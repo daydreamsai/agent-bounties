@@ -4,6 +4,14 @@
 
 ---
 
+## Submission File
+
+**File Path:** `submissions/<!-- your-agent-name.md -->`
+
+Please create a markdown file in the `submissions/` directory with your agent details. Name it after your agent (e.g., `fresh-markets-watch.md`).
+
+---
+
 ## Agent Description
 
 <!-- Provide a clear description of your agent, what it does, and how it solves the bounty requirements -->
@@ -28,6 +36,7 @@
 - [ ] Deployed on a domain
 - [ ] Reachable via x402
 - [ ] All acceptance criteria from the issue are met
+- [ ] Submission file added to `submissions/` directory
 
 ---
 
