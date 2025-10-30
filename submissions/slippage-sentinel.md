@@ -16,7 +16,7 @@ Manifest: https://slippage-sentinel.vercel.app/.well-known/agent.json
 * [x]  Submission file added to `submissions/` directory
 
 ## Other Resources
-Repository: [https://github.com/your-repo/slippage-sentinel](https://github.com/basstimam/slippage-sentinel) 
+Repository: (https://github.com/basstimam/slippage-sentinel) 
 Documentation: [README.md](https://github.com/basstimam/slippage-sentinel/blob/master/README.md) 
 Demo Video: (https://youtu.be/epLjory1qGE) Other: Includes helper script `bun run pay:call` for testing paid requests
 
