@@ -36,8 +36,8 @@ npx tsx scripts/slippage/run-live-check.ts   # (see repo instructions below)
 ### Paid x402 Call
 - Command: `npm run x402:test -- --resource 'POST /api/slippage/sentinel'`
 - Result: 0.05 USDC charge settled successfully.  
-  - Transaction signature: `3rjZCT7GUCUpMuzM5j5W4TR837rX9wf4wEPQVnpehHGnZybKASBqKiNRkJaaQ14ZaBEm7veXJZdCn1jxsgYFodN5`
-- Response payload returned `minSafeSlipBps: 75` during the live payment test (pre-fix run), demonstrating end-to-end reachability.
+  - Transaction signature: `4BGd2bjob7aUUu1GmKS4Has52tv8m2JeVdtvarKxadCoovvy4EsQzHyewCiTRLd9WbpZcpxXfNUaqyhNxVEaEbGT`
+- Response payload returned `minSafeSlipBps: 50` on the latest run, demonstrating end-to-end reachability post-deploy.
 
 ### Automated Tests
 - `npm test -- slippage`
@@ -55,10 +55,62 @@ npx tsx scripts/slippage/run-live-check.ts   # (see repo instructions below)
 ## Helper Script (optional)
 A convenience script can be added under `scripts/slippage/run-live-check.ts` to reproduce the verification table:
 
+
 ```ts
 import { analyseSlippage } from '../../src/analytics/slippageSentinel.ts';
 
+const TESTS = [
+  {
+    name: 'SOL -> USDC (5 SOL)',
+    inputMint: 'So11111111111111111111111111111111111111112',
+    outputMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    amountRaw: (5 * 1_000_000_000).toFixed(0),
+  },
+  {
+    name: 'SOL -> EfPoo4 pump (5 SOL)',
+    inputMint: 'So11111111111111111111111111111111111111112',
+    outputMint: 'EfPoo4wWgxKVToit7yX5VtXXBrhao4G8L7vrbKy6pump',
+    amountRaw: (5 * 1_000_000_000).toFixed(0),
+  },
+  {
+    name: 'SOL -> 3qq54 pump (5 SOL)',
+    inputMint: 'So11111111111111111111111111111111111111112',
+    outputMint: '3qq54YqAKG3TcrwNHXFSpMCWoL8gmMuPceJ4FG9npump',
+    amountRaw: (5 * 1_000_000_000).toFixed(0),
+  },
+];
+
+const run = async () => {
+  for (const test of TESTS) {
+    const res = await analyseSlippage({ ...test, swapMode: 'ExactIn' });
+    console.log(`
+=== ${test.name} ===`);
+    console.log('minSafeSlipBps:', res.minSafeSlipBps);
+    console.log('volatilityBufferBps:', res.diagnostics.volatilityBufferBps);
+    console.log('tradeSampleCount:', res.recentTradeSizeP95.sampleCount);
+    console.log('tradeUsdP95:', res.recentTradeSizeP95.usdAmountP95);
+    const routeDescription = res.poolDepths
+      .map((leg) => {
+        const inAmt = leg.inAmountUi != null ? leg.inAmountUi.toFixed(6) : 'n/a';
+        const outAmt =
+          leg.outAmountUi != null
+            ? (leg.outAmountUi > 1 ? leg.outAmountUi.toFixed(0) : leg.outAmountUi.toFixed(6))
+            : 'n/a';
+        return `${leg.amm} (in ${inAmt} ${leg.inputMint.slice(0, 4)}... -> out ${outAmt})`;
+      })
+      .join(' -> ');
+    console.log('route:', routeDescription);
+  }
+};
+
+run().catch((error) => {
+  console.error('Slippage live check failed:', error);
+  process.exitCode = 1;
+});
+```
+
 ## Quick Verification
+
 - **Paid request:** `npm run x402:test -- --resource "POST /api/slippage/sentinel"`
 - **Manual call:**
   ```bash
