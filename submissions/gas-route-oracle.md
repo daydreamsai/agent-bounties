@@ -26,9 +26,10 @@ Documentation: [README.md](README.md)
 Demo Video: N/A
 Other: Includes helper script `bun run pay` for testing paid requests
 
-## EVM Wallet
+## Wallet
 
-Wallet Address: 0x892e4feed0128f11d486fd451aff4a78171c8748
+EVM Wallet Address: 0x892e4feed0128f11d486fd451aff4a78171c8748 (pool, used on production)
+Solana Address: 9Bxn6CsqLcciGWVuPcwTVp7oyEVi815Y9Nx7TLg22Hp7
 
 ## Additional Notes
 
