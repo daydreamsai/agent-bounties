@@ -36,8 +36,8 @@ npx tsx scripts/slippage/run-live-check.ts   # (see repo instructions below)
 ### Paid x402 Call
 - Command: `npm run x402:test -- --resource 'POST /api/slippage/sentinel'`
 - Result: 0.05 USDC charge settled successfully.  
-  - Transaction signature: `4BGd2bjob7aUUu1GmKS4Has52tv8m2JeVdtvarKxadCoovvy4EsQzHyewCiTRLd9WbpZcpxXfNUaqyhNxVEaEbGT`
-- Response payload returned `minSafeSlipBps: 50` on the latest run, demonstrating end-to-end reachability post-deploy.
+  - Transaction signature: `38VXfunqq35s5cMTQmELZC4fn2qWSzhCbp9gSHGCWMT3nbep6S3rdzdDnaKYnRjgi1eWJXp1oUzda5fqmHxUi3Z4`
+- Response payload returned `minSafeSlipBps: 150` on the latest 5 SOL run (SOL → EfPoo4 pump), demonstrating end-to-end reachability post-deploy.
 
 ### Automated Tests
 - `npm test -- slippage`
