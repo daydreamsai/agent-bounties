@@ -18,7 +18,7 @@ Manifest: https://slippage-sentinel.vercel.app/.well-known/agent.json
 ## Other Resources
 Repository: (https://github.com/basstimam/slippage-sentinel) 
 Documentation: [README.md](https://github.com/basstimam/slippage-sentinel/blob/master/README.md) 
-Demo Video: (https://youtu.be/epLjory1qGE) Other: Includes helper script `bun run pay:call` for testing paid requests
+Demo Video: (https://youtu.be/vjYpvriJqAM) Other: Includes helper script `bun run pay:call` for testing paid requests
 
 ## Wallet
 EVM Wallet Address: 0xb308ed39d67D0d4BAe5BC2FAEF60c66BBb6AE429 (used for payments and production)
