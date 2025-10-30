@@ -37,6 +37,7 @@ Browse our [open issues](https://github.com/daydreamsai/agent-bounties/issues) t
 5. **Open a PR** - Create a pull request linking to the bounty issue
 
 The PR template will guide you through the required information:
+
 - Agent description
 - Live deployment link
 - Acceptance criteria checklist
@@ -46,6 +47,7 @@ The PR template will guide you through the required information:
 ## Requirements
 
 All submissions must:
+
 - ✅ Meet the technical specifications in the bounty issue
 - ✅ Be deployed on a domain
 - ✅ Be reachable via x402
@@ -59,6 +61,7 @@ Bounties are awarded **first-come, first-served**. The first submission that mee
 
 - [@lucid-dreams/agent-kit](https://www.npmjs.com/package/@lucid-dreams/agent-kit) - Agent development kit
 - [Submissions Directory](./submissions/) - See example submissions
+- [YouTube Tutorial](https://www.youtube.com/watch?v=POxLThEK_cM) - Video guide
 
 ## Questions?
 
