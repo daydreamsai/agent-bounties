@@ -27,7 +27,19 @@ The **Approval Risk Auditor** is an AI agent that scans wallet addresses across 
 - Server: @hono/node-server v1.19.5
 - Blockchain Library: ethers v6.15.0
 - Data Source: Covalent API (@covalenthq/client-sdk v2.3.4)
-- Payment Protocol: x402 on base-sepolia network
+- Payment Protocol: x402 on Base mainnet (0.01 USDC per request)
+
+---
+
+## Demo Video
+
+**Payment Flow Demonstration:** https://drive.google.com/file/d/1VnmdEEAdvtyL6W8N5-SpIomPvcifJ6CY/view?usp=sharing
+
+The video demonstrates:
+1. Request without payment returns 402 Payment Required
+2. Payment is created and processed (0.01 USDC on Base mainnet)
+3. Request with payment returns 200 OK with audit results
+4. Payment is verified via balance check
 
 ---
 
@@ -69,10 +81,11 @@ curl -i https://bounty5-auditor-production.up.railway.app/entrypoints/audit/invo
 
 - **Repository:** https://github.com/ShivanshKandpal/bounty5-auditor
 - **Documentation:** See README.md in repository
+- **Demo Video:** https://drive.google.com/file/d/1VnmdEEAdvtyL6W8N5-SpIomPvcifJ6CY/view?usp=sharing
 - **Verification:**
-  - Payment Network: base-sepolia
-  - Pricing: 0.03 USDC per invoke
-  - Payee Wallet: 0xb308ed39d67D0d4BAe5BC2FAEF60c66BBb6AE429
+  - Payment Network: Base mainnet
+  - Pricing: 0.01 USDC per invoke
+  - Payee Wallet: 0x352F99eCbB999288fC3B08E3A0042cf65d16A543
   - Facilitator: https://facilitator.daydreams.systems
 
 ---
