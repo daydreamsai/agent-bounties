@@ -104,7 +104,5 @@ curl -X POST https://perps-funding-agent-production.up.railway.app/entrypoints/g
 
 ## Additional Resources
 
-- **Source Code:** Available in the perps-funding-agent directory
-- **Documentation:** See README.md in perps-funding-agent/
 - **Test Health Endpoint:** https://perps-funding-agent-production.up.railway.app/health
 - **Agent Manifest:** https://perps-funding-agent-production.up.railway.app/.well-known/agent.json
