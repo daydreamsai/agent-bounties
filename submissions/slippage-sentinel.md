@@ -40,6 +40,12 @@ Intelligent slippage recommendation engine analyzing pool depth and recent volat
 
 **URL**: https://slippage-sentinel-production.up.railway.app
 
+**Agent Metadata**:
+- Manifest: https://slippage-sentinel-production.up.railway.app/.well-known/agent.json
+- x402 Metadata: https://slippage-sentinel-production.up.railway.app/.well-known/x402
+
+**x402scan Agent**: Registration pending (agents are live and functional)
+
 **Endpoints**:
 - GET: https://slippage-sentinel-production.up.railway.app/entrypoints/slippage-sentinel/invoke
 - POST: https://slippage-sentinel-production.up.railway.app/entrypoints/slippage-sentinel/invoke
@@ -91,6 +97,24 @@ curl -X POST https://slippage-sentinel-production.up.railway.app/entrypoints/sli
 ✅ Dual facilitator support (Daydreams + Coinbase CDP)
 ✅ Valid x402 metadata on GET and POST endpoints
 ✅ OutputSchema properly configured
+✅ CORS enabled for x402scan composer integration
+
+## Testing & Verification
+
+### Test with x402scan Composer
+1. Visit https://www.x402scan.com/composer
+2. Enter agent URL: https://slippage-sentinel-production.up.railway.app
+3. Discover entrypoints automatically
+4. Test invocations with example payloads
+
+### Test with curl
+See "Example Request" section above for working curl commands.
+
+### Verify x402 Metadata
+```bash
+curl https://slippage-sentinel-production.up.railway.app/.well-known/agent.json
+curl https://slippage-sentinel-production.up.railway.app/.well-known/x402
+```
 
 ## Repository
 **GitHub**: https://github.com/DeganAI/slippage-sentinel

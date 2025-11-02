@@ -41,6 +41,12 @@ Multi-chain arbitrage detection engine identifying profitable price spreads acro
 
 **URL**: https://cross-dex-arbitrage-production.up.railway.app
 
+**Agent Metadata**:
+- Manifest: https://cross-dex-arbitrage-production.up.railway.app/.well-known/agent.json
+- x402 Metadata: https://cross-dex-arbitrage-production.up.railway.app/.well-known/x402
+
+**x402scan Agent**: Registration pending (agents are live and functional)
+
 **Endpoints**:
 - GET: https://cross-dex-arbitrage-production.up.railway.app/entrypoints/cross-dex-arbitrage/invoke
 - POST: https://cross-dex-arbitrage-production.up.railway.app/entrypoints/cross-dex-arbitrage/invoke
@@ -102,6 +108,24 @@ curl -X POST https://cross-dex-arbitrage-production.up.railway.app/entrypoints/c
 ✅ Dual facilitator support (Daydreams + Coinbase CDP)
 ✅ Valid x402 metadata on GET and POST endpoints
 ✅ OutputSchema properly configured
+✅ CORS enabled for x402scan composer integration
+
+## Testing & Verification
+
+### Test with x402scan Composer
+1. Visit https://www.x402scan.com/composer
+2. Enter agent URL: https://cross-dex-arbitrage-production.up.railway.app
+3. Discover entrypoints automatically
+4. Test invocations with example payloads
+
+### Test with curl
+See "Example Request" section above for working curl commands.
+
+### Verify x402 Metadata
+```bash
+curl https://cross-dex-arbitrage-production.up.railway.app/.well-known/agent.json
+curl https://cross-dex-arbitrage-production.up.railway.app/.well-known/x402
+```
 
 ## Repository
 **GitHub**: https://github.com/DeganAI/cross-dex-arbitrage

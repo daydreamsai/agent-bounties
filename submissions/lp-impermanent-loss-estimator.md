@@ -42,6 +42,12 @@ Advanced LP position analyzer calculating impermanent loss and fee APR estimates
 
 **URL**: https://lp-impermanent-loss-estimator-production-62b5.up.railway.app
 
+**Agent Metadata**:
+- Manifest: https://lp-impermanent-loss-estimator-production-62b5.up.railway.app/.well-known/agent.json
+- x402 Metadata: https://lp-impermanent-loss-estimator-production-62b5.up.railway.app/.well-known/x402
+
+**x402scan Agent**: Registration pending (agents are live and functional)
+
 **Endpoints**:
 - GET: https://lp-impermanent-loss-estimator-production-62b5.up.railway.app/entrypoints/lp-impermanent-loss-estimator/invoke
 - POST: https://lp-impermanent-loss-estimator-production-62b5.up.railway.app/entrypoints/lp-impermanent-loss-estimator/invoke
@@ -91,6 +97,24 @@ curl -X POST https://lp-impermanent-loss-estimator-production-62b5.up.railway.ap
 ✅ Dual facilitator support (Daydreams + Coinbase CDP)
 ✅ Valid x402 metadata on GET and POST endpoints
 ✅ OutputSchema properly configured
+✅ CORS enabled for x402scan composer integration
+
+## Testing & Verification
+
+### Test with x402scan Composer
+1. Visit https://www.x402scan.com/composer
+2. Enter agent URL: https://lp-impermanent-loss-estimator-production-62b5.up.railway.app
+3. Discover entrypoints automatically
+4. Test invocations with example payloads
+
+### Test with curl
+See "Example Request" section above for working curl commands.
+
+### Verify x402 Metadata
+```bash
+curl https://lp-impermanent-loss-estimator-production-62b5.up.railway.app/.well-known/agent.json
+curl https://lp-impermanent-loss-estimator-production-62b5.up.railway.app/.well-known/x402
+```
 
 ## Repository
 **GitHub**: https://github.com/DeganAI/lp-impermanent-loss-estimator

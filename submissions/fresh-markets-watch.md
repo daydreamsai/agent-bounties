@@ -41,6 +41,12 @@ Real-time AMM pair discovery agent monitoring factory contracts across multiple 
 
 **URL**: https://fresh-markets-watch-production.up.railway.app
 
+**Agent Metadata**:
+- Manifest: https://fresh-markets-watch-production.up.railway.app/.well-known/agent.json
+- x402 Metadata: https://fresh-markets-watch-production.up.railway.app/.well-known/x402
+
+**x402scan Agent**: Registration pending (agents are live and functional)
+
 **Endpoints**:
 - GET: https://fresh-markets-watch-production.up.railway.app/entrypoints/fresh-markets-watch/invoke
 - POST: https://fresh-markets-watch-production.up.railway.app/entrypoints/fresh-markets-watch/invoke
@@ -97,6 +103,24 @@ curl -X POST https://fresh-markets-watch-production.up.railway.app/entrypoints/f
 ✅ Dual facilitator support (Daydreams + Coinbase CDP)
 ✅ Valid x402 metadata on GET and POST endpoints
 ✅ OutputSchema properly configured
+✅ CORS enabled for x402scan composer integration
+
+## Testing & Verification
+
+### Test with x402scan Composer
+1. Visit https://www.x402scan.com/composer
+2. Enter agent URL: https://fresh-markets-watch-production.up.railway.app
+3. Discover entrypoints automatically
+4. Test invocations with example payloads
+
+### Test with curl
+See "Example Request" section above for working curl commands.
+
+### Verify x402 Metadata
+```bash
+curl https://fresh-markets-watch-production.up.railway.app/.well-known/agent.json
+curl https://fresh-markets-watch-production.up.railway.app/.well-known/x402
+```
 
 ## Repository
 **GitHub**: https://github.com/DeganAI/fresh-markets-watch
