@@ -1,4 +1,4 @@
-# GachaFi - AI Gacha Token Launcher
+# GachaFi - AI Cross-Chain Token Launcher
 
 ## Agent Description
 
@@ -59,24 +59,27 @@ curl -X POST https://api.gacha.fi/gachapull-base \
 ```json
 {
   "success": true,
-  "tokenName": "Cyberpunk Sloths",
-  "tokenSymbol": "SLOTH",
-  "mintAddress": "8FjXqN2vK3hGZm4qW7pR5dYnE9sT1cU6bV4xL2mA7zK9",
-  "explorer": "https://solscan.io/token/8FjXqN2vK3hGZm4qW7pR5dYnE9sT1cU6bV4xL2mA7zK9",
-  "paymentNetwork": "Solana"
+  "tokenName": "Procrastinating Potato",
+  "tokenSymbol": "SPUDS",
+  "mintAddress": "HdxQdzqFxsQEM5vw8zETiQLuedfzxEZRPvJVajzR9fH2",
+  "explorer": "https://solscan.io/token/HdxQdzqFxsQEM5vw8zETiQLuedfzxEZRPvJVajzR9fH2",
+  "paymentNetwork": "Base"
 }
 ```
 
-### Example AI-Generated Tokens
+### Real Example - Procrastinating Potato
 
-The AI generates completely random, creative meme coin concepts such as:
-- **Degen Raccoons** - Trash pandas raiding the DeFi dumpsters
-- **Space Hamsters** - Cosmic rodents running the wheel of fortune
-- **Ninja Penguins** - Stealth birds sliding into your wallet
-- **Time-Traveling Toasters** - Breakfast appliances from the future
-- **Cyberpunk Sloths** - Slow but steady in the metaverse
+**The first token deployed on Solana that was paid for on Base** - demonstrating the cross-chain payment novelty of the x402 protocol!
 
-Each token gets a unique AI-generated logo image created specifically for its concept.
+- **Name:** Procrastinating Potato
+- **Symbol:** $SPUDS
+- **Mint Address:** `HdxQdzqFxsQEM5vw8zETiQLuedfzxEZRPvJVajzR9fH2`
+- **Explorer:** https://solscan.io/token/HdxQdzqFxsQEM5vw8zETiQLuedfzxEZRPvJVajzR9fH2
+- **Metadata URI:** https://ipfs.io/ipfs/bafkreierfn7ykc3prkeltjrvuzwqplbee5xjuyed655dfujfltjmhwkq2q
+- **Payment:** $5 USDC on Base
+- **Deployment:** Solana mainnet via Raydium LaunchLab
+
+This showcases the power of x402: **pay on one chain, deploy on another**. The user paid with USDC on Base, but the token was deployed to Solana - a true cross-chain payment experience.
 
 ## Technical Implementation
 
@@ -148,59 +151,6 @@ Each token gets a unique AI-generated logo image created specifically for its co
   - Solana (USDC)
   - Base (USDC)
 
-## Metadata Standards
-
-All tokens comply with:
-- **Metaplex Metadata Standard** for Solana tokens
-- **IPFS permanent storage** for decentralization
-- **JSON metadata format:**
-  ```json
-  {
-    "name": "Token Name",
-    "symbol": "SYMBOL",
-    "description": "AI-generated description",
-    "image": "https://ipfs.io/ipfs/{CID}",
-    "attributes": [
-      {
-        "trait_type": "AI Generated",
-        "value": "true"
-      },
-      {
-        "trait_type": "Created",
-        "value": "2025-11-03T..."
-      }
-    ]
-  }
-  ```
-
-## Use Cases
-
-- **Entertainment** - Fun way to create random meme tokens
-- **Community Engagement** - Launch surprise tokens for communities
-- **AI Experimentation** - Showcase AI creativity in DeFi
-- **Token Art** - Collect unique AI-generated token artwork
-- **Gacha Gaming** - DeFi meets gacha mechanics
-
-## Why GachaFi?
-
-GachaFi represents a novel intersection of:
-- **AI Innovation** - Leveraging Claude and Flux for creative token generation
-- **DeFi Utility** - Real tokens deployed on Raydium's established platform
-- **User Experience** - Zero-friction gacha-style randomness
-- **Multi-Chain Payments** - x402 enables seamless payment across networks
-- **Permanent Storage** - IPFS ensures token metadata lives forever
-
-It's a fun, experimental showcase of what's possible when you combine cutting-edge AI with blockchain infrastructure and micropayment protocols.
-
 ## Bounty Payment Wallet
 
 **Solana Wallet Address:** `65erknJyjgixYifm6vfQTkPGUmARMjfuatWQyoYSswFv`
-
-## Additional Resources
-
-- **Live Service:** https://api.gacha.fi/
-- **Payment Protocol:** x402 (Solana + Base support)
-- **Token Platform:** Raydium LaunchLab (Solana)
-- **AI Models:** Claude Haiku 4.5, Flux Schnell
-- **Storage:** Pinata IPFS
-- **Price:** $5 USDC per gacha pull
