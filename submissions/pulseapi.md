@@ -94,7 +94,7 @@ All endpoints return HTTP 402 (Payment Required) with proper x402 headers.
 
 ## Solana Wallet
 
-**Wallet Address:** <!-- Provide Solana wallet if this qualifies for any bounty -->
+**Wallet Address:** Hnf7qnwdHYtSqj7PjjLjokUq4qaHR4qtHLedW7XDaNDG
 
 **Note:** While this submission doesn't match a specific bounty issue, it demonstrates a fully functional x402 service with real-world utility for AI agents.
 
