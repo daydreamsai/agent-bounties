@@ -27,7 +27,18 @@
 
 **Deployment URL:** https://pulseapi-production-00cc.up.railway.app
 
-**x402scan Registration:** https://www.x402scan.com/resources
+**x402scan Registry:** https://www.x402scan.com/resources
+
+**x402scan Service Page:** https://www.x402scan.com/server/134b6de2-0d0f-48e7-ae4e-c5e343b88e65/
+
+### Verification
+
+The x402scan service page shows PulseAPI is fully functional with:
+- ✅ All 7 endpoints registered and discoverable
+- ✅ Organization: "Daydreams" (properly attributed to ecosystem)
+- ✅ Author: "DegenLlama.net"
+- ✅ Complete input schemas for each endpoint
+- ✅ Proper pricing display ($0.01 - $0.06 per query)
 
 ### Test Endpoints
 
