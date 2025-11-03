@@ -45,31 +45,35 @@ Real-time multi-chain gas optimization oracle recommending the cheapest blockcha
 - Manifest: https://gasroute-bounty-production.up.railway.app/.well-known/agent.json
 - x402 Metadata: https://gasroute-bounty-production.up.railway.app/.well-known/x402
 
-**x402scan Agent**: Registration pending (agents are live and functional)
+**x402scan Agent**: ✅ Validated and operational
 
 **Endpoints**:
-- GET: https://gasroute-bounty-production.up.railway.app/entrypoints/gasroute-bounty/invoke
-- POST: https://gasroute-bounty-production.up.railway.app/entrypoints/gasroute-bounty/invoke
+- GET: https://gasroute-bounty-production.up.railway.app/route
+- POST: https://gasroute-bounty-production.up.railway.app/route
 
 ### Example Request
 ```bash
-curl -X POST https://gasroute-bounty-production.up.railway.app/entrypoints/gasroute-bounty/invoke \
+curl -X POST https://gasroute-bounty-production.up.railway.app/route \
   -H 'Content-Type: application/json' \
   -d '{
-    "chain_set": [1, 137, 42161, 10],
-    "calldata_size_bytes": 256,
-    "gas_units_est": 150000
+    "chain_ids": [1, 137, 42161, 10, 8453],
+    "estimated_gas_units": 100000,
+    "calldata_bytes": 512
   }'
 ```
 
 ### Example Response
 ```json
 {
-  "chain": "arbitrum",
-  "fee_native": "0.000045 ETH",
-  "fee_usd": 0.12,
-  "busy_level": "low",
-  "tip_hint": "0.01 gwei"
+  "recommended_chain_id": 8453,
+  "recommended_chain_name": "Base",
+  "native_token_symbol": "ETH",
+  "total_gas_cost_native": 0.00000234,
+  "total_gas_cost_usd": 0.0052,
+  "gas_price_gwei": 0.02,
+  "congestion_percent": 15.3,
+  "timing_recommendation": "Excellent time to execute - network is uncongested",
+  "optimal_execution_window": "Execute now for optimal pricing"
 }
 ```
 
@@ -115,7 +119,7 @@ curl https://gasroute-bounty-production.up.railway.app/.well-known/x402
 ```
 
 ## Repository
-**GitHub**: https://github.com/DeganAI/gasroute-oracle
+**GitHub**: https://github.com/DeganAI/gasroute-bounty
 
 ## Acceptance Criteria
 ✅ Meets all technical specifications
