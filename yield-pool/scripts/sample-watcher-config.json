@@ -1,0 +1,33 @@
+{
+  "protocolIds": ["aave-v3"],
+  "pools": [
+    {
+      "id": "base-usdc",
+      "protocolId": "aave-v3",
+      "chainId": 8453,
+      "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "metadata": {
+        "poolContract": "0xA238Dd80C259a72e81d7e4664a9801593F98d1c5",
+        "priceOracle": "0x2Cc0Fc26eD4563A5ce5e8bdcfe1A2878676Ae156",
+        "aTokenAddress": "0x4e65fE4DbA92790696d040ac24Aa414708F5c0AB",
+        "underlyingAsset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "assetDecimals": 6
+      }
+    }
+  ],
+  "thresholdRules": [
+    {
+      "id": "tvl-spike",
+      "metric": "tvl",
+      "change": {
+        "type": "percent",
+        "direction": "increase",
+        "amount": 10
+      },
+      "window": {
+        "type": "blocks",
+        "value": 1
+      }
+    }
+  ]
+}
