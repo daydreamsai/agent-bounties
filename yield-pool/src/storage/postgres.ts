@@ -1,6 +1,7 @@
 import type { WatcherConfig } from "../config";
 import type { AlertEvent, DeltaSnapshot, PoolMetrics } from "../types";
 import { getDb } from "../services/db";
+import { normaliseJson } from "../utils/json";
 
 export interface WatcherRow {
   watcher_id: string;
@@ -70,7 +71,9 @@ export class PostgresWatcherRepository {
       { next_version: number }[]
     >`SELECT COALESCE(MAX(version), 0) + 1 AS next_version FROM watcher_configs WHERE watcher_id = ${watcherId}`;
 
-    await this.sql`INSERT INTO watcher_configs (watcher_id, version, config) VALUES (${watcherId}, ${next_version}, ${this.sql.json(config as any)})`;
+    const serialisedConfig = normaliseJson(config) as any;
+
+    await this.sql`INSERT INTO watcher_configs (watcher_id, version, config) VALUES (${watcherId}, ${next_version}, ${this.sql.json(serialisedConfig)})`;
 
     return { version: next_version };
   }
@@ -219,7 +222,7 @@ export class PostgresWatcherRepository {
             ${metric.apy ?? null},
             ${metric.tvl ?? null},
             ${metric.raw
-              ? sql.json(metric.raw as any)
+              ? sql.json(normaliseJson(metric.raw) as any)
               : null}
           )
           ON CONFLICT (watcher_id, protocol_id, pool_id, block_number)
@@ -340,7 +343,7 @@ export class PostgresWatcherRepository {
             ${alert.triggeredAt},
             ${alert.message},
             ${alert.metadata
-              ? sql.json(alert.metadata as any)
+              ? sql.json(normaliseJson(alert.metadata) as any)
               : null}
           )
           ON CONFLICT (alert_id)
