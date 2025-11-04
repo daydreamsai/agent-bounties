@@ -9,7 +9,7 @@ RUN bun install --frozen-lockfile --production
 COPY tsconfig.json ./tsconfig.json
 COPY src ./src
 COPY scripts ./scripts
-COPY README.md ./README.md
+COPY yield-pool-watcher.md ./yield-pool-watcher.md
 
 ENV NODE_ENV=production
 
