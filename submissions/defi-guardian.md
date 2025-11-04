@@ -21,7 +21,7 @@
 - **Payment:** x402 protocol with USDC on Base ($0.75 flat rate)
 - **Validation:** TypeScript + Zod schemas
 - **Deployment:** Railway (auto-scaling)
-- **Architecture:** Orchestrates 6 internal zero-cost microservices
+- **Architecture:** Orchestrates 6 internal microservices
 
 ---
 
@@ -149,8 +149,6 @@ DeFi Guardian operates as an **orchestrator agent** that coordinates 6 specializ
 5. **Perps Funding Pulse** (optional) - Perpetuals funding rates
 6. **Cross DEX Arbitrage** (optional) - Multi-DEX arbitrage detection
 
-All internal services are zero-cost (no external API charges), enabling **100% profit margin** on the $0.75 flat rate.
-
 ---
 
 ## Competitive Advantages
@@ -158,7 +156,6 @@ All internal services are zero-cost (no external API charges), enabling **100% p
 | Feature | DeFi Guardian | Individual Services |
 |---------|---------------|---------------------|
 | Coverage | 6 services in 1 | Separate calls needed |
-| Cost | $0.75 flat | $3-5+ combined |
 | Risk Score | Holistic 0-100 | Manual aggregation |
 | Auto-Detection | Full portfolio scan | Manual position entry |
 | Critical Alerts | Consolidated | Scattered across tools |
@@ -193,18 +190,18 @@ All internal services are zero-cost (no external API charges), enabling **100% p
 
 DeFi users and AI agents need comprehensive portfolio monitoring but face:
 - Fragmented tools requiring multiple API calls
-- High combined costs ($3-5+ per full analysis)
 - Manual position entry and risk calculation
 - No unified risk scoring
+- Scattered data across multiple services
 
 ### Solution
 
 DeFi Guardian provides:
 1. **One-Call Analysis:** Complete portfolio health in single request
-2. **Cost Efficiency:** $0.75 flat rate vs $3-5+ for individual services
-3. **Auto-Detection:** Scans wallet for LP positions automatically
-4. **Holistic Risk Score:** 0-100 scoring with critical alerts
-5. **Actionable Insights:** Clear recommendations and warnings
+2. **Auto-Detection:** Scans wallet for LP positions automatically
+3. **Holistic Risk Score:** 0-100 scoring with critical alerts
+4. **Actionable Insights:** Clear recommendations and warnings
+5. **Comprehensive Coverage:** 6 specialized analyses in one agent
 
 ### Use Cases
 
@@ -220,9 +217,9 @@ DeFi Guardian provides:
 
 - **6 Services Integrated:** Lending, Yield, LP, Perps, Arbitrage, Portfolio Scanner
 - **3 Bounties Addressed:** #6 (Yield), #7 (IL Estimator), #9 (Lending)
-- **100% Profit Margin:** All backend services are zero-cost internal APIs
 - **Multi-Chain Support:** Ethereum, Arbitrum, Base
 - **10+ Protocols Covered:** Major DeFi protocols across categories
+- **Comprehensive Analysis:** Single endpoint for complete portfolio health
 
 ---
 
