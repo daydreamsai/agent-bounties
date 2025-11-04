@@ -22,7 +22,7 @@
       "change": {
         "type": "percent",
         "direction": "increase",
-        "amount": 10
+        "amount": 0.00005
       },
       "window": {
         "type": "blocks",

@@ -6,6 +6,7 @@ import {
 import { monitoringService } from "./runtime";
 import { watcherConfigSchema } from "./config";
 import type { AlertEvent, DeltaSnapshot, PoolMetrics } from "./types";
+import { normaliseJson } from "./utils/json";
 
 const configOverrides: AgentKitConfig = {
   payments: {
@@ -102,7 +103,9 @@ function serialiseMetrics(metrics: PoolMetrics[]): z.infer<typeof poolMetricOutp
     timestamp: metric.timestamp,
     apy: metric.apy ?? null,
     tvl: metric.tvl ?? null,
-    raw: metric.raw,
+    raw: metric.raw
+      ? (normaliseJson(metric.raw) as Record<string, unknown>)
+      : undefined,
   }));
 }
 
@@ -139,7 +142,9 @@ function serialiseAlerts(alerts: AlertEvent[]): z.infer<typeof alertOutputSchema
     changeAmount: alert.changeAmount ?? null,
     percentChange: alert.percentChange ?? null,
     message: alert.message,
-    metadata: alert.metadata,
+    metadata: alert.metadata
+      ? (normaliseJson(alert.metadata) as Record<string, unknown>)
+      : undefined,
   }));
 }
 
