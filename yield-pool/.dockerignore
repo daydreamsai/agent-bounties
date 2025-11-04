@@ -1,0 +1,7 @@
+bun.lockb
+node_modules
+.git
+.gitignore
+logs
+*.log
+tmp
