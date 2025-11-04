@@ -438,7 +438,3 @@ Use it as a template when onboarding new pools.
 - `find-top-yields` surfaces the highest-yielding pools tracked on a chain, optionally filtered by minimum TVL and sorted by APY or TVL.
 
 Both entrypoints rely on the monitoring service having up-to-date metrics. Make sure your deployment has outbound network access to the configured RPCs and (if enabled) the OpenAI endpoint.
-
-## Solana Wallet Address
-
-6iThbDBdkei9VUXAJF5driPzhHoyrg1By9ssBecN1aCt
