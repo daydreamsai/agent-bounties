@@ -1,99 +1,444 @@
-## yield-pool
+# yield-pool
 
-This project was scaffolded with `create-agent-kit` and ships with a ready-to-run agent app built on [`@lucid-dreams/agent-kit`](https://www.npmjs.com/package/@lucid-dreams/agent-kit).
+Agent that monitors DeFi yield pools, stores historical metrics, emits TVL/APY alerts, and serves paid entrypoints over the x402 protocol. It is built with [`@lucid-dreams/agent-kit`](https://www.npmjs.com/package/@lucid-dreams/agent-kit) and runs on Bun.
 
-### Quick start
+## Architecture
 
-```sh
-bun install
-bun run dev
+- **Entrypoint router** (`src/agent.ts` + `@lucid-dreams/agent-kit`): exposes paid functions under `/entrypoints/<key>/invoke` and publishes the manifest at `/.well-known/agent.json`.
+- **Monitoring service** (`src/services/monitoring.ts`): keeps each watcher’s configuration, polls on-chain protocols, calculates deltas, and triggers alert events.
+- **Storage** (`src/storage/postgres.ts`): persists watcher configs, metrics, deltas, and alerts in Postgres so multiple payers can share a deployment safely.
+- **Protocol adapters** (`src/protocols/*`): encapsulate per-protocol logic (currently Aave v3 + Curve) and can be extended.
+- **Summaries** (`src/services/llm.ts` + `src/utils/analytics.ts`): optional OpenAI-backed watcher summaries with deterministic fallbacks when an API key is not provided.
+
+## Hosted Access
+
+- **Base URL**: `https://agent-bounties-yield-pool.up.railway.app`
+- **x402scan listing**: [https://www.x402scan.com/server/b4f155d4-a731-4f2b-8d61-a3b058d7992e](https://www.x402scan.com/server/b4f155d4-a731-4f2b-8d61-a3b058d7992e)
+- Each entrypoint is accessible at `POST {baseUrl}/entrypoints/<key>/invoke` and requires an `X-PAYMENT` header signed through x402.
+- Helper scripts in `scripts/` can target the hosted deployment by setting `AGENT_URL=https://agent-bounties-yield-pool.up.railway.app`.
+
+### Project structure (for maintainers)
+
+- `src/agent.ts` – manifest + entrypoint definitions
+- `src/runtime.ts` – wires monitoring, storage, and LLM services
+- `src/services/*` – monitoring loop, database connector, LLM integration
+- `src/protocols/*` – pluggable adapters for on-chain protocols
+- `scripts/` – x402 helper clients and sample configs
+
+## Self-hosting (optional)
+
+Set these variables if you run your own deployment (the hosted Railway instance is already configured):
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | ✅ | Postgres connection string used for watcher storage |
+| `FACILITATOR_URL` | ✅ | x402 facilitator URL (defaults to `https://facilitator.daydreams.systems`) |
+| `PAY_TO` | ✅ | EVM address that receives x402 payments |
+| `NETWORK` | ✅ | x402 payment network (e.g. `base`, `base-sepolia`) |
+| `DEFAULT_PRICE` | ✅ | Default 402 price (string, defaults to `0.1`) |
+| `PORT` | ➖ | Port Bun should listen on (defaults to `8787`) |
+| `RPC_URL_<chainId>` | ➖ | RPC URL per-chain (e.g. `RPC_URL_8453` for Base). Falls back to `RPC_URL`. |
+| `OPENAI_API_KEY` | ➖ | Enables LLM-backed watcher summaries |
+| `OPENAI_MODEL` | ➖ | Override OpenAI model (default `gpt-4o-mini`) |
+| `OPENAI_BASE_URL` | ➖ | Point to an OpenAI-compatible API endpoint |
+| `LLM_PROVIDER` | ➖ | Set to `openai` (default) or another provider (others disable LLMs) |
+| `DB_POOL_MAX`, `DB_IDLE_TIMEOUT`, `DB_MAX_LIFETIME` | ➖ | Optional Postgres tuning knobs |
+
+You can override the monitoring cadence per watcher by including `pollingIntervalMs` in the `configure-watcher` payload.
+
+## Using the x402 flow
+
+1. **Manifest discovery** – `GET https://agent-bounties-yield-pool.up.railway.app/.well-known/agent.json` publishes the agent metadata, entrypoints, and pricing.
+2. **Paid invocation** – each entrypoint lives at `POST https://agent-bounties-yield-pool.up.railway.app/entrypoints/<key>/invoke` and expects:
+   ```json
+   {
+     "input": { /* entrypoint-specific payload */ }
+   }
+   ```
+   Requests must include an `X-PAYMENT` header signed using x402.
+3. **Helpers** – the repo bundles clients that manage payments automatically:
+   - `AGENT_URL=https://agent-bounties-yield-pool.up.railway.app bunx tsx scripts/demo-client.ts` – configures a watcher, triggers a snapshot, and prints settlements.
+   - `AGENT_URL=https://agent-bounties-yield-pool.up.railway.app bunx tsx scripts/fetch-entrypoint.ts get-snapshot '{"watcherId":"0x..."}'` – call any entrypoint without reconfiguring.
+
+   Shared environment variables for these scripts:
+   - `AGENT_URL` / `API_BASE_URL` / `PORT` – point the scripts at the agent (set `AGENT_URL=https://agent-bounties-yield-pool.up.railway.app`; defaults to localhost if unset)
+   - `NETWORK` – payment network (`base` by default)
+   - `PAYER_PRIVATE_KEY` / `PRIVATE_KEY` – private key used to sign payments
+   - `MAX_PAYMENT_ATOMIC` – max spend in atomic units (defaults to `1000`)
+   - `MAX_TIMEOUT_SECONDS` – optional upper bound on required validity windows
+   - `WATCHER_ID` – optional override; defaults to the payer address
+
+   The helpers also detect clock skew and adjust signed timestamps when your local clock drifts relative to the on-chain time.
+
+All entrypoints require a `watcherId` so multiple wallets can share one deployment without clobbering each other’s state. The helper scripts derive the ID from the payer’s address automatically.
+
+## API reference
+
+Every entrypoint returns `{ "output": … }` on success and emits x402 settlement headers when payments clear. Errors follow the agent-kit default shape `{ "error": { "type": string, "message": string } }`.
+
+### `configure-watcher`
+
+- **Path**: `POST /entrypoints/configure-watcher/invoke`
+- **Hosted URL**: `https://agent-bounties-yield-pool.up.railway.app/entrypoints/configure-watcher/invoke`
+- **Purpose**: Register/update the watcher’s protocol, pool, and threshold configuration.
+- **Body fields**
+
+  | Field | Type | Required | Description | Example |
+  | --- | --- | --- | --- | --- |
+  | `input.watcherId` | `string` | ✅ | Identifier for the watcher (typically the payer wallet address). | `0x1234567890abcdef1234567890abcdef12345678` |
+  | `input.config.protocolIds` | `string[]` | ✅ | Protocol identifiers to poll. | `["aave-v3"]` |
+  | `input.config.pools[].id` | `string` | ✅ | Human readable pool identifier. | `"base-usdc"` |
+  | `input.config.pools[].protocolId` | `string` | ✅ | Protocol that owns the pool. | `"aave-v3"` |
+  | `input.config.pools[].chainId` | `number` | ✅ | EVM chain id hosting the pool. | `8453` |
+  | `input.config.pools[].address` | `string` | ✅ | Pool contract address. | `"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"` |
+  | `input.config.pools[].metadata.poolContract` | `string` | ✅ | Protocol-specific pool contract. | `"0xA238Dd80C259a72e81d7e4664a9801593F98d1c5"` |
+  | `input.config.pools[].metadata.priceOracle` | `string` | ✅ | Oracle contract for pricing. | `"0x2Cc0Fc26eD4563A5ce5e8bdcfe1A2878676Ae156"` |
+  | `input.config.pools[].metadata.aTokenAddress` | `string` | ✅ (Aave) | aToken contract used to read supply. | `"0x4e65fE4DbA92790696d040ac24Aa414708F5c0AB"` |
+  | `input.config.pools[].metadata.underlyingAsset` | `string` | ✅ | Underlying asset contract. | `"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"` |
+  | `input.config.pools[].metadata.assetDecimals` | `number` | ✅ | Decimal precision of the asset. | `6` |
+  | `input.config.thresholdRules[].id` | `string` | ✅ | Unique identifier for the rule. | `"tvl-spike"` |
+  | `input.config.thresholdRules[].metric` | `"tvl" \| "apy"` | ✅ | Metric tracked by the rule. | `"tvl"` |
+  | `input.config.thresholdRules[].change.type` | `"percent" \| "absolute"` | ✅ | Threshold evaluation style. | `"percent"` |
+  | `input.config.thresholdRules[].change.direction` | `"increase" \| "decrease" \| "both"` | ✅ | Change direction to monitor. | `"increase"` |
+  | `input.config.thresholdRules[].change.amount` | `number` | ✅ | Threshold amount (percent or absolute). | `0.00005` |
+  | `input.config.thresholdRules[].window.type` | `"blocks" \| "minutes"` | ✅ | Look-back window units. | `"blocks"` |
+  | `input.config.thresholdRules[].window.value` | `number` | ✅ | Size of the look-back window. | `1` |
+  | `input.config.pollingIntervalMs` | `number` | ➖ | Optional per-watcher polling cadence in ms. | `12000` |
+
+- **Example request body**
+
+  ```json
+  {
+    "watcherId": "0x1234567890abcdef1234567890abcdef12345678",
+    "config": {
+      "protocolIds": ["aave-v3"],
+      "pools": [
+        {
+          "id": "base-usdc",
+          "protocolId": "aave-v3",
+          "chainId": 8453,
+          "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "metadata": {
+            "poolContract": "0xA238Dd80C259a72e81d7e4664a9801593F98d1c5",
+            "priceOracle": "0x2Cc0Fc26eD4563A5ce5e8bdcfe1A2878676Ae156",
+            "aTokenAddress": "0x4e65fE4DbA92790696d040ac24Aa414708F5c0AB",
+            "underlyingAsset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "assetDecimals": 6
+          }
+        }
+      ],
+      "thresholdRules": [
+        {
+          "id": "tvl-spike",
+          "metric": "tvl",
+          "change": {
+            "type": "percent",
+            "direction": "increase",
+            "amount": 0.00005
+          },
+          "window": {
+            "type": "blocks",
+            "value": 1
+          }
+        }
+      ],
+      "pollingIntervalMs": 12000
+    }
+  }
+  ```
+- **Output**:
+  ```json
+  {
+    "output": {
+      "watcherId": "string",
+      "protocolIds": ["string"],
+      "pools": [
+        { "protocolId": "string", "poolId": "string", "chainId": 8453 }
+      ],
+      "thresholdRules": [
+        { "id": "string", "metric": "apy" }
+      ],
+      "pollingIntervalMs": 12000,
+      "configVersion": 3
+    }
+  }
+  ```
+
+Config validation is enforced by Zod (`src/config.ts`). Reconfiguring clears cached metrics/deltas while leaving historic data intact.
+
+### `get-snapshot`
+
+- **Path**: `POST /entrypoints/get-snapshot/invoke`
+- **Hosted URL**: `https://agent-bounties-yield-pool.up.railway.app/entrypoints/get-snapshot/invoke`
+- **Purpose**: Return the latest pool metrics, calculated deltas, and most recent alerts for a watcher.
+
+- **Body fields**
+
+  | Field | Type | Required | Description | Example |
+  | --- | --- | --- | --- | --- |
+  | `input.watcherId` | `string` | ✅ | Watcher to query (payer wallet address or custom id). | `0x1234567890abcdef1234567890abcdef12345678` |
+  | `input.protocolId` | `string` | ➖ | Filter results to a specific protocol. | `"aave-v3"` |
+  | `input.poolId` | `string` | ➖ | Filter results to a specific pool id. | `"base-usdc"` |
+  | `input.alertLimit` | `number` | ➖ | Limit number of alerts returned (max 500). | `5` |
+
+- **Example request body**
+
+  ```json
+  {
+    "watcherId": "0x1234567890abcdef1234567890abcdef12345678",
+    "protocolId": "aave-v3",
+    "poolId": "base-usdc",
+    "alertLimit": 5
+  }
+  ```
+- **Output**:
+  ```json
+  {
+    "output": {
+      "pool_metrics": [
+        {
+          "protocolId": "aave-v3",
+          "poolId": "base-usdc",
+          "chainId": 8453,
+          "address": "0x...",
+          "blockNumber": "123456789",
+          "timestamp": 1710000000000,
+          "apy": 12.34,
+          "tvl": 5432100.12,
+          "raw": { "...": "..." }
+        }
+      ],
+      "deltas": [
+        {
+          "protocolId": "aave-v3",
+          "poolId": "base-usdc",
+          "metric": "tvl",
+          "previous": 5200000,
+          "current": 5432100.12,
+          "absoluteChange": 232100.12,
+          "percentChange": 4.46,
+          "timestamp": 1710000000000,
+          "blockNumber": "123456789"
+        }
+      ],
+      "alerts": [
+        {
+          "id": "alert::tvl-spike::aave-v3::base-usdc::123456789",
+          "protocolId": "aave-v3",
+          "poolId": "base-usdc",
+          "metric": "tvl",
+          "ruleId": "tvl-spike",
+          "triggeredAt": 1710000000500,
+          "blockNumber": "123456789",
+          "changeDirection": "increase",
+          "changeAmount": 232100.12,
+          "percentChange": 4.46,
+          "message": "Rule tvl-spike triggered ...",
+          "metadata": { "...": "..." }
+        }
+      ]
+    }
+  }
+  ```
+
+### `get-alerts`
+
+- **Path**: `POST /entrypoints/get-alerts/invoke`
+- **Hosted URL**: `https://agent-bounties-yield-pool.up.railway.app/entrypoints/get-alerts/invoke`
+- **Purpose**: Fetch recent alert events with optional protocol/pool filtering.
+
+- **Body fields**
+
+  | Field | Type | Required | Description | Example |
+  | --- | --- | --- | --- | --- |
+  | `input.watcherId` | `string` | ✅ | Watcher to pull alerts for. | `0x1234567890abcdef1234567890abcdef12345678` |
+  | `input.protocolId` | `string` | ➖ | Filter to a single protocol. | `"aave-v3"` |
+  | `input.poolId` | `string` | ➖ | Filter to a specific pool id. | `"base-usdc"` |
+  | `input.limit` | `number` | ➖ | Maximum alerts to return (≤500). | `10` |
+
+- **Example request body**
+
+  ```json
+  {
+    "watcherId": "0x1234567890abcdef1234567890abcdef12345678",
+    "protocolId": "aave-v3",
+    "poolId": "base-usdc",
+    "limit": 10
+  }
+  ```
+- **Output**:
+  ```json
+  {
+    "output": {
+      "alerts": [ /* same shape as get-snapshot alerts */ ]
+    }
+  }
+  ```
+
+### `summarize-watcher`
+
+- **Path**: `POST /entrypoints/summarize-watcher/invoke`
+- **Hosted URL**: `https://agent-bounties-yield-pool.up.railway.app/entrypoints/summarize-watcher/invoke`
+- **Purpose**: Produce a natural-language summary of the watcher’s config, recent changes, and alerts.
+
+- **Body fields**
+
+  | Field | Type | Required | Description | Example |
+  | --- | --- | --- | --- | --- |
+  | `input.watcherId` | `string` | ✅ | Watcher to summarize. | `0x1234567890abcdef1234567890abcdef12345678` |
+  | `input.timeframeHours` | `number` | ➖ | Look-back window in hours (1–168). Defaults to 24. | `24` |
+  | `input.maxRecentAlerts` | `number` | ➖ | Alerts per pool to include in the summary (1–20). | `5` |
+
+- **Example request body**
+
+  ```json
+  {
+    "watcherId": "0x1234567890abcdef1234567890abcdef12345678",
+    "timeframeHours": 24,
+    "maxRecentAlerts": 5
+  }
+  ```
+- **Output**:
+  ```json
+  {
+    "output": {
+      "summary": "Watcher is monitoring ...",
+      "data": {
+        "generatedAt": "2024-05-01T12:00:00.000Z",
+        "timeframeHours": 24,
+        "watcherConfig": { "...": "..." },
+        "pools": [ /* per-pool stats */ ],
+        "alertTotals": {
+          "totalAlerts24h": 2,
+          "byRule": [{ "ruleId": "apy-drop", "count": 2 }]
+        }
+      },
+      "llm": {
+        "provider": "openai",
+        "model": "gpt-4o-mini"
+      }
+    }
+  }
+  ```
+
+The `llm` field appears only when the LLM service is enabled and successfully returns text.
+
+### `find-top-yields`
+
+- **Path**: `POST /entrypoints/find-top-yields/invoke`
+- **Hosted URL**: `https://agent-bounties-yield-pool.up.railway.app/entrypoints/find-top-yields/invoke`
+- **Purpose**: Rank the highest-yielding pools being monitored for a given chain.
+
+- **Body fields**
+
+  | Field | Type | Required | Description | Example |
+  | --- | --- | --- | --- | --- |
+  | `input.watcherId` | `string` | ✅ | Watcher whose monitored pools are ranked. | `0x1234567890abcdef1234567890abcdef12345678` |
+  | `input.chainId` | `number` | ✅ | EVM chain id to evaluate. | `8453` |
+  | `input.limit` | `number` | ➖ | Max pools to return (default 5, max 50). | `5` |
+  | `input.minTvlUsd` | `number` | ➖ | Filter out pools with TVL below this USD value. | `1000000` |
+  | `input.sortBy` | `"apy" \| "tvl"` | ➖ | Sort metric (`"apy"` default). | `"apy"` |
+
+- **Example request body**
+
+  ```json
+  {
+    "watcherId": "0x1234567890abcdef1234567890abcdef12345678",
+    "chainId": 8453,
+    "limit": 5,
+    "minTvlUsd": 1000000,
+    "sortBy": "apy"
+  }
+  ```
+- **Output**:
+  ```json
+  {
+    "output": {
+      "results": [
+        {
+          "protocolId": "curve",
+          "poolId": "tri-crypto",
+          "chainId": 8453,
+          "apy": 18.76,
+          "tvl": 12000000.45,
+          "timestamp": 1710000000000,
+          "blockNumber": "123456789"
+        }
+      ]
+    }
+  }
+  ```
+
+### `health`
+
+- **Path**: `POST /entrypoints/health/invoke`
+- **Hosted URL**: `https://agent-bounties-yield-pool.up.railway.app/entrypoints/health/invoke`
+- **Purpose**: Report monitoring status without touching watcher state.
+- **Input**:
+  ```json
+  {}
+  ```
+- **Output**:
+  ```json
+  {
+    "output": {
+      "status": "ok",
+      "pollingIntervalMs": 12000,
+      "activePools": 4,
+      "configuredProtocols": 2,
+      "lastRunAt": 1710000000000
+    }
+  }
+  ```
+
+## Sample watcher configuration
+
+`scripts/sample-watcher-config.json` sets up an Aave v3 USDC pool on Base:
+
+```jsonc
+{
+  "protocolIds": ["aave-v3"],
+  "pools": [
+    {
+      "id": "base-usdc",
+      "protocolId": "aave-v3",
+      "chainId": 8453,
+      "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "metadata": {
+        "poolContract": "0xA238Dd80C259a72e81d7e4664a9801593F98d1c5",
+        "priceOracle": "0x2Cc0Fc26eD4563A5ce5e8bdcfe1A2878676Ae156",
+        "aTokenAddress": "0x4e65fE4DbA92790696d040ac24Aa414708F5c0AB",
+        "underlyingAsset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "assetDecimals": 6
+      }
+    }
+  ],
+  "thresholdRules": [
+    {
+      "id": "tvl-spike",
+      "metric": "tvl",
+      "change": { "type": "percent", "direction": "increase", "amount": 0.00005 },
+      "window": { "type": "blocks", "value": 1 }
+    }
+  ]
+}
 ```
 
-The dev command runs `bun` in watch mode, starts the HTTP server, and reloads when you change files inside `src/`.
+Use it as a template when onboarding new pools.
 
-### Project structure
+## Watcher storage semantics
 
-- `src/agent.ts` – defines your agent manifest and entrypoints.
-- `src/index.ts` – boots a Bun HTTP server with the agent.
+- Each payer wallet maps to its own watcher row in Postgres. Metrics, deltas, and alerts are isolated per watcher so multiple users can share a deployment.
+- Every entrypoint expects a `watcherId`. Helper scripts derive it from the payer address; override with `WATCHER_ID=<custom-id>` if necessary.
+- Reconfiguring a watcher clears its in-memory cache and schedules an immediate poll, but historic metrics remain available for summaries and analytics.
 
-### Available scripts
+## LLM summaries & yield search
 
-- `bun run dev` – start the agent in watch mode.
-- `bun run start` – start the agent once.
-- `bun run agent` – run the agent module directly (helpful for quick experiments).
-- `bunx tsc --noEmit` – type-check the project.
+- `summarize-watcher` generates natural-language recaps using OpenAI when `OPENAI_API_KEY` + `LLM_PROVIDER=openai` are set. Without an API key it falls back to a deterministic summary built from the same dataset.
+- `find-top-yields` surfaces the highest-yielding pools tracked on a chain, optionally filtered by minimum TVL and sorted by APY or TVL.
 
-### Next steps
+Both entrypoints rely on the monitoring service having up-to-date metrics. Make sure your deployment has outbound network access to the configured RPCs and (if enabled) the OpenAI endpoint.
 
-- Update `src/agent.ts` with your use case.
-- Wire up `@lucid-dreams/agent-kit` configuration and secrets (see `AGENTS.md` in the repo for details).
-- Copy `.env.example` to `.env` and fill in the values for your environment.
-- Deploy with your preferred Bun-compatible platform when you're ready.
+## Solana Wallet Address
 
-## Deployment
-
-### Railway
-
-This project ships with a `Dockerfile` compatible with Railway's Bun runtime. The high-level deployment flow:
-
-1. Push your changes to a GitHub repository.
-2. Create a new Railway project and choose **Deploy from GitHub repo**.
-3. When prompted for the service path, select `yield-pool/` (or set the Working Directory to `yield-pool`).
-4. Railway auto-detects the Dockerfile and builds from `oven/bun`. No extra build command is required.
-5. Set the start command to `bun run start` (Railway injects the `PORT` environment variable automatically).
-6. Configure environment variables:
-   - `FACILITATOR_URL` – x402 facilitator (defaults to Daydreams prod if unset).
-   - `PAY_TO` – EVM address that will receive payments.
-   - `NETWORK` – x402 payment network (e.g. `base`).
-   - `DEFAULT_PRICE` – fallback price (string, e.g. `0.1`).
-   - `DATABASE_URL` – Postgres connection string used for watcher configs/metrics.
-   - `OPENAI_API_KEY` – optional, enables richer watcher summaries via GPT.
-   - `OPENAI_MODEL` – optional override (defaults to `gpt-4o-mini`).
-   - `OPENAI_BASE_URL` – optional custom OpenAI-compatible endpoint.
-   - `RPC_URL_8453` – Base mainnet RPC provider URL (Alchemy/Infura/etc).
-   - Any other `RPC_URL_<chainId>` you support.
-7. Redeploy. Railway assigns a public URL once the container is healthy.
-
-You can customize the polling cadence by passing `POLLING_INTERVAL_MS` in your watcher configuration via `configure-watcher`.
-
-### Verifying the deployment
-
-After Railway finishes the deploy:
-
-```sh
-curl https://<railway-domain>/.well-known/agent.json
-```
-
-Confirm the manifest loads and reflects your configuration. Use the demo client or the fetch helper scripts to run `configure-watcher`, `get-snapshot`, and `get-alerts` against the hosted URL to make sure x402 payments settle end-to-end.
-
-## Registering on x402scan
-
-1. Ensure the Railway deployment is publicly reachable and that the `.well-known/agent.json` endpoint returns the agent manifest.
-2. Visit [https://x402scan.xyz/agents/register](https://x402scan.xyz/agents/register) (or the latest registration URL).
-3. Submit the Railway HTTPS URL as the agent endpoint.
-4. Complete the verification flow:
-   - x402scan will issue a 402 challenge; confirm that your agent responds with the expected payment requirements (you can cross-check using the fetch helper script locally).
-   - Once payment settles, the registry will validate the manifest and entrypoints.
-5. After approval, the agent will show up in x402scan with its status and payment info.
-
-If you need to rotate deployment URLs, update the agent manifest (if required) and resubmit to x402scan so the registry points to the new endpoint. For troubleshooting, use `bunx tsx scripts/fetch-entrypoint.ts` against the Railway URL to inspect payment headers and responses directly.
-
-## Multi-tenant watcher storage
-
-- Each payer wallet maps to its own watcher row in Postgres. Configs, metrics, deltas, and alerts are isolated per watcher so multiple users can share one deployment without overwriting each other’s thresholds.
-- All entrypoints now require a `watcherId` string. The helper scripts derive this from the payer address automatically; override with `WATCHER_ID=<custom-id>` if you need something different.
-- `configure-watcher` expects payloads shaped like `{ "watcherId": "0x...", "config": { ... } }`. Follow-up calls (`get-snapshot`, `get-alerts`, `summarize-watcher`, `find-top-yields`) must include `{ "watcherId": "0x...", ... }`.
-- Reconfiguring a watcher clears its active cache and triggers a fresh poll, while historical metrics remain in Postgres for summaries and analytics.
-
-## LLM-powered summaries & yield search
-
-- `summarize-watcher`: produces a natural-language recap of the watcher’s configuration, threshold preferences, and the most notable APY/TVL changes over the last 24 hours. If `OPENAI_API_KEY` is set the summary comes from the configured OpenAI model; otherwise a deterministic fallback summary is generated.
-  ```sh
-  bunx tsx scripts/fetch-entrypoint.ts summarize-watcher '{"timeframeHours":24,"maxRecentAlerts":5}'
-  ```
-- `find-top-yields`: returns the highest-yielding pools currently tracked on a specific chain, sorted by APY by default.
-  ```sh
-  bunx tsx scripts/fetch-entrypoint.ts find-top-yields '{"chainId":8453,"limit":5}'
-  ```
-
-Both entrypoints rely on the watcher being configured and the monitoring service having recent metrics in memory. When using the LLM summarizer in production, make sure outbound network access to the OpenAI endpoint is permitted.
+6iThbDBdkei9VUXAJF5driPzhHoyrg1By9ssBecN1aCt
