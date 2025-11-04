@@ -12,6 +12,7 @@
  *   - PAYER_PRIVATE_KEY: wallet used for x402 payments
  *   - MAX_PAYMENT_ATOMIC: max spend in base units (defaults to 1,000 USDC base units)
  *   - WATCHER_CONFIG_PATH: path to watcher config JSON
+ *   - WATCHER_ID: optional override for the watcher identifier (defaults to payer address)
  */
 
 import { config as loadEnv } from "dotenv";
@@ -31,6 +32,7 @@ import {
   requirePrivateKey,
   resolveAgentUrl,
   resolveNetwork,
+  resolveWatcherId,
 } from "./client-common";
 
 loadEnv();
@@ -89,7 +91,10 @@ async function main() {
       ? createClockAdjustedFetch(wrappedFetchWithPayment, detectedClockSkewMs)
       : wrappedFetchWithPayment;
 
+  const watcherId = resolveWatcherId(signer.account.address);
+
   console.log("[demo] Payer address:", signer.account.address);
+  console.log("[demo] Watcher id:", watcherId);
 
   console.log("[demo] Using agent:", options.agentUrl);
   console.log("[demo] Signing payments on network:", options.network);
@@ -122,7 +127,10 @@ async function main() {
     fetchWithPayment,
     options.agentUrl,
     "configure-watcher",
-    watcherConfig
+    {
+      watcherId,
+      config: watcherConfig,
+    }
   );
 
   logPaymentsInfo(configureResult.response);
@@ -140,7 +148,7 @@ async function main() {
     fetchWithPayment,
     options.agentUrl,
     "get-snapshot",
-    {}
+    { watcherId }
   );
 
   logPaymentsInfo(snapshotResult.response);

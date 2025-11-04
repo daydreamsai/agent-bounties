@@ -3,10 +3,14 @@ import {
   AgentKitConfig,
   createAgentApp,
 } from "@lucid-dreams/agent-kit";
-import { monitoringService } from "./runtime";
+import { llmService, monitoringService } from "./runtime";
 import { watcherConfigSchema } from "./config";
 import type { AlertEvent, DeltaSnapshot, PoolMetrics } from "./types";
 import { normaliseJson } from "./utils/json";
+import {
+  buildWatcherSummaryData,
+  buildFallbackWatcherSummaryText,
+} from "./utils/analytics";
 
 const configOverrides: AgentKitConfig = {
   payments: {
@@ -33,13 +37,24 @@ const { app, addEntrypoint } = createAgentApp(
   }
 );
 
+const watcherIdSchema = z
+  .string()
+  .min(1, { message: "watcherId is required. Use wallet address or custom identifier." });
+
+const configureWatcherInputSchema = z.object({
+  watcherId: watcherIdSchema,
+  config: watcherConfigSchema,
+});
+
 const snapshotFilterSchema = z.object({
+  watcherId: watcherIdSchema,
   protocolId: z.string().optional(),
   poolId: z.string().optional(),
   alertLimit: z.number().int().positive().max(500).optional(),
 });
 
 const alertsFilterSchema = z.object({
+  watcherId: watcherIdSchema,
   protocolId: z.string().optional(),
   poolId: z.string().optional(),
   limit: z.number().int().positive().max(500).optional(),
@@ -88,6 +103,135 @@ const configuredPoolOutputSchema = z.object({
   protocolId: z.string(),
   poolId: z.string(),
   chainId: z.number(),
+});
+
+const metricChangeStatsSchema = z.object({
+  dataPoints: z.number().int(),
+  largestIncreasePercent: z.number().nullable(),
+  largestDecreasePercent: z.number().nullable(),
+  cumulativeAbsoluteChange: z.number().nullable(),
+  lastChangePercent: z.number().nullable(),
+  lastChangeAmount: z.number().nullable(),
+});
+
+const alertSummarySchema = z.object({
+  id: z.string(),
+  protocolId: z.string(),
+  poolId: z.string(),
+  metric: z.enum(["tvl", "apy"]),
+  ruleId: z.string(),
+  triggeredAt: z.number(),
+  changeDirection: z.enum(["increase", "decrease"]),
+  changeAmount: z.number().nullable().optional(),
+  percentChange: z.number().nullable().optional(),
+  message: z.string(),
+  blockNumber: z.string().optional(),
+});
+
+const poolWatcherSummarySchema = z.object({
+  protocolId: z.string(),
+  poolId: z.string(),
+  chainId: z.number(),
+  address: z.string().optional(),
+  currentMetrics: z
+    .object({
+      tvl: z.number().nullable().optional(),
+      apy: z.number().nullable().optional(),
+      timestamp: z.number().optional(),
+      blockNumber: z.string().optional(),
+    })
+    .optional(),
+  tvlStats: metricChangeStatsSchema.optional(),
+  apyStats: metricChangeStatsSchema.optional(),
+  recentAlerts: z.array(alertSummarySchema).optional(),
+});
+
+const watcherSummaryDataSchema = z.object({
+  generatedAt: z.string(),
+  timeframeHours: z.number(),
+  watcherConfig: z.object({
+    protocolIds: z.array(z.string()),
+    pools: z.array(
+      z.object({
+        id: z.string(),
+        protocolId: z.string(),
+        chainId: z.number(),
+        address: z.string().optional(),
+        metadata: z.record(z.string(), z.unknown()).optional(),
+      })
+    ),
+    thresholdRules: z.array(
+      z.object({
+        id: z.string(),
+        metric: z.enum(["tvl", "apy"]),
+        change: z.object({
+          type: z.enum(["percent", "absolute"]),
+          direction: z.enum(["increase", "decrease", "both"]),
+          amount: z.number(),
+        }),
+        window: z.object({
+          type: z.enum(["blocks", "minutes"]),
+          value: z.number(),
+        }),
+        metadata: z.record(z.string(), z.unknown()).optional(),
+        appliesTo: z
+          .object({
+            protocolIds: z.array(z.string()).optional(),
+            poolIds: z.array(z.string()).optional(),
+          })
+          .optional(),
+      })
+    ),
+  }),
+  pools: z.array(poolWatcherSummarySchema),
+  alertTotals: z.object({
+    totalAlerts24h: z.number().int(),
+    byRule: z.array(
+      z.object({
+        ruleId: z.string(),
+        count: z.number().int(),
+      })
+    ),
+  }),
+});
+
+const watcherSummaryResultSchema = z.object({
+  summary: z.string(),
+  data: watcherSummaryDataSchema,
+  llm: z
+    .object({
+      provider: z.string(),
+      model: z.string(),
+    })
+    .optional(),
+});
+
+const watcherSummaryInputSchema = z.object({
+  watcherId: watcherIdSchema,
+  timeframeHours: z.number().int().min(1).max(168).optional(),
+  maxRecentAlerts: z.number().int().min(1).max(20).optional(),
+});
+
+const topYieldInputSchema = z.object({
+  watcherId: watcherIdSchema,
+  chainId: z.number().int().positive(),
+  limit: z.number().int().positive().max(50).optional(),
+  minTvlUsd: z.number().nonnegative().optional(),
+  sortBy: z.enum(["apy", "tvl"]).optional(),
+});
+
+const topYieldOutputSchema = z.object({
+  results: z.array(
+    z.object({
+      protocolId: z.string(),
+      poolId: z.string(),
+      chainId: z.number(),
+      apy: z.number().nullable().optional(),
+      tvl: z.number().nullable().optional(),
+      timestamp: z.number().optional(),
+      blockNumber: z.string().optional(),
+    })
+  ),
 });
 
 function serialiseMetrics(metrics: PoolMetrics[]): z.infer<typeof poolMetricOutputSchema>[] {
@@ -152,8 +296,9 @@ addEntrypoint({
   key: "configure-watcher",
   description:
     "Configure the yield pool watcher with protocol, pool, and threshold rules.",
-  input: watcherConfigSchema,
+  input: configureWatcherInputSchema,
   output: z.object({
+    watcherId: z.string(),
     protocolIds: z.array(z.string()),
     pools: z.array(configuredPoolOutputSchema),
     thresholdRules: z.array(
@@ -163,11 +308,17 @@ addEntrypoint({
       })
     ),
     pollingIntervalMs: z.number().int().positive().optional(),
+    configVersion: z.number().int().positive(),
   }),
   async handler({ input }) {
-    const config = monitoringService.configure(input);
+    const { watcherId, config: configInput } = input;
+    const { config, version } = await monitoringService.configure(
+      watcherId,
+      configInput
+    );
     return {
       output: {
+        watcherId,
         protocolIds: config.protocolIds,
         pools: config.pools.map((pool) => ({
           protocolId: pool.protocolId,
@@ -179,6 +330,7 @@ addEntrypoint({
           metric: rule.metric,
         })),
         pollingIntervalMs: config.pollingIntervalMs,
+        configVersion: version,
       },
     };
   },
@@ -195,14 +347,16 @@ addEntrypoint({
     alerts: z.array(alertOutputSchema),
   }),
   async handler({ input }) {
-    const { protocolId, poolId, alertLimit } = input ?? {};
+    const { watcherId, protocolId, poolId, alertLimit } = input;
     const baseFilter = { protocolId, poolId };
-    const metrics = monitoringService.getMetrics(baseFilter);
-    const deltas = monitoringService.getDeltas(baseFilter);
-    const alerts = monitoringService.getAlerts({
-      ...baseFilter,
-      limit: alertLimit,
-    });
+    const [metrics, deltas, alerts] = await Promise.all([
+      monitoringService.getMetrics(watcherId, baseFilter),
+      monitoringService.getDeltas(watcherId, baseFilter),
+      monitoringService.getAlerts(watcherId, {
+        ...baseFilter,
+        limit: alertLimit,
+      }),
+    ]);
 
     return {
       output: {
@@ -223,10 +377,167 @@ addEntrypoint({
     alerts: z.array(alertOutputSchema),
   }),
   async handler({ input }) {
-    const alerts = monitoringService.getAlerts(input ?? {});
+    const { watcherId, protocolId, poolId, limit } = input;
+    const alerts = await monitoringService.getAlerts(watcherId, {
+      protocolId,
+      poolId,
+      limit,
+    });
     return {
       output: {
         alerts: serialiseAlerts(alerts),
+      },
+    };
+  },
+});
+
+addEntrypoint({
+  key: "summarize-watcher",
+  description:
+    "Summarize configured watcher preferences and highlight changes over the selected timeframe using an LLM when available.",
+  input: watcherSummaryInputSchema,
+  output: watcherSummaryResultSchema,
+  async handler({ input }) {
+    const watcherId = input.watcherId;
+    const timeframeHours = input.timeframeHours ?? 24;
+    const maxRecentAlerts = input.maxRecentAlerts ?? 5;
+    const since = Date.now() - timeframeHours * 60 * 60 * 1000;
+
+    const config = await monitoringService.getConfig(watcherId);
+    if (!config) {
+      const emptySummary: z.infer<typeof watcherSummaryDataSchema> = {
+        generatedAt: new Date().toISOString(),
+        timeframeHours,
+        watcherConfig: {
+          protocolIds: [],
+          pools: [],
+          thresholdRules: [],
+        },
+        pools: [],
+        alertTotals: {
+          totalAlerts24h: 0,
+          byRule: [],
+        },
+      };
+
+      return {
+        output: {
+          summary:
+            "Watcher is not configured. Configure the watcher before requesting summaries.",
+          data: emptySummary,
+        },
+      };
+    }
+
+    const [metrics, deltas, alerts] = await Promise.all([
+      monitoringService.getMetrics(watcherId),
+      monitoringService.getDeltas(watcherId),
+      monitoringService.getAlerts(watcherId, {
+        limit: Math.max(100, maxRecentAlerts * 5),
+      }),
+    ]);
+
+    const filteredDeltas = deltas.filter((delta) => delta.timestamp >= since);
+    const filteredAlerts = alerts.filter(
+      (alert) => alert.triggeredAt >= since
+    );
+
+    const summaryDataRaw = buildWatcherSummaryData({
+      config,
+      metrics,
+      deltas: filteredDeltas,
+      alerts: filteredAlerts,
+      sinceTimestamp: since,
+      maxRecentAlertsPerPool: maxRecentAlerts,
+      timeframeHours,
+    });
+
+    const summaryData = normaliseJson(summaryDataRaw);
+    let summaryText = buildFallbackWatcherSummaryText(summaryDataRaw);
+    let llmMetadata: { provider: string; model: string } | undefined;
+
+    if (llmService.isEnabled()) {
+      try {
+        summaryText = await llmService.summarizeWatcher(summaryData);
+        llmMetadata = {
+          provider: llmService.provider,
+          model: llmService.model,
+        };
+      } catch (error) {
+        console.error("[llm] Summary generation failed:", error);
+        summaryText = buildFallbackWatcherSummaryText(summaryDataRaw);
+      }
+    }
+
+    return {
+      output: {
+        summary: summaryText,
+        data: summaryData,
+        ...(llmMetadata ? { llm: llmMetadata } : {}),
+      },
+    };
+  },
+});
+
+addEntrypoint({
+  key: "find-top-yields",
+  description:
+    "Return the highest-yielding pools currently tracked on a given chain.",
+  input: topYieldInputSchema,
+  output: topYieldOutputSchema,
+  async handler({ input }) {
+    const {
+      watcherId,
+      chainId,
+      limit = 5,
+      minTvlUsd = 0,
+      sortBy = "apy",
+    } = input;
+
+    const metrics = await monitoringService.getMetrics(watcherId);
+    const filtered = metrics.filter((metric) => {
+      if (metric.chainId !== chainId) {
+        return false;
+      }
+      if (
+        minTvlUsd > 0 &&
+        (metric.tvl === null ||
+          metric.tvl === undefined ||
+          metric.tvl < minTvlUsd)
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    const sorted = [...filtered].sort((a, b) => {
+      const metricA =
+        sortBy === "tvl"
+          ? a.tvl ?? Number.NEGATIVE_INFINITY
+          : a.apy ?? Number.NEGATIVE_INFINITY;
+      const metricB =
+        sortBy === "tvl"
+          ? b.tvl ?? Number.NEGATIVE_INFINITY
+          : b.apy ?? Number.NEGATIVE_INFINITY;
+      return Number(metricB) - Number(metricA);
+    });
+
+    const results = sorted.slice(0, limit).map((metric) => ({
+      protocolId: metric.protocolId,
+      poolId: metric.poolId,
+      chainId: metric.chainId,
+      apy: metric.apy ?? null,
+      tvl: metric.tvl ?? null,
+      timestamp: metric.timestamp,
+      blockNumber:
+        metric.blockNumber !== undefined && metric.blockNumber !== null
+          ? String(metric.blockNumber)
+          : undefined,
+    }));
+
+    return {
+      output: {
+        results,
       },
     };
   },

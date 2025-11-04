@@ -11,7 +11,8 @@
  *
  * Environment variables mirror scripts/demo-client.ts:
  *   AGENT_URL / API_BASE_URL / PORT, NETWORK, PAYER_PRIVATE_KEY, PRIVATE_KEY,
- *   MAX_PAYMENT_ATOMIC, MAX_TIMEOUT_SECONDS, FETCH_DELAY_MS (optional wait).
+ *   MAX_PAYMENT_ATOMIC, MAX_TIMEOUT_SECONDS, FETCH_DELAY_MS (optional wait),
+ *   WATCHER_ID (optional override for watcher identifier; defaults to payer address).
  */
 
 import { config as loadEnv } from "dotenv";
@@ -28,6 +29,7 @@ import {
   requirePrivateKey,
   resolveAgentUrl,
   resolveNetwork,
+  resolveWatcherId,
 } from "./client-common";
 
 loadEnv();
@@ -77,12 +79,16 @@ function parseArgs() {
   return { entrypoint, payloadRaw, delayMs };
 }
 
-function parsePayload(payloadRaw: string | undefined): unknown {
+function parsePayload(payloadRaw: string | undefined): Record<string, unknown> {
   if (!payloadRaw) {
     return {};
   }
   try {
-    return JSON.parse(payloadRaw);
+    const parsed = JSON.parse(payloadRaw);
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error("Payload JSON must be an object.");
+    }
+    return parsed as Record<string, unknown>;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to parse payload JSON: ${message}`);
@@ -130,7 +136,7 @@ async function main() {
       `[fetch] Detected minor clock skew of ${skewSeconds}s (within tolerance).`
     );
   }
-  const { fetchWithPayment: wrappedFetchWithPayment } =
+  const { fetchWithPayment: wrappedFetchWithPayment, signer } =
     await createFetchWithPayment({
       network,
       privateKey,
@@ -146,8 +152,16 @@ async function main() {
       ? createClockAdjustedFetch(wrappedFetchWithPayment, detectedClockSkewMs)
       : wrappedFetchWithPayment;
 
+  const watcherId = resolveWatcherId(signer.account.address);
+
+  const existingWatcherId = payload["watcherId"];
+  if (typeof existingWatcherId !== "string" || existingWatcherId.trim().length === 0) {
+    payload["watcherId"] = watcherId;
+  }
+
   console.log("[fetch] Using agent:", agentUrl);
   console.log("[fetch] Entry point:", entrypoint);
+  console.log("[fetch] Watcher id:", watcherId);
   console.dir({ payload }, { depth: null });
 
   const result = await invokePaidEntrypoint(

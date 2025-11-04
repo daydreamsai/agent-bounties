@@ -46,6 +46,10 @@ This project ships with a `Dockerfile` compatible with Railway's Bun runtime. Th
    - `PAY_TO` – EVM address that will receive payments.
    - `NETWORK` – x402 payment network (e.g. `base`).
    - `DEFAULT_PRICE` – fallback price (string, e.g. `0.1`).
+   - `DATABASE_URL` – Postgres connection string used for watcher configs/metrics.
+   - `OPENAI_API_KEY` – optional, enables richer watcher summaries via GPT.
+   - `OPENAI_MODEL` – optional override (defaults to `gpt-4o-mini`).
+   - `OPENAI_BASE_URL` – optional custom OpenAI-compatible endpoint.
    - `RPC_URL_8453` – Base mainnet RPC provider URL (Alchemy/Infura/etc).
    - Any other `RPC_URL_<chainId>` you support.
 7. Redeploy. Railway assigns a public URL once the container is healthy.
@@ -73,3 +77,23 @@ Confirm the manifest loads and reflects your configuration. Use the demo client 
 5. After approval, the agent will show up in x402scan with its status and payment info.
 
 If you need to rotate deployment URLs, update the agent manifest (if required) and resubmit to x402scan so the registry points to the new endpoint. For troubleshooting, use `bunx tsx scripts/fetch-entrypoint.ts` against the Railway URL to inspect payment headers and responses directly.
+
+## Multi-tenant watcher storage
+
+- Each payer wallet maps to its own watcher row in Postgres. Configs, metrics, deltas, and alerts are isolated per watcher so multiple users can share one deployment without overwriting each other’s thresholds.
+- All entrypoints now require a `watcherId` string. The helper scripts derive this from the payer address automatically; override with `WATCHER_ID=<custom-id>` if you need something different.
+- `configure-watcher` expects payloads shaped like `{ "watcherId": "0x...", "config": { ... } }`. Follow-up calls (`get-snapshot`, `get-alerts`, `summarize-watcher`, `find-top-yields`) must include `{ "watcherId": "0x...", ... }`.
+- Reconfiguring a watcher clears its active cache and triggers a fresh poll, while historical metrics remain in Postgres for summaries and analytics.
+
+## LLM-powered summaries & yield search
+
+- `summarize-watcher`: produces a natural-language recap of the watcher’s configuration, threshold preferences, and the most notable APY/TVL changes over the last 24 hours. If `OPENAI_API_KEY` is set the summary comes from the configured OpenAI model; otherwise a deterministic fallback summary is generated.
+  ```sh
+  bunx tsx scripts/fetch-entrypoint.ts summarize-watcher '{"timeframeHours":24,"maxRecentAlerts":5}'
+  ```
+- `find-top-yields`: returns the highest-yielding pools currently tracked on a specific chain, sorted by APY by default.
+  ```sh
+  bunx tsx scripts/fetch-entrypoint.ts find-top-yields '{"chainId":8453,"limit":5}'
+  ```
+
+Both entrypoints rely on the watcher being configured and the monitoring service having recent metrics in memory. When using the LLM summarizer in production, make sure outbound network access to the OpenAI endpoint is permitted.

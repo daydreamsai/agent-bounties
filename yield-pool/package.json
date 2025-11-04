@@ -18,6 +18,8 @@
     "@lucid-dreams/agent-kit": "latest",
     "dotenv": "^17.2.3",
     "p-retry": "^6.0.1",
+    "openai": "^4.59.0",
+    "postgres": "^3.4.4",
     "viem": "^2.9.6",
     "zod": "^4.1.12"
   },

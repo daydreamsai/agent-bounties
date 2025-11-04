@@ -75,6 +75,17 @@ export function parseMaxTimeoutSeconds(
   return value;
 }
 
+export function resolveWatcherId(
+  defaultAddress: `0x${string}`,
+  env: NodeJS.ProcessEnv = process.env
+): string {
+  const override = env.WATCHER_ID;
+  if (override && override.trim().length > 0) {
+    return override.trim();
+  }
+  return defaultAddress;
+}
+
 export function createLoggingFetch(): typeof fetch {
   return async (input, init) => {
     const url = typeof input === "string" ? input : input.toString();

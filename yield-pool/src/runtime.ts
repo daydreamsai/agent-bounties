@@ -1,9 +1,11 @@
-import { InMemoryWatcherStore } from "./storage/in-memory";
 import { MonitoringService } from "./services/monitoring";
+import { LLMService } from "./services/llm";
+import { PostgresWatcherRepository } from "./storage/postgres";
 
-const store = new InMemoryWatcherStore();
-const monitoringService = new MonitoringService(store, {
+const watcherRepository = new PostgresWatcherRepository();
+const monitoringService = new MonitoringService(watcherRepository, {
   defaultPollingIntervalMs: 12_000,
 });
+const llmService = new LLMService();
 
-export { store, monitoringService };
+export { watcherRepository, monitoringService, llmService };

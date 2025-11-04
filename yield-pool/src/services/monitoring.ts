@@ -4,21 +4,17 @@ import {
   watcherConfigSchema,
 } from "../config";
 import { getProtocolAdapter } from "../protocols";
-import type { WatcherStore } from "../storage/in-memory";
+import { PostgresWatcherRepository, WatcherRow } from "../storage/postgres";
 import {
   AlertEvent,
   DeltaSnapshot,
   MetricKind,
-  PoolMetrics,
   NumericMetric,
+  PoolMetrics,
 } from "../types";
 
 const DEFAULT_POLLING_INTERVAL_MS = 12_000;
 const ALERT_ID_PREFIX = "alert";
-
-export interface MonitoringServiceOptions {
-  defaultPollingIntervalMs?: number;
-}
 
 export interface MetricsFilter {
   protocolId?: string;
@@ -31,34 +27,37 @@ export interface AlertsFilter extends MetricsFilter {
 
 export interface HealthStatus {
   status: "ok" | "unconfigured" | "stopped";
+  watchers: number;
   pollingIntervalMs: number;
-  lastRunAt?: number;
-  activePools: number;
+  configuredPools: number;
   configuredProtocols: number;
+  lastRunAt?: number;
 }
 
 export class MonitoringService {
-  private readonly store: WatcherStore;
+  private readonly repository: PostgresWatcherRepository;
   private readonly defaultPollingIntervalMs: number;
   private pollingHandle: ReturnType<typeof setInterval> | null = null;
-  private lastRunAt?: number;
   private isRunning = false;
   private isPolling = false;
 
-  constructor(store: WatcherStore, options?: MonitoringServiceOptions) {
-    this.store = store;
+  constructor(
+    repository: PostgresWatcherRepository,
+    options?: { defaultPollingIntervalMs?: number }
+  ) {
+    this.repository = repository;
     this.defaultPollingIntervalMs =
       options?.defaultPollingIntervalMs ?? DEFAULT_POLLING_INTERVAL_MS;
   }
 
   start(): void {
-    if (this.isRunning) {
-      return;
-    }
+    if (this.isRunning) return;
     this.isRunning = true;
-    this.startPollingLoop();
-    // Kick off an initial run without waiting for the first interval.
-    this.tick();
+    this.pollingHandle = setInterval(
+      () => void this.tick(),
+      Math.min(this.defaultPollingIntervalMs, 5_000)
+    );
+    void this.tick();
   }
 
   stop(): void {
@@ -69,167 +68,170 @@ export class MonitoringService {
     }
   }
 
-  configure(input: WatcherConfigInput): WatcherConfig {
+  async configure(
+    watcherAddress: string,
+    input: WatcherConfigInput
+  ): Promise<{ watcher: WatcherRow; config: WatcherConfig; version: number }> {
     const config = watcherConfigSchema.parse(input);
-    this.store.setConfig(config);
-    this.store.resetState();
+    const watcher = await this.repository.ensureWatcher(
+      watcherAddress,
+      config.pollingIntervalMs ?? null
+    );
 
-    if (this.isRunning) {
-      this.restartPollingLoop();
-    }
+    await this.repository.resetWatcherState(watcher.watcher_id);
+    const { version } = await this.repository.saveWatcherConfig(
+      watcher.watcher_id,
+      config
+    );
 
-    return config;
+    // Trigger an immediate poll asynchronously.
+    void this.pollWatcher(watcher, config);
+
+    return { watcher, config, version };
   }
 
-  getConfig(): WatcherConfig | null {
-    return this.store.getConfig();
+  async getConfig(watcherAddress: string): Promise<WatcherConfig | null> {
+    const watcher = await this.repository.getWatcherByAddress(watcherAddress);
+    if (!watcher) return null;
+    const latest = await this.repository.getLatestConfig(watcher.watcher_id);
+    return latest?.config ?? null;
   }
 
-  async runOnce(): Promise<void> {
-    await this.tick();
+  async getMetrics(
+    watcherAddress: string,
+    filter?: MetricsFilter
+  ): Promise<PoolMetrics[]> {
+    const watcher = await this.repository.getWatcherByAddress(watcherAddress);
+    if (!watcher) return [];
+    const config = await this.repository.getLatestConfig(watcher.watcher_id);
+    if (!config) return [];
+
+    const metrics = await this.repository.getLatestMetrics(
+      watcher.watcher_id,
+      filter
+    );
+    return this.applyPoolMetadata(metrics, config.config);
   }
 
-  getMetrics(filter?: MetricsFilter): PoolMetrics[] {
-    const all = this.store.getMetrics();
-    if (!filter) {
-      return all;
-    }
-    return all.filter((metric) => {
-      if (filter.protocolId) {
-        if (
-          metric.protocolId.toLowerCase() !== filter.protocolId.toLowerCase()
-        ) {
-          return false;
-        }
-      }
-      if (filter.poolId) {
-        if (metric.poolId.toLowerCase() !== filter.poolId.toLowerCase()) {
-          return false;
-        }
-      }
-      return true;
-    });
+  async getDeltas(
+    watcherAddress: string,
+    filter?: MetricsFilter
+  ): Promise<DeltaSnapshot[]> {
+    const watcher = await this.repository.getWatcherByAddress(watcherAddress);
+    if (!watcher) return [];
+    return this.repository.getDeltas(watcher.watcher_id, filter);
   }
 
-  getDeltas(filter?: MetricsFilter): DeltaSnapshot[] {
-    const all = this.store.getDeltas();
-    if (!filter) {
-      return all;
-    }
-    return all.filter((delta) => {
-      if (filter.protocolId) {
-        if (
-          delta.protocolId.toLowerCase() !== filter.protocolId.toLowerCase()
-        ) {
-          return false;
-        }
-      }
-      if (filter.poolId) {
-        if (delta.poolId.toLowerCase() !== filter.poolId.toLowerCase()) {
-          return false;
-        }
-      }
-      return true;
-    });
+  async getAlerts(
+    watcherAddress: string,
+    filter?: AlertsFilter
+  ): Promise<AlertEvent[]> {
+    const watcher = await this.repository.getWatcherByAddress(watcherAddress);
+    if (!watcher) return [];
+    return this.repository.getAlerts(watcher.watcher_id, filter);
   }
 
-  getAlerts(filter?: AlertsFilter): AlertEvent[] {
-    let alerts = this.store.getAlerts();
-    if (filter?.protocolId) {
-      alerts = alerts.filter(
-        (alert) =>
-          alert.protocolId.toLowerCase() === filter.protocolId!.toLowerCase()
-      );
-    }
-    if (filter?.poolId) {
-      alerts = alerts.filter(
-        (alert) => alert.poolId.toLowerCase() === filter.poolId!.toLowerCase()
-      );
-    }
-    if (filter?.limit !== undefined) {
-      alerts = alerts.slice(-filter.limit);
-    }
-    return alerts;
-  }
-
-  getHealth(): HealthStatus {
-    const config = this.store.getConfig();
+  async getHealth(): Promise<HealthStatus> {
     if (!this.isRunning) {
       return {
         status: "stopped",
-        pollingIntervalMs: config?.pollingIntervalMs ?? this.defaultPollingIntervalMs,
-        activePools: config?.pools?.length ?? 0,
-        configuredProtocols: config?.protocolIds?.length ?? 0,
-        lastRunAt: this.lastRunAt,
+        watchers: 0,
+        pollingIntervalMs: this.defaultPollingIntervalMs,
+        configuredPools: 0,
+        configuredProtocols: 0,
       };
     }
-    if (!config) {
+
+    const entries = await this.repository.listActiveWatchersWithConfig();
+    if (!entries.length) {
       return {
         status: "unconfigured",
+        watchers: 0,
         pollingIntervalMs: this.defaultPollingIntervalMs,
-        activePools: 0,
+        configuredPools: 0,
         configuredProtocols: 0,
-        lastRunAt: this.lastRunAt,
       };
     }
+
+    const pools = entries.reduce(
+      (acc, entry) => acc + (entry.config?.pools.length ?? 0),
+      0
+    );
+    const protocols = new Set<string>();
+    for (const entry of entries) {
+      entry.config?.protocolIds.forEach((id) =>
+        protocols.add(id.toLowerCase())
+      );
+    }
+    const lastRun = entries
+      .map((entry) => entry.watcher.last_run_at?.getTime() ?? 0)
+      .reduce((max, value) => Math.max(max, value), 0);
 
     return {
       status: "ok",
-      pollingIntervalMs: config.pollingIntervalMs ?? this.defaultPollingIntervalMs,
-      activePools: config.pools.length,
-      configuredProtocols: config.protocolIds.length,
-      lastRunAt: this.lastRunAt,
+      watchers: entries.length,
+      pollingIntervalMs: this.defaultPollingIntervalMs,
+      configuredPools: pools,
+      configuredProtocols: protocols.size,
+      lastRunAt: lastRun || undefined,
     };
   }
 
-  private startPollingLoop(): void {
-    const interval = this.resolvePollingInterval();
-    if (this.pollingHandle) {
-      clearInterval(this.pollingHandle);
-    }
-    this.pollingHandle = setInterval(() => this.tick(), interval);
-  }
-
-  private restartPollingLoop(): void {
-    if (!this.isRunning) {
-      return;
-    }
-    this.startPollingLoop();
-  }
-
-  private resolvePollingInterval(): number {
-    const config = this.store.getConfig();
-    return config?.pollingIntervalMs ?? this.defaultPollingIntervalMs;
-  }
-
   private async tick(): Promise<void> {
-    if (this.isPolling) {
-      return;
-    }
+    if (this.isPolling) return;
     this.isPolling = true;
     try {
-      await this.poll();
+      await this.pollDueWatchers();
     } catch (error) {
-      console.error("[monitoring] Polling cycle failed:", error);
+      console.error("[monitoring] polling loop failed:", error);
     } finally {
       this.isPolling = false;
     }
   }
 
-  private async poll(): Promise<void> {
-    const config = this.store.getConfig();
-    if (!config) {
+  private async pollDueWatchers(): Promise<void> {
+    const entries = await this.repository.listActiveWatchersWithConfig();
+    if (!entries.length) return;
+
+    const now = Date.now();
+
+    for (const entry of entries) {
+      if (!entry.config) continue;
+      const interval =
+        entry.config.pollingIntervalMs ??
+        entry.watcher.polling_interval_ms ??
+        this.defaultPollingIntervalMs;
+      const lastRun = entry.watcher.last_run_at?.getTime() ?? 0;
+      if (now - lastRun < interval) {
+        continue;
+      }
+      await this.pollWatcher(entry.watcher, entry.config);
+    }
+  }
+
+  private async pollWatcher(
+    watcher: WatcherRow,
+    config: WatcherConfig
+  ): Promise<void> {
+    if (!config.pools.length) {
+      await this.repository.updateWatcherRunState(
+        watcher.watcher_id,
+        new Date()
+      );
       return;
     }
 
     const currentTimestamp = Date.now();
+    const previousMap = await this.repository.getLatestMetricsMap(
+      watcher.watcher_id
+    );
     const collectedMetrics: PoolMetrics[] = [];
 
     for (const pool of config.pools) {
       const adapter = getProtocolAdapter(pool.protocolId);
       if (!adapter) {
         console.warn(
-          `[monitoring] No adapter found for protocol ${pool.protocolId} (pool: ${pool.id}).`
+          `[monitoring] No adapter for protocol ${pool.protocolId} (pool ${pool.id})`
         );
         continue;
       }
@@ -250,37 +252,87 @@ export class MonitoringService {
     }
 
     if (!collectedMetrics.length) {
-      this.lastRunAt = currentTimestamp;
+      await this.repository.updateWatcherRunState(
+        watcher.watcher_id,
+        new Date(currentTimestamp)
+      );
       return;
     }
 
     const deltas: DeltaSnapshot[] = [];
     const alerts: AlertEvent[] = [];
 
-    for (const metric of collectedMetrics) {
-      const previous = this.store.getMetric(metric.protocolId, metric.poolId);
-      const metricDeltas = this.computeDeltas(previous, metric);
+    for (const metrics of collectedMetrics) {
+      const key = this.metricKey(metrics.protocolId, metrics.poolId);
+      const previous = previousMap.get(key) ?? null;
+      if (previous && !previous.address) {
+        previous.address = this.lookupPoolAddress(config, metrics);
+      }
+
+      const metricDeltas = this.computeDeltas(previous, metrics);
       deltas.push(...metricDeltas);
 
       const triggered = this.evaluateAlerts(
         metricDeltas,
-        metric,
+        metrics,
         previous,
         config.thresholdRules
       );
       alerts.push(...triggered);
     }
 
-    this.store.upsertMetrics(collectedMetrics);
-    this.store.appendDeltas(deltas);
-    this.store.appendAlerts(alerts);
-    this.lastRunAt = currentTimestamp;
+    await this.repository.insertMetrics(watcher, collectedMetrics);
+    await this.repository.insertDeltas(watcher, deltas);
+    await this.repository.insertAlerts(watcher, alerts);
+    await this.repository.updateWatcherRunState(
+      watcher.watcher_id,
+      new Date(currentTimestamp)
+    );
+  }
+
+  private metricKey(protocolId: string, poolId: string): string {
+    return `${protocolId.toLowerCase()}::${poolId.toLowerCase()}`;
+  }
+
+  private applyPoolMetadata(
+    metrics: PoolMetrics[],
+    config: WatcherConfig
+  ): PoolMetrics[] {
+    if (!metrics.length) return metrics;
+    const poolLookup = new Map<string, WatcherConfig["pools"][number]>();
+    for (const pool of config.pools) {
+      poolLookup.set(this.metricKey(pool.protocolId, pool.id), pool);
+    }
+    return metrics.map((metric) => {
+      const pool = poolLookup.get(this.metricKey(metric.protocolId, metric.poolId));
+      if (!pool) return metric;
+      return {
+        ...metric,
+        address: pool.address as `0x${string}`,
+      };
+    });
+  }
+
+  private lookupPoolAddress(
+    config: WatcherConfig,
+    metrics: PoolMetrics
+  ): `0x${string}` {
+    const pool = config.pools.find(
+      (p) =>
+        p.protocolId.toLowerCase() === metrics.protocolId.toLowerCase() &&
+        p.id.toLowerCase() === metrics.poolId.toLowerCase()
+    );
+    return (pool?.address ?? metrics.address) as `0x${string}`;
   }
 
   private computeDeltas(
     previous: PoolMetrics | null,
     current: PoolMetrics
   ): DeltaSnapshot[] {
+    if (!previous) {
+      return [];
+    }
+
     const results: DeltaSnapshot[] = [];
 
     const metricsToCompare: Array<{
@@ -288,8 +340,8 @@ export class MonitoringService {
       previousValue: NumericMetric;
       currentValue: NumericMetric;
     }> = [
-      { kind: "tvl", previousValue: previous?.tvl, currentValue: current.tvl },
-      { kind: "apy", previousValue: previous?.apy, currentValue: current.apy },
+      { kind: "tvl", previousValue: previous.tvl, currentValue: current.tvl },
+      { kind: "apy", previousValue: previous.apy, currentValue: current.apy },
     ];
 
     for (const { kind, previousValue, currentValue } of metricsToCompare) {
@@ -308,12 +360,8 @@ export class MonitoringService {
     current: NumericMetric,
     metrics: PoolMetrics
   ): DeltaSnapshot | null {
-    if (previous === null || previous === undefined) {
-      return null;
-    }
-    if (current === null || current === undefined) {
-      return null;
-    }
+    if (previous === null || previous === undefined) return null;
+    if (current === null || current === undefined) return null;
 
     const absoluteChange = current - previous;
     const percentChange =
@@ -346,13 +394,9 @@ export class MonitoringService {
 
     for (const delta of deltas) {
       for (const rule of rules) {
-        if (!this.ruleApplies(rule, current)) {
-          continue;
-        }
-
+        if (!this.ruleApplies(rule, current)) continue;
         const changeDirection =
           (delta.absoluteChange ?? 0) >= 0 ? "increase" : "decrease";
-
         if (
           rule.change.direction !== "both" &&
           rule.change.direction !== changeDirection
@@ -360,17 +404,13 @@ export class MonitoringService {
           continue;
         }
 
-        if (rule.metric !== delta.metric) {
-          continue;
-        }
+        if (rule.metric !== delta.metric) continue;
 
         const meetsThreshold = this.checkThreshold(rule, delta);
-        if (!meetsThreshold) {
-          continue;
-        }
+        if (!meetsThreshold) continue;
 
         alerts.push({
-          id: this.buildAlertId(rule.id, current, delta),
+          id: this.buildAlertId(rule.id, current),
           protocolId: current.protocolId,
           poolId: current.poolId,
           metric: delta.metric,
@@ -393,10 +433,11 @@ export class MonitoringService {
     return alerts;
   }
 
-  private ruleApplies(rule: WatcherConfig["thresholdRules"][number], metrics: PoolMetrics): boolean {
-    if (!rule.appliesTo) {
-      return true;
-    }
+  private ruleApplies(
+    rule: WatcherConfig["thresholdRules"][number],
+    metrics: PoolMetrics
+  ): boolean {
+    if (!rule.appliesTo) return true;
     if (rule.appliesTo.protocolIds) {
       const match = rule.appliesTo.protocolIds.some(
         (id) => id.toLowerCase() === metrics.protocolId.toLowerCase()
@@ -431,15 +472,14 @@ export class MonitoringService {
 
   private buildAlertId(
     ruleId: string,
-    metrics: PoolMetrics,
-    delta: DeltaSnapshot
+    metrics: PoolMetrics
   ): string {
     const segments = [
       ALERT_ID_PREFIX,
       ruleId,
       metrics.protocolId,
       metrics.poolId,
-      metrics.blockNumber ?? this.lastRunAt ?? Date.now(),
+      metrics.blockNumber ?? Date.now(),
     ];
     return segments.join("::");
   }
