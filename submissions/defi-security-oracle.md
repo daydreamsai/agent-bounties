@@ -4,6 +4,8 @@
 
 **Submission File:** `submissions/defi-security-oracle.md`
 
+**Status:** ✅ **DEPLOYED AND OPERATIONAL** - v3.0.0 live at [risk-auditor.kamiyo.ai](https://risk-auditor.kamiyo.ai)
+
 ## Agent Description
 
 KAMIYO Risk Auditor provides token approval auditing and DeFi security intelligence for AI agents via x402 micropayments on Solana. The service scans wallet addresses across 7 EVM chains, detects risky token approvals, and generates ERC20 revocation transactions.
@@ -13,6 +15,8 @@ Core functionality:
 - Detects risk factors: unlimited approvals, stale approvals, exploited protocols
 - Generates valid ERC20 revocation transaction data
 - Cross-references KAMIYO exploit database for protocol risk assessment
+
+**Live Verification:** `curl https://risk-auditor.kamiyo.ai/health` shows `"version": "3.0.0"` and `"approval_auditing": true`
 
 ## Live Link
 
@@ -105,8 +109,11 @@ Payment flow:
 
 - **Repository:** [https://github.com/kamiyo-ai/risk-auditor](https://github.com/kamiyo-ai/risk-auditor)
 - **Documentation:** [README](https://github.com/kamiyo-ai/risk-auditor/blob/main/README.md)
-- **Architecture Diagrams:** ASCII diagrams in README showing system architecture, data flow, and payment flow
-- **TypeScript Implementation:** Full source code with TypeScript, Express.js, and Zod validation
+- **Validation Proof:** [VALIDATION.md](https://github.com/kamiyo-ai/risk-auditor/blob/main/VALIDATION.md) - Etherscan comparison methodology
+- **Deployment Guide:** [DEPLOYMENT.md](https://github.com/kamiyo-ai/risk-auditor/blob/main/DEPLOYMENT.md)
+- **Competitive Analysis:** [COMPARISON.md](https://github.com/kamiyo-ai/risk-auditor/blob/main/COMPARISON.md) - vs other submissions
+- **TypeScript SDK:** [client-library.ts](https://github.com/kamiyo-ai/risk-auditor/blob/main/examples/client-library.ts)
+- **cURL Example:** [simple-curl.sh](https://github.com/kamiyo-ai/risk-auditor/blob/main/examples/simple-curl.sh)
 
 ## Why This Agent
 
