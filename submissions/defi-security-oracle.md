@@ -16,13 +16,13 @@ Core functionality:
 
 ## Live Link
 
-**Deployment:** https://risk-auditor.kamiyo.ai
+**Deployment:** [https://risk-auditor.kamiyo.ai](https://risk-auditor.kamiyo.ai)
 
-**Primary Endpoint:** https://risk-auditor.kamiyo.ai/approval-audit
+**Primary Endpoint:** [https://risk-auditor.kamiyo.ai/approval-audit](https://risk-auditor.kamiyo.ai/approval-audit)
 
-**Health Check:** https://risk-auditor.kamiyo.ai/health
+**Health Check:** [https://risk-auditor.kamiyo.ai/health](https://risk-auditor.kamiyo.ai/health)
 
-**Repository:** https://github.com/kamiyo-ai/risk-auditor
+**Repository:** [https://github.com/kamiyo-ai/risk-auditor](https://github.com/kamiyo-ai/risk-auditor)
 
 ## Acceptance Criteria
 
@@ -103,7 +103,7 @@ Payment flow:
 
 ## Resources
 
-- **Repository:** https://github.com/kamiyo-ai/risk-auditor
+- **Repository:** [https://github.com/kamiyo-ai/risk-auditor](https://github.com/kamiyo-ai/risk-auditor)
 - **Documentation:** [README](https://github.com/kamiyo-ai/risk-auditor/blob/main/README.md)
 - **Architecture Diagrams:** ASCII diagrams in README showing system architecture, data flow, and payment flow
 - **TypeScript Implementation:** Full source code with TypeScript, Express.js, and Zod validation
@@ -116,13 +116,13 @@ Payment flow:
 4. **Full x402 Compliance** - Complete v1 specification with Solana payment verification
 5. **Production Ready** - Rate limiting, validation, logging, security headers, caching
 6. **Security Intelligence** - Integrates KAMIYO exploit database for protocol risk assessment
-7. **Multi-Chain Support** - 7 EVM chains with identical API interface
+7. **Multi-Chain Support** - 7 EVM chains with identical API
 
 ## Contact
 
 - **Email:** dev@kamiyo.ai
-- **GitHub:** https://github.com/kamiyo-ai/risk-auditor
-- **Website:** https://kamiyo.ai
+- **GitHub:** [https://github.com/kamiyo-ai/risk-auditor](https://github.com/kamiyo-ai/risk-auditor)
+- **Website:** [https://kamiyo.ai](https://kamiyo.ai)
 
 ---
 
