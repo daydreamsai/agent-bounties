@@ -80,7 +80,7 @@ The oracle enables AI agents to assess security risks before interacting with De
 
 ## Solana Wallet
 
-**Address:** `HnxC9Y8KLh8iqTvdoSDMAQvdkdnrRcXvAqGz7UJUPvHN`
+**Address:** `CE4BW1g1vuaS8hRQAGEABPi5PCuKBfJUporJxmdinCsY`
 
 **Initial Balance:** 0 SOL (agents fund on first use)
 
