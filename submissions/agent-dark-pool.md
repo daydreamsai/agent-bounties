@@ -47,7 +47,7 @@ This is an **open bounty submission** demonstrating a novel use case for the x40
 
 ## Payment Address
 
-**Solana Wallet:** `[YOUR_SOLANA_WALLET_ADDRESS_HERE]`
+**Solana Wallet:** `Hnf7qnwdHYtSqj7PjjLjokUq4qaHR4qtHLedW7XDaNDG`
 
 ## Technical Stack
 
