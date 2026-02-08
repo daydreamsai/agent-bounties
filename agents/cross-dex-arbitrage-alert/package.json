@@ -1,0 +1,19 @@
+{
+  "name": "cross-dex-arbitrage-alert",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "tsx index.ts",
+    "build": "tsc",
+    "dev": "tsx watch index.ts"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "viem": "^2.38.5",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.9.2"
+  }
+}
