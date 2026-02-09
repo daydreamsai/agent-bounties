@@ -1,0 +1,25 @@
+app = "ralph-gasroute-oracle"
+primary_region = "ams"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[deploy]
+  release_command = "bun dist/index.js"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [[http_service.checks]]
+    interval = "10s"
+    timeout = "5s"
+    path = "/.well-known/agentkit/manifest"
+
+  [[http_service.endpoints]]
+    protocol = "tcp"
+    port = 8787
