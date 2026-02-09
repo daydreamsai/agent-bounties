@@ -1,0 +1,20 @@
+{
+  "name": "cross-dex-arbitrage-alert",
+  "version": "1.0.0",
+  "description": "Cross DEX Arbitrage Alert Agent - Multi-DEX Price Spread Scanner with x402 micropayments",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "bun build src/index.ts --outfile dist/index.js",
+    "start": "node dist/index.js",
+    "dev": "bun run src/index.ts"
+  },
+  "dependencies": {
+    "@lucid-agents/core": "^0.1.0",
+    "@lucid-agents/payments": "^0.1.0",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node-fetch": "^2.6.4"
+  }
+}
