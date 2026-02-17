@@ -8,6 +8,9 @@ const LIFI_BASE = "https://li.quest/v1";
 // Dummy address used for quote requests (we don't execute txs)
 const DUMMY_ADDRESS = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
 
+/** Default request timeout in milliseconds. */
+const REQUEST_TIMEOUT_MS = 30_000;
+
 /**
  * Fetch advanced routes from LI.FI.
  */
@@ -30,34 +33,12 @@ export async function fetchRoutes({ fromChainId, toChainId, fromToken, toToken, 
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(`LI.FI routes error: ${err.message || res.statusText}`);
-  }
-
-  return res.json();
-}
-
-/**
- * Fetch a single best quote from LI.FI.
- */
-export async function fetchQuote({ fromChainId, toChainId, fromToken, toToken, fromAmount }) {
-  const params = new URLSearchParams({
-    fromChain: String(fromChainId),
-    toChain: String(toChainId),
-    fromToken,
-    toToken,
-    fromAmount,
-    fromAddress: DUMMY_ADDRESS,
-  });
-
-  const res = await fetch(`${LIFI_BASE}/quote?${params}`);
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(`LI.FI quote error: ${err.message || res.statusText}`);
   }
 
   return res.json();
@@ -72,11 +53,17 @@ export async function resolveToken(chainId, symbolOrAddress) {
     return symbolOrAddress;
   }
 
-  const res = await fetch(`${LIFI_BASE}/token?chain=${chainId}&token=${encodeURIComponent(symbolOrAddress)}`);
+  const res = await fetch(
+    `${LIFI_BASE}/token?chain=${chainId}&token=${encodeURIComponent(symbolOrAddress)}`,
+    { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) },
+  );
   if (!res.ok) {
     throw new Error(`Could not resolve token "${symbolOrAddress}" on chain ${chainId}`);
   }
   const data = await res.json();
+  if (!data.address) {
+    throw new Error(`Token "${symbolOrAddress}" on chain ${chainId} resolved but has no address`);
+  }
   return data.address;
 }
 
@@ -89,7 +76,7 @@ export function parseRoute(route) {
 
   // Sum up fee costs and gas costs
   let totalFeeUsd = 0;
-  let totalGasUsd = parseFloat(route.gasCostUSD || "0");
+  let totalGasUsd = 0;
   let totalExecutionSeconds = 0;
 
   for (const step of steps) {

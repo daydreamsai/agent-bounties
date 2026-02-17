@@ -25,10 +25,12 @@ export const CHAIN_MAP = {
 export const NATIVE_TOKEN = "0x0000000000000000000000000000000000000000";
 
 export function resolveChainId(input) {
-  if (typeof input === "number") return input;
+  if (typeof input === "number") {
+    return Number.isInteger(input) && input > 0 ? input : null;
+  }
   const key = String(input).toLowerCase().trim();
   if (CHAIN_MAP[key] !== undefined) return CHAIN_MAP[key];
   const num = Number(key);
-  if (!isNaN(num) && num > 0) return num;
+  if (Number.isInteger(num) && num > 0) return num;
   return null;
 }

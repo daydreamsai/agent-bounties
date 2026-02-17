@@ -25,7 +25,7 @@ The agent starts on `http://localhost:3000` (configurable via `PORT` env var).
 
 The agent exposes an A2A-compatible agent card at:
 
-```
+```text
 GET http://localhost:3000/.well-known/agent.json
 ```
 
@@ -146,7 +146,7 @@ Each route in the response includes:
 
 ```bash
 git clone <this-repo>
-cd bridge-route-pinger
+cd submissions/bridge-route-pinger
 npm install
 PORT=8080 npm start
 ```
