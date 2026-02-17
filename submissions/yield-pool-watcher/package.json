@@ -1,0 +1,18 @@
+{
+  "name": "yield-pool-watcher",
+  "version": "0.1.0",
+  "description": "DeFi yield pool monitoring agent that tracks APY and TVL across pools and alerts on sharp changes",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "start": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target node"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "zod": "^3.23.0"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  }
+}
