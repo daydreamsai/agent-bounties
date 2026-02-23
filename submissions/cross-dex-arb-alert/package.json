@@ -1,0 +1,22 @@
+{
+  "name": "cross-dex-arb-alert",
+  "version": "1.0.0",
+  "description": "Flag price spreads across DEXs after fees and gas to spot profitable swaps",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "latest",
+    "hono": "^4.0.0",
+    "viem": "^2.0.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.3.0"
+  }
+}
