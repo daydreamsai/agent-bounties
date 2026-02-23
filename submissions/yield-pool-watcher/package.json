@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Track APY and TVL across DeFi pools and alert on sharp changes",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "scripts": {
     "dev": "bun run src/index.ts",
     "build": "tsc",
