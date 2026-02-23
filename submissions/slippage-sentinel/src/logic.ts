@@ -339,12 +339,20 @@ export async function analyzeSlippage(
   const refAmount = fullAmount / 10n || 1n;
 
   // Probe amounts for price-impact curve analysis.
-  const probeAmounts = [
+  // Deduplicate so that tiny fullAmount values (where integer division
+  // collapses several probes to the same value) don't bias the stdDev.
+  const rawProbes = [
     { label: "10%", amount: fullAmount / 10n || 1n },
     { label: "50%", amount: fullAmount / 2n || 1n },
     { label: "100%", amount: fullAmount },
     { label: "200%", amount: fullAmount * 2n },
   ];
+  const seen = new Set<bigint>();
+  const probeAmounts = rawProbes.filter((p) => {
+    if (seen.has(p.amount)) return false;
+    seen.add(p.amount);
+    return true;
+  });
 
   const poolDepths: PoolDepth[] = [];
   const allImpactBps: number[] = [];

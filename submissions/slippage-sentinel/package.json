@@ -2,7 +2,7 @@
   "name": "slippage-sentinel",
   "version": "1.0.0",
   "description": "Estimate safe slippage tolerance for any swap route",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "type": "module",
   "scripts": {
     "start": "tsx src/index.ts",
