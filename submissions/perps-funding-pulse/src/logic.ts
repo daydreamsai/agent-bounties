@@ -56,18 +56,25 @@ type HyperliquidAssetCtx = {
 };
 
 async function fetchHyperliquidData(): Promise<[HyperliquidMeta, HyperliquidAssetCtx[]]> {
-  const res = await fetch(HYPERLIQUID_INFO, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ type: "metaAndAssetCtxs" }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000); // 10s timeout
+  try {
+    const res = await fetch(HYPERLIQUID_INFO, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "metaAndAssetCtxs" }),
+      signal: controller.signal,
+    });
 
-  if (!res.ok) {
-    throw new Error(`Hyperliquid API error: ${res.status} ${res.statusText}`);
+    if (!res.ok) {
+      throw new Error(`Hyperliquid API error: ${res.status} ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    return data as [HyperliquidMeta, HyperliquidAssetCtx[]];
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const data = await res.json();
-  return data as [HyperliquidMeta, HyperliquidAssetCtx[]];
 }
 
 /**
@@ -226,8 +233,14 @@ async function getUniswapReference(): Promise<{
 
     const sqrtPriceX96 = slot0Result[0];
     // price = (sqrtPriceX96 / 2^96)^2 adjusted for decimals (USDC 6, WETH 18)
-    const sqrtPrice = Number(sqrtPriceX96) / 2 ** 96;
-    const rawPrice = sqrtPrice * sqrtPrice;
+    // Use bigint arithmetic throughout to avoid precision loss — sqrtPriceX96
+    // is a uint160 (up to 160 bits) which exceeds Number's 53-bit mantissa.
+    const sqrtPrice = BigInt(sqrtPriceX96);
+    const priceX192 = sqrtPrice * sqrtPrice; // sqrtPriceX96^2
+    // Scale up by 10^12 before dividing to preserve fractional precision,
+    // then convert to Number and scale back down.
+    const PRECISION = BigInt(10 ** 12);
+    const rawPrice = Number(priceX192 * PRECISION / (2n ** 192n)) / 1e12;
     // Pool is token0=USDC(6 dec), token1=WETH(18 dec)
     // rawPrice = USDC per WETH in base units = (USDC_units / WETH_units)
     // Adjust for decimal difference: multiply by 10^(18-6) = 10^12
