@@ -37,7 +37,7 @@ Check lending position health for a wallet.
   - `alert_threshold_hit` — Boolean if alert fires
 
 ### `health`
-Returns `{ status: "ok", timestamp }`.
+Quick health factor check for a single wallet on a single protocol. Returns current risk level and liquidation metrics including `health_factor`, `risk_level`, `liq_price`, `buffer_percent`, `total_collateral_usd`, and `total_debt_usd`.
 
 ## Supported Protocols
 
