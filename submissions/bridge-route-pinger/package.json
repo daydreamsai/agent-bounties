@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Find optimal bridge routes for cross-chain token transfers with live fee and time quotes",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "scripts": {
     "start": "bun run src/index.ts",
     "build": "tsc",
