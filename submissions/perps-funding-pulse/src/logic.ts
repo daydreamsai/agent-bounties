@@ -84,8 +84,10 @@ async function fetchHyperliquidData(): Promise<[HyperliquidMeta, HyperliquidAsse
 function secondsToNextFunding(): number {
   const now = Date.now();
   const msPerHour = 3_600_000;
-  const nextHour = Math.ceil(now / msPerHour) * msPerHour;
-  return Math.max(0, Math.round((nextHour - now) / 1000));
+  // Always advance to the next hour boundary — Math.floor()+1 ensures we
+  // return 3600 (not 0) when called exactly on the hour.
+  const nextHour = (Math.floor(now / msPerHour) + 1) * msPerHour;
+  return Math.round((nextHour - now) / 1000);
 }
 
 function formatDuration(totalSeconds: number): string {
@@ -141,7 +143,7 @@ async function getHyperliquidMetrics(
 
   // Normalise requested markets to uppercase and strip common suffixes
   const normalised = requestedMarkets.map((m) =>
-    m.toUpperCase().replace(/[-/]?PERP$/i, "").replace(/[-/]?USD[T]?$/i, "")
+    m.toUpperCase().replace(/[-/]?PERP$/i, "").replace(/[-/]?USDT?$/i, "")
   );
 
   const results: FundingMetrics[] = [];
@@ -242,15 +244,16 @@ async function getUniswapReference(): Promise<{
     const PRECISION = BigInt(10 ** 12);
     const rawPrice = Number(priceX192 * PRECISION / (2n ** 192n)) / 1e12;
     // Pool is token0=USDC(6 dec), token1=WETH(18 dec)
-    // rawPrice = USDC per WETH in base units = (USDC_units / WETH_units)
-    // Adjust for decimal difference: multiply by 10^(18-6) = 10^12
-    const ethPrice = 1 / (rawPrice * 1e12);
+    // rawPrice = token0_per_token1 in raw units (USDC_raw / WETH_raw)
+    // To get ETH price in USDC: 10^(token1_dec - token0_dec) / rawPrice = 1e12 / rawPrice
+    const ethPrice = 1e12 / rawPrice;
 
     return {
       spot_price: ethPrice.toFixed(2),
       pool_liquidity: liquidityResult.toString(),
     };
-  } catch {
+  } catch (err) {
+    console.error("[perps-funding-pulse] Uniswap reference failed:", err);
     return null;
   }
 }

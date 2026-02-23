@@ -1,4 +1,4 @@
-import { createAgentApp } from "@lucid-dreams/agent-kit";
+import { createAgentApp, paymentsFromEnv } from "@lucid-dreams/agent-kit";
 import { z } from "zod";
 import { fetchFundingData } from "./logic.js";
 
@@ -20,11 +20,7 @@ const { app, addEntrypoint } = createAgentApp(
       "Fetch current funding rate, next tick, and open interest per market from perpetuals exchanges",
   },
   {
-    payments: {
-      payTo: process.env.ADDRESS as `0x${string}`,
-      network: (process.env.NETWORK as any) || "base-sepolia",
-      defaultPrice: process.env.DEFAULT_PRICE || "1000",
-    } as any,
+    payments: paymentsFromEnv({ defaultPrice: "1000" }),
   }
 );
 
@@ -74,8 +70,8 @@ addEntrypoint({
     summary: z.string(),
   }) as any,
   async handler({ input }: any) {
-    const venueIds: string[] = input.venue_ids ?? ["hyperliquid"];
-    const markets: string[] = input.markets ?? ["BTC", "ETH"];
+    const venueIds: string[] = input.venue_ids;
+    const markets: string[] = input.markets;
 
     const result = await fetchFundingData(venueIds, markets);
 
