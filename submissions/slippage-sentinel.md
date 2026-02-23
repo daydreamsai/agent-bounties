@@ -9,7 +9,7 @@ Estimates safe slippage tolerance for any Uniswap V3 swap route on Base to preve
 1. **Pool Discovery** — Queries the Uniswap V3 Factory on Base for all fee-tier pools (0.01%, 0.05%, 0.3%, 1%) for the given token pair
 2. **Price Impact Measurement** — Calls the Quoter V2 contract at multiple trade sizes (10%, 50%, 100%, 200% of the requested amount) to build a price impact curve
 3. **Liquidity Analysis** — Reads on-chain `liquidity()` from each pool to report pool depth
-4. **Volatility Buffer** — Scans recent Swap events (last 200 blocks) to calculate the 95th percentile trade size and estimate short-term volatility
+4. **Volatility Buffer** — Scans recent Swap events (last 100 blocks) to calculate the 95th percentile trade size and estimate short-term volatility
 5. **Risk Classification** — Combines price impact + volatility into min/recommended slippage in basis points, classified as low/medium/high/extreme
 
 ## Entrypoints

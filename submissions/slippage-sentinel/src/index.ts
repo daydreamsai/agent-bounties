@@ -50,8 +50,21 @@ addEntrypoint({
     risk_level: z.string(),
   }),
   handler: async ({ input }: any) => {
-    const result = await analyzeSlippage(input);
-    return { output: result };
+    try {
+      const result = await analyzeSlippage(input);
+      return { output: result };
+    } catch (err: any) {
+      return {
+        output: {
+          min_safe_slip_bps: 500,
+          recommended_slip_bps: 500,
+          pool_depths: [],
+          recent_trade_size_p95: "0",
+          risk_level: "extreme",
+          error: err.message ?? "Unknown error",
+        },
+      };
+    }
   },
 });
 

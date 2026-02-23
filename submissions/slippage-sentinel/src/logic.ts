@@ -323,7 +323,17 @@ export async function analyzeSlippage(
 
   const tokenIn = input.token_in as Address;
   const tokenOut = input.token_out as Address;
-  const fullAmount = BigInt(input.amount_in);
+
+  let fullAmount: bigint;
+  try {
+    fullAmount = BigInt(input.amount_in);
+  } catch {
+    throw new Error(`Invalid amount_in: "${input.amount_in}" is not a valid integer`);
+  }
+
+  if (fullAmount <= 0n) {
+    throw new Error(`amount_in must be positive, got ${input.amount_in}`);
+  }
 
   // Reference (small) trade amount: 10% of full amount, minimum 1.
   const refAmount = fullAmount / 10n || 1n;
@@ -429,7 +439,9 @@ export async function analyzeSlippage(
       price_impact_bps: impactBps,
     });
 
-    allImpactBps.push(impactBps);
+    // probeImpacts already includes the full-amount impact (added when
+    // probe.amount === fullAmount), so only spread probeImpacts to avoid
+    // double-counting the full-trade data point in the stdDev calculation.
     allImpactBps.push(...probeImpacts);
     allSwapSizes.push(...swapSizes);
   }
