@@ -65,8 +65,22 @@ addEntrypoint({
     ),
   }) as any,
   handler: async ({ input }: any) => {
-    const result = await estimateGasRoutes(input);
-    return { output: result };
+    try {
+      const result = await estimateGasRoutes(input);
+      return { output: result };
+    } catch (err: any) {
+      return {
+        output: {
+          chain: "none",
+          fee_native: "0",
+          fee_usd: "0",
+          busy_level: "unknown",
+          tip_hint: "0",
+          all_chains: [],
+          error: err.message ?? "Unknown error",
+        },
+      };
+    }
   },
 });
 
