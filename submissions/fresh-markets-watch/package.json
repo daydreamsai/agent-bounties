@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "List new AMM pairs or pools in the last few minutes for discovery bots or yield scouts",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "scripts": {
     "start": "bun run src/index.ts",
     "build": "tsc",

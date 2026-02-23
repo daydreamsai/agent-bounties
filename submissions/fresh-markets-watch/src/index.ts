@@ -2,6 +2,12 @@ import { createAgentApp } from "@lucid-dreams/agent-kit";
 import { z } from "zod";
 import { scanNewPairs } from "./logic.js";
 
+if (!process.env.ADDRESS) {
+  throw new Error(
+    "ADDRESS environment variable is required. Refusing to start with the zero address to prevent burning payments."
+  );
+}
+
 const { app, addEntrypoint } = createAgentApp(
   {
     name: "fresh-markets-watch",
@@ -10,9 +16,7 @@ const { app, addEntrypoint } = createAgentApp(
   },
   {
     payments: {
-      payTo:
-        (process.env.ADDRESS as `0x${string}`) ||
-        "0x0000000000000000000000000000000000000000",
+      payTo: process.env.ADDRESS as `0x${string}`,
       network: (process.env.NETWORK as any) || "base-sepolia",
       defaultPrice: process.env.DEFAULT_PRICE || "1000",
     } as any,
