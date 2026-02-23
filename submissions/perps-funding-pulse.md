@@ -26,7 +26,7 @@ Fetch live funding metrics for perpetual markets.
 - `markets[]` — Per-market metrics:
   - `symbol` — Market symbol
   - `funding_rate` — Current hourly funding rate
-  - `time_to_next_s` — Seconds until next funding payment
+  - `time_to_next_seconds` — Seconds until next funding payment
   - `open_interest` — Total open interest in USD
   - `skew` — Long/short ratio (>1 = more longs)
 

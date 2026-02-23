@@ -6,6 +6,12 @@ import { fetchFundingData } from "./logic.js";
 // Agent bootstrap
 // ---------------------------------------------------------------------------
 
+if (!process.env.ADDRESS) {
+  throw new Error(
+    "ADDRESS environment variable is required. Refusing to start with the zero address to prevent burning payments."
+  );
+}
+
 const { app, addEntrypoint } = createAgentApp(
   {
     name: "perps-funding-pulse",
@@ -15,9 +21,7 @@ const { app, addEntrypoint } = createAgentApp(
   },
   {
     payments: {
-      payTo:
-        (process.env.ADDRESS as `0x${string}`) ||
-        "0x0000000000000000000000000000000000000000",
+      payTo: process.env.ADDRESS as `0x${string}`,
       network: (process.env.NETWORK as any) || "base-sepolia",
       defaultPrice: process.env.DEFAULT_PRICE || "1000",
     } as any,
@@ -102,7 +106,7 @@ addEntrypoint({
         status: "ok",
         version: "1.0.0",
         supported_venues: ["hyperliquid"],
-        default_markets: ["BTC", "ETH", "SOL", "ARB", "DOGE"],
+        default_markets: ["BTC", "ETH"],
       },
       usage: { total_tokens: 0 },
     };

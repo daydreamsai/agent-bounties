@@ -2,7 +2,7 @@
   "name": "perps-funding-pulse",
   "version": "1.0.0",
   "description": "Fetch perpetual futures funding rates, open interest, and skew per market",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "scripts": {
     "start": "tsx src/index.ts",
     "build": "tsc"
