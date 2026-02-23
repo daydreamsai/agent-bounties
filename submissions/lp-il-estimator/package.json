@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Calculate impermanent loss and fee APR for any LP position or simulated deposit",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "scripts": {
     "start": "bun run src/index.ts",
     "build": "tsc",
