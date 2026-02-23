@@ -10,7 +10,7 @@ import { base } from "viem/chains";
 // Constants
 // ---------------------------------------------------------------------------
 
-const BASE_RPC = "https://mainnet.base.org";
+const BASE_RPC = process.env.BASE_RPC_URL || "https://mainnet.base.org";
 
 const UNISWAP_V3_QUOTER_V2: Address =
   "0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a";
