@@ -199,8 +199,7 @@ async function estimateForChain(
     if (cfg.hasL1DataFee && calldataSizeBytes > 0) {
       l1DataFee = await fetchL1DataFee(
         client,
-        calldataSizeBytes,
-        baseFee
+        calldataSizeBytes
       );
     }
 
@@ -242,12 +241,16 @@ async function estimateForChain(
 
 async function fetchL1DataFee(
   client: PublicClient,
-  calldataSizeBytes: number,
-  _baseFee: bigint
+  calldataSizeBytes: number
 ): Promise<bigint> {
-  // Build synthetic calldata of the given size
-  const syntheticCalldata = ("0x" +
-    "ff".repeat(calldataSizeBytes)) as `0x${string}`;
+  // Build synthetic calldata with ~30% zero bytes to approximate real transactions.
+  // The OP Stack L1 oracle charges 4 gas per zero byte vs 16 per non-zero byte,
+  // so using all 0xFF would overestimate fees.
+  const bytes: string[] = [];
+  for (let i = 0; i < calldataSizeBytes; i++) {
+    bytes.push(i % 3 === 0 ? "00" : "ff");
+  }
+  const syntheticCalldata = ("0x" + bytes.join("")) as `0x${string}`;
 
   try {
     const fee = await client.readContract({

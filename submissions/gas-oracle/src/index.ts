@@ -36,9 +36,13 @@ addEntrypoint({
       ),
     calldata_size_bytes: z
       .number()
+      .int()
+      .nonnegative()
       .describe("Size of transaction calldata in bytes"),
     gas_units_est: z
       .number()
+      .int()
+      .positive()
       .describe("Estimated gas units for the transaction"),
   }) as any,
   output: z.object({

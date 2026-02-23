@@ -44,5 +44,5 @@ Returns `{ status: "ok", timestamp }`.
 ```bash
 cd submissions/gas-oracle
 npm install
-ADDRESS=0xYourWallet NETWORK=base-sepolia tsx src/index.ts
+ADDRESS=0xYourWallet NETWORK=base-sepolia DEFAULT_PRICE=1000 tsx src/index.ts
 ```
