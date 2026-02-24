@@ -159,7 +159,7 @@ async function getHyperliquidMetrics(
     if (
       normalised.length > 0 &&
       !normalised.some(
-        (n) => upperName === n || upperName.startsWith(n)
+        (n) => upperName === n
       )
     ) {
       continue;
@@ -205,7 +205,7 @@ const POOL_ABI = parseAbi([
 
 function getMainnetClient() {
   const rpcUrl = process.env.ETH_RPC_URL || "https://eth.llamarpc.com";
-  return createPublicClient({ chain: mainnet, transport: http(rpcUrl) });
+  return createPublicClient({ chain: mainnet, transport: http(rpcUrl, { timeout: 15_000 }) });
 }
 
 /**
