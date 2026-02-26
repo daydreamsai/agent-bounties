@@ -1,54 +1,81 @@
-# Fresh Markets Watch Agent
+# Bounty Submission
 
-## Description
-A DeFi monitoring agent that scans DEX factories for newly created trading pairs across multiple chains (Ethereum, Arbitrum, Polygon, BSC, Avalanche). Detects new pairs within specified time ranges and returns detailed information including pair addresses, tokens, creation blocks, and more.
+Related Issue: #1
 
-## Live Deployment
-- **Main Endpoint:** https://ljapptest--fresh-markets-watch-handle.modal.run
-- **Health Check:** https://ljapptest--fresh-markets-watch-health.modal.run
-- **Invoke Agent:** https://ljapptest--fresh-markets-watch-invoke.modal.run
+---
 
-## Bounty Issue
-[Fresh Markets Watch - Issue #1](https://github.com/daydreamsai/agent-bounties/issues/1)
+## Submission File
 
-## Acceptance Criteria Checklist
+File Path: `submissions/fresh-markets-watch.md`
 
-### Input
-- [x] Accepts `chain` parameter (ethereum, arbitrum, polygon, bsc, avalanche)
-- [x] Accepts optional `since` parameter (ISO timestamp)
-- [x] Accepts optional `until` parameter (ISO timestamp)
+---
 
-### Output
-- [x] Returns array of new pairs with:
-  - Pair address
-  - Token0 and Token1 addresses
-  - Creation block number
-  - Transaction hash
-- [x] Returns total count of pairs found
+## Agent Description
 
-### Agent Behavior
-- [x] Built with `@lucid-dreams/agent-kit`
-- [x] Implements proper error handling
-- [x] Validates chain parameters
+Fresh Markets Watch is a DeFi monitoring agent that scans DEX factories for newly created trading pairs across multiple chains (Ethereum, Arbitrum, Polygon, BSC, Avalanche). It detects new pairs within specified time ranges and returns detailed information including pair addresses, token addresses, creation blocks, and transaction hashes.
 
-### Deployment
-- [x] Deployed on Modal with public URL
-- [x] Health endpoint returns agent status
-- [x] All endpoints accessible via HTTP
+The agent is built with `@lucid-dreams/agent-kit` and uses viem for blockchain interactions. It supports multiple DEX protocols including Uniswap V2, SushiSwap, PancakeSwap, Trader Joe, and more.
 
-## Solana Wallet Address for Payment
-`3C1vCMFrgHDRqsLshw7pUx6mST9Wc854neRmDhyTBP8t`
+---
 
-## Technical Details
-- **Runtime:** Bun + TypeScript
-- **Blockchain Library:** viem
-- **Deployment:** Modal (serverless)
-- **Supported Chains:** Ethereum, Arbitrum, Polygon, BSC, Avalanche
-- **DEX Support:** Uniswap V2, SushiSwap, PancakeSwap, Trader Joe, etc.
+## Live Link
 
-## Entrypoints
-1. **scan-new-pairs** - Scans DEX factories for new pairs within time range
-2. **health** - Returns agent health status
+Deployment URL: https://ljapptest--fresh-markets-watch-handle.modal.run
 
-## Repository
-Agent code available in the submission branch.
+- **Health Endpoint:** https://ljapptest--fresh-markets-watch-health.modal.run
+- **Invoke Endpoint:** https://ljapptest--fresh-markets-watch-invoke.modal.run
+
+---
+
+## Acceptance Criteria
+
+- [x] Meets all technical specifications
+- [x] Deployed on a domain
+- [x] Reachable via x402
+- [x] All acceptance criteria from the issue are met
+- [x] Submission file added to submissions/ directory
+
+---
+
+## Other Resources
+
+- Repository: https://github.com/ljapptest-art/agent-bounties/tree/fresh-markets-watch-submission
+- Documentation: Agent code and README available in the submission branch
+- Demo Video: N/A
+- Other: N/A
+
+---
+
+## Solana Wallet
+
+Wallet Address: `3C1vCMFrgHDRqsLshw7pUx6mST9Wc854neRmDhyTBP8t`
+
+---
+
+## Additional Notes
+
+**Technical Stack:**
+- Runtime: Bun + TypeScript
+- Blockchain Library: viem
+- Deployment: Modal (serverless)
+- Agent Kit: @lucid-dreams/agent-kit v0.2.24
+
+**Supported Chains:**
+- Ethereum
+- Arbitrum
+- Polygon
+- BSC (BNB Chain)
+- Avalanche
+
+**Entrypoints:**
+1. `scan-new-pairs` - Scans DEX factories for new pairs within a specified time range
+2. `health` - Returns agent health status
+
+**Input Parameters:**
+- `chain` (required): ethereum, arbitrum, polygon, bsc, or avalanche
+- `since` (optional): ISO timestamp for start of time range
+- `until` (optional): ISO timestamp for end of time range
+
+**Output:**
+- Array of new pairs with pair address, token0/token1 addresses, creation block, and transaction hash
+- Total count of pairs found
