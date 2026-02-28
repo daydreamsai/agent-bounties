@@ -176,10 +176,11 @@ function computeLiquidationMetrics(
   // healthFactor is in 1e18 decimals
   const healthFactor = Number(formatUnits(healthFactorRaw, 18));
 
-  // If no debt, health factor is effectively infinite
+  // If no debt, health factor is effectively infinite — use MAX_SAFE_INTEGER
+  // so the value survives JSON.stringify (Infinity serializes as null)
   if (totalDebtBase === 0n) {
     return {
-      healthFactor: Infinity,
+      healthFactor: Number.MAX_SAFE_INTEGER,
       liqPrice: 0,
       bufferPercent: 100,
     };
