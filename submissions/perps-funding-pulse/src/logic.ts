@@ -114,8 +114,8 @@ function formatDuration(totalSeconds: number): string {
  */
 function computeSkew(ctx: HyperliquidAssetCtx): { ratio: number; direction: string } {
   const mid = parseFloat(ctx.midPx);
-  const buyImpact = parseFloat(ctx.impactPxs?.[0] ?? ctx.midPx);
-  const sellImpact = parseFloat(ctx.impactPxs?.[1] ?? ctx.midPx);
+  const buyImpact = parseFloat(ctx.impactPxs?.[0] || ctx.midPx);
+  const sellImpact = parseFloat(ctx.impactPxs?.[1] || ctx.midPx);
 
   const buyDelta = buyImpact - mid;
   const sellDelta = mid - sellImpact;
@@ -244,7 +244,7 @@ async function getUniswapReference(): Promise<{
     const PRECISION = BigInt(10 ** 12);
     const rawPrice = Number(priceX192 * PRECISION / (2n ** 192n)) / 1e12;
     // Pool is token0=USDC(6 dec), token1=WETH(18 dec)
-    // rawPrice = token0_per_token1 in raw units (USDC_raw / WETH_raw)
+    // rawPrice = token1_per_token0 in raw units (WETH_raw / USDC_raw)
     // To get ETH price in USDC: 10^(token1_dec - token0_dec) / rawPrice = 1e12 / rawPrice
     const ethPrice = 1e12 / rawPrice;
 
