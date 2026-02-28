@@ -34,7 +34,7 @@ addEntrypoint({
   input: z.object({
     token_in: z.string().describe("Input token address"),
     token_out: z.string().describe("Output token address"),
-    amount_in: z.string().describe("Amount to swap in wei"),
+    amount_in: z.string().regex(/^\d+$/, "Must be a non-negative integer string").describe("Amount to swap in wei"),
     route_hint: z
       .string()
       .optional()
@@ -52,6 +52,7 @@ addEntrypoint({
     ),
     recent_trade_size_p95: z.string(),
     risk_level: z.string(),
+    error: z.string().optional(),
   }),
   handler: async ({ input }: any) => {
     try {

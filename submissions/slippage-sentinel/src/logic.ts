@@ -77,6 +77,16 @@ const poolLiquidityAbi = [
   },
 ] as const;
 
+const poolToken0Abi = [
+  {
+    name: "token0",
+    type: "function",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
+  },
+] as const;
+
 const swapEventAbi = parseAbiItem(
   "event Swap(address indexed sender, address indexed recipient, int256 amount0, int256 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick)"
 );
@@ -203,14 +213,28 @@ async function getPoolLiquidity(
 }
 
 /**
- * Fetch recent Swap events from a pool and return the absolute amount0
- * values (trade sizes in token0 terms).
+ * Fetch recent Swap events from a pool and return absolute trade sizes
+ * denominated in `tokenIn` units.
+ *
+ * Uniswap V3 Swap events report `amount0` (token0 delta) and `amount1`
+ * (token1 delta). We read the pool's `token0()` to determine which field
+ * corresponds to the caller's input token so the resulting sizes are
+ * directly comparable with `fullAmount`.
  */
 async function getRecentSwapSizes(
   client: ReturnType<typeof getClient>,
-  poolAddress: Address
+  poolAddress: Address,
+  tokenIn: Address
 ): Promise<bigint[]> {
   try {
+    // Determine whether tokenIn is token0 or token1 in this pool.
+    const token0 = await client.readContract({
+      address: poolAddress,
+      abi: poolToken0Abi,
+      functionName: "token0",
+    });
+    const useAmount0 = token0.toLowerCase() === tokenIn.toLowerCase();
+
     const blockNumber = await client.getBlockNumber();
     const fromBlock =
       blockNumber > SWAP_EVENT_LOOKBACK_BLOCKS
@@ -225,8 +249,10 @@ async function getRecentSwapSizes(
     });
 
     return logs.map((log) => {
-      const amount0 = log.args.amount0 ?? 0n;
-      return amount0 < 0n ? -amount0 : amount0;
+      const amount = useAmount0
+        ? (log.args.amount0 ?? 0n)
+        : (log.args.amount1 ?? 0n);
+      return amount < 0n ? -amount : amount;
     });
   } catch {
     return [];
@@ -422,8 +448,8 @@ export async function analyzeSlippage(
         }
       }
 
-      // 7. Fetch recent swap events for P95 trade size.
-      const swapSizes = await getRecentSwapSizes(client, poolAddr);
+      // 7. Fetch recent swap events for P95 trade size (in tokenIn units).
+      const swapSizes = await getRecentSwapSizes(client, poolAddr, tokenIn);
 
       return {
         fee,
