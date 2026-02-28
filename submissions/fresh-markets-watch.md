@@ -20,10 +20,10 @@ The agent is built with `@lucid-dreams/agent-kit` and uses viem for blockchain i
 
 ## Live Link
 
-Deployment URL: https://ljapptest--fresh-markets-watch-handle.modal.run
+Deployment URL: https://ljapptest--web.modal.run
 
-- **Health Endpoint:** https://ljapptest--fresh-markets-watch-health.modal.run
-- **Invoke Endpoint:** https://ljapptest--fresh-markets-watch-invoke.modal.run
+- **Health Endpoint:** https://ljapptest--health.modal.run ✅
+- **x402 Endpoint:** https://ljapptest--web.modal.run ✅
 
 ---
 
