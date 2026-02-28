@@ -78,6 +78,33 @@ The agent uses `@lucid-dreams/agent-kit` which integrates x402 middleware. Payme
 2. Client sends payment to specified wallet on Base network
 3. Client retries request with payment proof → Server returns HTTP 200 with data
 
+### x402 Endpoint Test
+
+**Request:**
+```bash
+curl -s -X POST "https://ljapptest--web.modal.run" \
+  -H "Content-Type: application/json" \
+  -d '{"path": "/entrypoints/scan-new-pairs/invoke", "method": "POST", "body": {}, "headers": {}}'
+```
+
+**Response:**
+```json
+{
+  "status": 402,
+  "headers": {"content-type": "application/json"},
+  "body": "{\"error\":\"X-PAYMENT header is required\",\"accepts\":[{\"scheme\":\"exact\",\"network\":\"base\",\"maxAmountRequired\":\"1000000000\",\"resource\":\"http://localhost/entrypoints/scan-new-pairs/invoke\",\"description\":\"List new AMM pairs or pools in the last N minutes\",\"mimeType\":\"application/json\",\"payTo\":\"0xb308ed39d67D0d4BAe5BC2FAEF60c66BBb6AE429\",\"maxTimeoutSeconds\":300,\"asset\":\"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\",\"x402Version\":1}]}"
+}
+```
+
+**Verification Points:**
+| Check | Result |
+|-------|--------|
+| HTTP Status Code | 402 Payment Required ✅ |
+| Payment Address | `0xb308ed39d67D0d4BAe5BC2FAEF60c66BBb6AE429` |
+| Network | Base ✅ |
+| Price | 1 USDC (1000000000 wei) |
+| x402 Version | 1 ✅ |
+
 ---
 
 ## Other Resources
