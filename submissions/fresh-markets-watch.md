@@ -43,7 +43,7 @@ Deployment URL: https://ljapptest--web.modal.run
 
 **Request:**
 ```bash
-curl -s -i "https://ljapptest--fresh-markets-watch-health.modal.run"
+curl -s -i "https://ljapptest--health.modal.run"
 ```
 
 **Response:**
