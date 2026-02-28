@@ -167,19 +167,20 @@ async function getHyperliquidMetrics(
 
     const fundingRate = parseFloat(ctx.funding);
     const markPrice = parseFloat(ctx.markPx);
-    const oiNotional = parseFloat(ctx.openInterest);
+    const oiSize = parseFloat(ctx.openInterest); // asset-denominated OI (e.g. number of BTC)
     const { ratio, direction } = computeSkew(ctx);
 
     results.push({
       venue: "hyperliquid",
       market: `${asset.name}-PERP`,
       funding_rate: fundingRate,
+      // annualized %: hourly rate * 8760 hours/year, scaled to percentage
       funding_rate_annualized:
-        Math.round(fundingRate * 8760 * 10000) / 100, // hourly -> annual %
+        Math.round(fundingRate * 8760 * 10000) / 100,
       time_to_next: formatDuration(ttNext),
       time_to_next_seconds: ttNext,
-      open_interest: oiNotional,
-      open_interest_notional: `$${(oiNotional * markPrice).toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
+      open_interest: oiSize,
+      open_interest_notional: `$${(oiSize * markPrice).toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
       skew: ratio,
       skew_direction: direction,
       mark_price: ctx.markPx,
@@ -282,7 +283,7 @@ export async function fetchFundingData(
       // Return a degraded result rather than failing completely
       allMetrics.push({
         venue: "hyperliquid",
-        market: markets.join(",") || "ALL",
+        market: "UNAVAILABLE",
         funding_rate: 0,
         funding_rate_annualized: 0,
         time_to_next: "N/A",
@@ -304,7 +305,7 @@ export async function fetchFundingData(
   // include ETH (or no specific markets were requested)
   const wantEth =
     markets.length === 0 ||
-    markets.some((m) => /^ETH/i.test(m));
+    markets.some((m) => /^ETH$/i.test(m));
 
   let uniRef: { spot_price: string; pool_liquidity: string } | null = null;
   if (wantEth) {

@@ -27,7 +27,7 @@ Fetch live funding metrics for perpetual markets.
   - `market` — Market symbol
   - `funding_rate` — Current hourly funding rate
   - `time_to_next_seconds` — Seconds until next funding payment
-  - `open_interest` — Total open interest in USD
+  - `open_interest` — Open interest in asset units (e.g. number of BTC)
   - `skew` — Long/short ratio (>1 = more longs)
 
 ### `health`
