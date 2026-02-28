@@ -3,6 +3,7 @@ import {
   http,
   type Address,
   parseAbiItem,
+  isAddress,
 } from "viem";
 import { base } from "viem/chains";
 
@@ -346,6 +347,12 @@ export async function analyzeSlippage(
   input: AnalyzeInput
 ): Promise<AnalyzeOutput> {
   const client = getClient();
+
+  if (!isAddress(input.token_in) || !isAddress(input.token_out)) {
+    throw new Error(
+      "token_in and token_out must be valid 20-byte hex addresses"
+    );
+  }
 
   const tokenIn = input.token_in as Address;
   const tokenOut = input.token_out as Address;
