@@ -107,9 +107,9 @@ export interface PositionResult {
 export interface MonitorResult {
   wallet: string;
   positions: PositionResult[];
-  health_factor: number;
-  liq_price: number;
-  buffer_percent: number;
+  health_factor: number | null;
+  liq_price: number | null;
+  buffer_percent: number | null;
   alert_threshold_hit: boolean;
   summary: string;
 }
@@ -218,6 +218,11 @@ async function fetchAccountData(
   wallet: Address,
   protocolId: string,
 ): Promise<PositionResult> {
+  const ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
+  if (!ADDRESS_REGEX.test(wallet)) {
+    throw new Error(`Invalid wallet address: ${wallet}`);
+  }
+
   const config = PROTOCOL_CONFIGS[protocolId];
   if (!config) {
     throw new Error(
@@ -324,13 +329,13 @@ export async function monitorPositions(input: MonitorInput): Promise<MonitorResu
   }
 
   // Aggregate: use the worst (lowest) health factor across all positions
-  let worstHealthFactor = Infinity;
-  let worstLiqPrice = 0;
-  let worstBufferPercent = 100;
+  let worstHealthFactor: number | null = null;
+  let worstLiqPrice: number | null = null;
+  let worstBufferPercent: number | null = null;
   let anyAlertHit = false;
 
   for (const pos of positions) {
-    if (pos.health_factor < worstHealthFactor) {
+    if (pos.health_factor < (worstHealthFactor ?? Infinity)) {
       worstHealthFactor = pos.health_factor;
       worstLiqPrice = pos.liq_price;
       worstBufferPercent = pos.buffer_percent;
@@ -346,15 +351,15 @@ export async function monitorPositions(input: MonitorInput): Promise<MonitorResu
     summary = errors.length > 0
       ? `Failed to fetch positions: ${errors.join("; ")}`
       : "No active lending positions found for this wallet.";
-    worstHealthFactor = 0;
-  } else if (worstHealthFactor < 1.0) {
+    // Leave metrics as null — no data means no liquidation signal
+  } else if (worstHealthFactor !== null && worstHealthFactor < 1.0) {
     summary = `CRITICAL: Position is liquidatable! Health factor: ${worstHealthFactor.toFixed(4)}. Immediate action required.`;
-  } else if (worstHealthFactor < 1.1) {
-    summary = `DANGER: Health factor is ${worstHealthFactor.toFixed(4)}. Liquidation is imminent. Buffer: ${worstBufferPercent.toFixed(2)}%.`;
+  } else if (worstHealthFactor !== null && worstHealthFactor < 1.1) {
+    summary = `DANGER: Health factor is ${worstHealthFactor.toFixed(4)}. Liquidation is imminent. Buffer: ${worstBufferPercent!.toFixed(2)}%.`;
   } else if (anyAlertHit) {
-    summary = `WARNING: Health factor ${worstHealthFactor.toFixed(4)} is below alert threshold ${alertThreshold}. Buffer: ${worstBufferPercent.toFixed(2)}%.`;
+    summary = `WARNING: Health factor ${worstHealthFactor!.toFixed(4)} is below alert threshold ${alertThreshold}. Buffer: ${worstBufferPercent!.toFixed(2)}%.`;
   } else {
-    summary = `Position is healthy. Health factor: ${worstHealthFactor.toFixed(4)}. Buffer: ${worstBufferPercent.toFixed(2)}% above liquidation.`;
+    summary = `Position is healthy. Health factor: ${worstHealthFactor!.toFixed(4)}. Buffer: ${worstBufferPercent!.toFixed(2)}% above liquidation.`;
   }
 
   if (errors.length > 0 && positions.length > 0) {
@@ -364,9 +369,15 @@ export async function monitorPositions(input: MonitorInput): Promise<MonitorResu
   return {
     wallet: input.wallet,
     positions,
-    health_factor: worstHealthFactor === Infinity ? 999 : Math.round(worstHealthFactor * 10000) / 10000,
+    health_factor:
+      worstHealthFactor === null
+        ? null
+        : Math.round(worstHealthFactor * 10000) / 10000,
     liq_price: worstLiqPrice,
-    buffer_percent: Math.round(worstBufferPercent * 100) / 100,
+    buffer_percent:
+      worstBufferPercent === null
+        ? null
+        : Math.round(worstBufferPercent * 100) / 100,
     alert_threshold_hit: anyAlertHit,
     summary,
   };
