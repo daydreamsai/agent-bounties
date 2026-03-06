@@ -652,6 +652,7 @@ export async function scanNewPairs(input: ScanInput): Promise<ScanResult> {
   const config = CHAIN_CONFIGS[chainKey];
 
   if (!config) {
+    const supported = Object.keys(CHAIN_CONFIGS).join(", ");
     return {
       pairs: [],
       chain: input.chain,
@@ -660,6 +661,9 @@ export async function scanNewPairs(input: ScanInput): Promise<ScanResult> {
       queried_at: new Date().toISOString(),
     };
   }
+
+  // Cap the scan window to a reasonable range to prevent excessive RPC load
+  const windowMinutes = Math.max(1, Math.min(input.window_minutes, 1440));
 
   // Determine which factories to scan
   const factories: { address: Address; dex: string }[] = input.factories
@@ -671,13 +675,13 @@ export async function scanNewPairs(input: ScanInput): Promise<ScanResult> {
 
   // Run on-chain scan and DexScreener scan concurrently
   const [onChainPairs, dexScreenerPairs] = await Promise.all([
-    scanOnChainPairs(config, factories, input.window_minutes).catch((err) => {
+    scanOnChainPairs(config, factories, windowMinutes).catch((err) => {
       console.error(
         `[fresh-markets-watch] On-chain scan failed: ${err instanceof Error ? err.message : String(err)}`
       );
       return [] as PairInfo[];
     }),
-    fetchDexScreenerLatest(config.dexScreenerChainId, input.window_minutes).catch(
+    fetchDexScreenerLatest(config.dexScreenerChainId, windowMinutes).catch(
       (err) => {
         console.error(
           `[fresh-markets-watch] DexScreener scan failed: ${err instanceof Error ? err.message : String(err)}`
@@ -725,7 +729,7 @@ export async function scanNewPairs(input: ScanInput): Promise<ScanResult> {
   return {
     pairs: enrichedPairs,
     chain: input.chain,
-    window_minutes: input.window_minutes,
+    window_minutes: windowMinutes,
     scanned_factories: factories.length,
     queried_at: new Date().toISOString(),
   };
