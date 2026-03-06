@@ -516,6 +516,20 @@ function fallbackUsdPrice(symbol: string): number {
 // ---------------------------------------------------------------------------
 
 export async function detectArbitrage(input: ArbitrageInput): Promise<ArbitrageResult> {
+  if (!input.token_in || input.token_in.trim().length === 0) {
+    throw new Error("token_in is required.");
+  }
+  if (!input.token_out || input.token_out.trim().length === 0) {
+    throw new Error("token_out is required.");
+  }
+  const parsedAmount = parseFloat(input.amount_in);
+  if (isNaN(parsedAmount) || parsedAmount <= 0) {
+    throw new Error(`Invalid amount_in: "${input.amount_in}". Must be a positive number.`);
+  }
+  if (input.token_in.toUpperCase() === input.token_out.toUpperCase()) {
+    throw new Error("token_in and token_out must be different tokens.");
+  }
+
   const allOpportunities: Opportunity[] = [];
   let totalDexesQueried = 0;
 
