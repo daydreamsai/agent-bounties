@@ -1,0 +1,21 @@
+{
+  "name": "lending-liquidation-sentinel",
+  "version": "1.0.0",
+  "description": "Monitor lending positions and warn before liquidation risk",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "viem": "^2.38.5",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
