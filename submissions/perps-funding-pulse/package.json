@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Fetch perpetual futures funding rates, open interest, and skew per market",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "start": "tsx src/index.ts",
     "build": "tsc"

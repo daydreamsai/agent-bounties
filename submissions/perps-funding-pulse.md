@@ -25,7 +25,8 @@ Fetch live funding metrics for perpetual markets.
 - `venue` — Exchange name
 - `markets[]` — Per-market metrics:
   - `market` — Market symbol
-  - `funding_rate` — Current hourly funding rate
+  - `funding_rate` — Current hourly funding rate (decimal, e.g. 0.0001 = 0.01%)
+  - `funding_rate_annualized` — Annualized funding rate (percentage, e.g. 87.6%)
   - `time_to_next_seconds` — Seconds until next funding payment
   - `open_interest` — Open interest in asset units (e.g. number of BTC)
   - `skew` — Long/short ratio (>1 = more longs)
