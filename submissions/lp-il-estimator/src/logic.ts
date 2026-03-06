@@ -254,6 +254,20 @@ function annualizeRate(rate: number, windowHours: number): number {
 // ---------------------------------------------------------------------------
 
 export async function estimateIL(input: EstimateInput): Promise<EstimateOutput> {
+  if (!input.token_a || input.token_a.trim().length === 0) {
+    throw new Error("token_a is required (symbol like 'ETH' or contract address).");
+  }
+  if (!input.token_b || input.token_b.trim().length === 0) {
+    throw new Error("token_b is required (symbol like 'USDC' or contract address).");
+  }
+  const depositUsdParsed = parseFloat(input.deposit_value_usd);
+  if (isNaN(depositUsdParsed) || depositUsdParsed <= 0) {
+    throw new Error(`Invalid deposit_value_usd: "${input.deposit_value_usd}". Must be a positive number.`);
+  }
+  if (input.window_hours <= 0) {
+    throw new Error("window_hours must be a positive number.");
+  }
+
   const notes: string[] = [];
   let pool: PoolInfo;
 
