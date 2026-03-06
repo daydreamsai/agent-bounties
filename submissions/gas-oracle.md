@@ -46,3 +46,16 @@ cd submissions/gas-oracle
 npm install
 ADDRESS=0xYourWallet NETWORK=base-sepolia DEFAULT_PRICE=1000 tsx src/index.ts
 ```
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `ADDRESS` | **Yes** | — | Wallet address for receiving payments. Agent refuses to start without it. |
+| `NETWORK` | No | `base-sepolia` | Payment network |
+| `DEFAULT_PRICE` | No | `1000` | Default price for x402 payments (numeric string) |
+| `RPC_ETHEREUM` | No | `https://1rpc.io/eth` | Custom RPC endpoint for Ethereum |
+| `RPC_BASE` | No | `https://mainnet.base.org` | Custom RPC endpoint for Base |
+| `RPC_ARBITRUM` | No | `https://arb1.arbitrum.io/rpc` | Custom RPC endpoint for Arbitrum |
+| `RPC_OPTIMISM` | No | `https://mainnet.optimism.io` | Custom RPC endpoint for Optimism |
+| `ETH_PRICE_FALLBACK` | No | `3000` | Fallback ETH/USD price when CoinGecko is unreachable |

@@ -29,25 +29,25 @@ interface ChainConfig {
 const CHAIN_CONFIGS: Record<string, ChainConfig> = {
   ethereum: {
     chain: mainnet,
-    rpcUrl: "https://1rpc.io/eth",
+    rpcUrl: process.env.RPC_ETHEREUM || "https://1rpc.io/eth",
     isL2: false,
     hasL1DataFee: false,
   },
   base: {
     chain: base,
-    rpcUrl: "https://mainnet.base.org",
+    rpcUrl: process.env.RPC_BASE || "https://mainnet.base.org",
     isL2: true,
     hasL1DataFee: true,
   },
   arbitrum: {
     chain: arbitrum,
-    rpcUrl: "https://arb1.arbitrum.io/rpc",
+    rpcUrl: process.env.RPC_ARBITRUM || "https://arb1.arbitrum.io/rpc",
     isL2: true,
     hasL1DataFee: false, // Arbitrum folds L1 data cost into its gas price
   },
   optimism: {
     chain: optimism,
-    rpcUrl: "https://mainnet.optimism.io",
+    rpcUrl: process.env.RPC_OPTIMISM || "https://mainnet.optimism.io",
     isL2: true,
     hasL1DataFee: true,
   },
@@ -65,12 +65,33 @@ const GAS_PRICE_ORACLE_ABI = parseAbi([
 ]);
 
 // ---------------------------------------------------------------------------
+// PublicClient cache — reuse clients across calls to benefit from connection
+// pooling and avoid repeated setup overhead.
+// ---------------------------------------------------------------------------
+
+const clientCache = new Map<string, PublicClient>();
+
+function getOrCreateClient(chainName: string, cfg: ChainConfig): PublicClient {
+  let client = clientCache.get(chainName);
+  if (!client) {
+    client = createPublicClient({
+      chain: cfg.chain,
+      transport: http(cfg.rpcUrl, { timeout: 10_000 }),
+    });
+    clientCache.set(chainName, client);
+  }
+  return client;
+}
+
+// ---------------------------------------------------------------------------
 // ETH price cache
 // ---------------------------------------------------------------------------
 
 let cachedEthPrice: { usd: number; fetchedAt: number } | null = null;
 const ETH_PRICE_CACHE_TTL_MS = 60_000; // 60 seconds
-const ETH_PRICE_FALLBACK = 3000;
+const ETH_PRICE_FALLBACK = parseFloat(
+  process.env.ETH_PRICE_FALLBACK || "3000"
+);
 
 async function getEthPriceUsd(): Promise<number> {
   if (
@@ -108,6 +129,9 @@ async function getEthPriceUsd(): Promise<number> {
     if (cachedEthPrice) {
       return cachedEthPrice.usd;
     }
+    console.warn(
+      `[gas-oracle] CoinGecko unreachable and no cached price; using fallback $${ETH_PRICE_FALLBACK}`
+    );
     return ETH_PRICE_FALLBACK;
   }
 }
@@ -166,10 +190,7 @@ async function estimateForChain(
 
   let client: PublicClient;
   try {
-    client = createPublicClient({
-      chain: cfg.chain,
-      transport: http(cfg.rpcUrl, { timeout: 10_000 }),
-    });
+    client = getOrCreateClient(chainName, cfg);
   } catch (err) {
     console.error(`[gas-oracle] Failed to create client for ${chainName}:`, err);
     return null;
