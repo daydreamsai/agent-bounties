@@ -6,9 +6,11 @@ import { monitorPositions, checkHealth } from "./logic.js";
 // App initialisation
 // ---------------------------------------------------------------------------
 
-if (!process.env.ADDRESS) {
+const ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
+const payToAddress = process.env.ADDRESS;
+if (!payToAddress || !ADDRESS_REGEX.test(payToAddress)) {
   throw new Error(
-    "ADDRESS environment variable is required. Refusing to start with the zero address to prevent burning payments."
+    "ADDRESS environment variable must be a valid 0x-prefixed 20-byte Ethereum address."
   );
 }
 
@@ -20,7 +22,7 @@ const { app, addEntrypoint } = createAgentApp(
   },
   {
     payments: {
-      payTo: process.env.ADDRESS as `0x${string}`,
+      payTo: payToAddress as `0x${string}`,
       network: (process.env.NETWORK as any) || "base-sepolia",
       defaultPrice: process.env.DEFAULT_PRICE || "1000",
     } as any,
@@ -36,7 +38,9 @@ addEntrypoint({
   description:
     "Monitor all lending positions for a wallet. Returns health factor, liquidation price, buffer percentage, and alert status across specified protocols.",
   input: z.object({
-    wallet: z.string().describe("Wallet address to monitor (0x...)"),
+    wallet: z.string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Must be a valid Ethereum address (0x...)")
+      .describe("Wallet address to monitor (0x...)"),
     protocol_ids: z
       .array(z.string())
       .optional()
@@ -82,7 +86,9 @@ addEntrypoint({
   description:
     "Quick health factor check for a single wallet on a single protocol. Returns current risk level and liquidation metrics.",
   input: z.object({
-    wallet: z.string().describe("Wallet address to check (0x...)"),
+    wallet: z.string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Must be a valid Ethereum address (0x...)")
+      .describe("Wallet address to check (0x...)"),
     protocol_id: z
       .string()
       .optional()

@@ -1,4 +1,4 @@
-import { createPublicClient, http, formatUnits, type PublicClient, type Address } from "viem";
+import { createPublicClient, http, formatUnits, isAddress, type PublicClient, type Address } from "viem";
 import { base, mainnet } from "viem/chains";
 
 // ---------------------------------------------------------------------------
@@ -20,35 +20,6 @@ const AAVE_V3_POOL_ABI = [
       { name: "healthFactor", type: "uint256" },
     ],
   },
-  {
-    name: "getReserveData",
-    type: "function",
-    stateMutability: "view",
-    inputs: [{ name: "asset", type: "address" }],
-    outputs: [
-      {
-        name: "",
-        type: "tuple",
-        components: [
-          { name: "configuration", type: "uint256" },
-          { name: "liquidityIndex", type: "uint128" },
-          { name: "currentLiquidityRate", type: "uint128" },
-          { name: "variableBorrowIndex", type: "uint128" },
-          { name: "currentVariableBorrowRate", type: "uint128" },
-          { name: "currentStableBorrowRate", type: "uint128" },
-          { name: "lastUpdateTimestamp", type: "uint40" },
-          { name: "id", type: "uint16" },
-          { name: "aTokenAddress", type: "address" },
-          { name: "stableDebtTokenAddress", type: "address" },
-          { name: "variableDebtTokenAddress", type: "address" },
-          { name: "interestRateStrategyAddress", type: "address" },
-          { name: "accruedToTreasury", type: "uint128" },
-          { name: "unbacked", type: "uint128" },
-          { name: "isolationModeTotalDebt", type: "uint128" },
-        ],
-      },
-    ],
-  },
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -61,13 +32,15 @@ interface ProtocolConfig {
   rpcUrl?: string;
 }
 
+const AAVE_V3_BASE_POOL: Address = "0xA238Dd80C259a72e81d7e4664a9801593F98d1c5";
+
 const PROTOCOL_CONFIGS: Record<string, ProtocolConfig> = {
   aave_v3_base: {
-    poolAddress: "0xA238Dd80C259a72e81d7e4664a9801593F98d1c5",
+    poolAddress: AAVE_V3_BASE_POOL,
     chain: base,
   },
   aave_v3: {
-    poolAddress: "0xA238Dd80C259a72e81d7e4664a9801593F98d1c5",
+    poolAddress: AAVE_V3_BASE_POOL,
     chain: base,
   },
   aave_v3_ethereum: {
@@ -131,15 +104,24 @@ export interface HealthResult {
 // Helpers
 // ---------------------------------------------------------------------------
 
+const clientCache = new Map<string, PublicClient>();
+
 function getClient(config: ProtocolConfig): PublicClient {
+  const cacheKey = `${config.chain.id}:${config.rpcUrl ?? "default"}`;
+  const cached = clientCache.get(cacheKey);
+  if (cached) return cached;
+
   const transport = config.rpcUrl
     ? http(config.rpcUrl)
     : http();
 
-  return createPublicClient({
+  const client = createPublicClient({
     chain: config.chain,
     transport,
   }) as PublicClient;
+
+  clientCache.set(cacheKey, client);
+  return client;
 }
 
 function classifyRisk(healthFactor: number): "SAFE" | "WARNING" | "DANGER" | "LIQUIDATABLE" {
@@ -219,8 +201,7 @@ async function fetchAccountData(
   wallet: Address,
   protocolId: string,
 ): Promise<PositionResult> {
-  const ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
-  if (!ADDRESS_REGEX.test(wallet)) {
+  if (!isAddress(wallet, { strict: false })) {
     throw new Error(`Invalid wallet address: ${wallet}`);
   }
 
@@ -287,6 +268,9 @@ async function fetchAccountData(
  * Monitor all positions for a wallet across specified protocols.
  */
 export async function monitorPositions(input: MonitorInput): Promise<MonitorResult> {
+  if (!isAddress(input.wallet, { strict: false })) {
+    throw new Error(`Invalid wallet address: ${input.wallet}`);
+  }
   const wallet = input.wallet as Address;
   const alertThreshold = input.alert_threshold ?? 1.5;
 
@@ -392,18 +376,38 @@ export async function checkHealth(
   protocolId: string = "aave_v3",
   alertThreshold: number = 1.5,
 ): Promise<HealthResult> {
-  const pos = await fetchAccountData(wallet as Address, protocolId);
+  if (!isAddress(wallet, { strict: false })) {
+    throw new Error(`Invalid wallet address: ${wallet}`);
+  }
 
-  return {
-    wallet,
-    protocol_id: protocolId,
-    health_factor: pos.health_factor,
-    liq_price: pos.liq_price,
-    buffer_percent: pos.buffer_percent,
-    alert_threshold_hit: pos.health_factor < alertThreshold,
-    risk_level: pos.risk_level,
-    total_collateral_usd: pos.total_collateral_usd,
-    total_debt_usd: pos.total_debt_usd,
-    timestamp: pos.timestamp,
-  };
+  try {
+    const pos = await fetchAccountData(wallet as Address, protocolId);
+
+    return {
+      wallet,
+      protocol_id: protocolId,
+      health_factor: pos.health_factor,
+      liq_price: pos.liq_price,
+      buffer_percent: pos.buffer_percent,
+      alert_threshold_hit: pos.health_factor < alertThreshold,
+      risk_level: pos.risk_level,
+      total_collateral_usd: pos.total_collateral_usd,
+      total_debt_usd: pos.total_debt_usd,
+      timestamp: pos.timestamp,
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "unknown error";
+    return {
+      wallet,
+      protocol_id: protocolId,
+      health_factor: 0,
+      liq_price: 0,
+      buffer_percent: 0,
+      alert_threshold_hit: false,
+      risk_level: `ERROR: ${errorMessage}`,
+      total_collateral_usd: "0",
+      total_debt_usd: "0",
+      timestamp: new Date().toISOString(),
+    };
+  }
 }

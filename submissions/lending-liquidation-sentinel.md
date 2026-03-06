@@ -25,16 +25,24 @@ Check lending position health for a wallet.
 **Output:**
 - `wallet` — Monitored wallet address
 - `positions[]` — Per-protocol position data:
-  - `protocol` — Protocol name
+  - `protocol_id` — Protocol identifier (e.g. `"aave_v3"`)
   - `chain` — Chain name
   - `health_factor` — Current health factor (1.0 = liquidation)
   - `total_collateral_usd` — Total collateral value in USD
   - `total_debt_usd` — Total debt value in USD
-  - `available_borrow_usd` — Remaining borrow capacity
-  - `ltv_percent` — Current loan-to-value ratio
-  - `liquidation_threshold_percent` — Max LTV before liquidation
-  - `buffer_percent` — Safety buffer above liquidation
-  - `alert_threshold_hit` — Boolean if alert fires
+  - `available_borrows_usd` — Remaining borrow capacity in USD
+  - `ltv_bps` — Current loan-to-value ratio in basis points
+  - `liquidation_threshold_bps` — Liquidation threshold in basis points
+  - `liq_price` — Collateral price drop ratio that triggers liquidation
+  - `buffer_percent` — Safety buffer percentage above liquidation
+  - `risk_level` — Risk classification: `SAFE`, `WARNING`, `DANGER`, or `LIQUIDATABLE`
+  - `alert_threshold_hit` — Boolean, true when health factor is below alert threshold
+  - `timestamp` — ISO 8601 timestamp of the check
+- `health_factor` — Worst health factor across all positions (`null` if no data)
+- `liq_price` — Worst liquidation price ratio (`null` if no data)
+- `buffer_percent` — Worst buffer percentage (`null` if no data)
+- `alert_threshold_hit` — Boolean, true if any position triggered an alert
+- `summary` — Human-readable summary of the position status
 
 ### `health`
 Quick health factor check for a single wallet on a single protocol. Returns current risk level and liquidation metrics including `health_factor`, `risk_level`, `liq_price`, `buffer_percent`, `total_collateral_usd`, and `total_debt_usd`.
