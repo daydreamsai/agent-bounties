@@ -265,6 +265,17 @@ export async function findBridgeRoutes(input: {
 }): Promise<FindRoutesResult> {
   const { token, amount, from_chain, to_chain } = input;
 
+  if (!token || token.trim().length === 0) {
+    throw new Error("Token symbol or address is required.");
+  }
+  const parsedAmount = parseFloat(amount);
+  if (isNaN(parsedAmount) || parsedAmount <= 0) {
+    throw new Error(`Invalid amount: "${amount}". Must be a positive number.`);
+  }
+  if (from_chain.toLowerCase() === to_chain.toLowerCase()) {
+    throw new Error("Source and destination chains must be different for bridging.");
+  }
+
   const fromChainId = resolveChainId(from_chain);
   const toChainId = resolveChainId(to_chain);
 
