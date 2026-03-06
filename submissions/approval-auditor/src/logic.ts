@@ -286,7 +286,14 @@ interface AuditInput {
 /*  Helpers                                                           */
 /* ================================================================== */
 
+function isValidAddress(addr: string): boolean {
+  return /^0x[0-9a-fA-F]{40}$/.test(addr);
+}
+
 function normalizeAddress(addr: string): Address {
+  if (!isValidAddress(addr)) {
+    throw new Error(`Invalid Ethereum address: "${addr}". Expected 0x-prefixed 40-hex-character string.`);
+  }
   return addr.toLowerCase() as Address;
 }
 
@@ -758,6 +765,12 @@ async function scanChain(
 /* ================================================================== */
 
 export async function auditApprovals(input: AuditInput): Promise<AuditResult> {
+  if (!input.wallet || !input.wallet.startsWith("0x")) {
+    throw new Error("A valid wallet address starting with 0x is required.");
+  }
+  if (!input.chains || input.chains.length === 0) {
+    throw new Error("At least one chain must be specified.");
+  }
   const wallet = normalizeAddress(input.wallet);
   const chains = input.chains.map((c) => c.toLowerCase().trim());
 
