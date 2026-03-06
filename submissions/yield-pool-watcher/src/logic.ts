@@ -348,6 +348,16 @@ function detectAlerts(
  * Main entry point: fetch DeFi pools, filter, detect alerts, return results.
  */
 export async function watchPools(input: WatchPoolsInput): Promise<WatchPoolsOutput> {
+  if (!input.protocol_ids || input.protocol_ids.length === 0) {
+    throw new Error("At least one protocol ID is required (e.g. 'aave-v3', 'compound-v3').");
+  }
+  if (input.apy_change_threshold <= 0) {
+    throw new Error("apy_change_threshold must be a positive number.");
+  }
+  if (input.tvl_change_threshold <= 0) {
+    throw new Error("tvl_change_threshold must be a positive number.");
+  }
+
   const rawPools = await fetchPools();
 
   // Normalize protocol IDs for matching

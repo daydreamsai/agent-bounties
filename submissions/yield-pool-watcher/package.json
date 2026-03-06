@@ -10,7 +10,7 @@
     "start": "bun run src/index.ts"
   },
   "dependencies": {
-    "@lucid-dreams/agent-kit": "latest",
+    "@lucid-dreams/agent-kit": "^0.2.24",
     "hono": "^4.7.0",
     "viem": "^2.23.0",
     "zod": "^3.24.0"
