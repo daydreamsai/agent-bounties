@@ -4,6 +4,9 @@ Estimates safe slippage for DEX swap routes based on liquidity and trade size.
 
 ## Endpoints
 
+### GET /
+Health check endpoint.
+
 ### POST /estimate
 Estimate slippage for a swap route.
 
