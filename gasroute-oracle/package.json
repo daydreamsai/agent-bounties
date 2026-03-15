@@ -1,0 +1,20 @@
+{
+  "name": "gasroute-oracle",
+  "version": "0.1.0",
+  "description": "Multi-chain gas estimation oracle — finds cheapest chain and timing for transactions",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.11",
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "@types/node": "^25.5.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "viem": "^2.47.4",
+    "zod": "^4.3.6"
+  }
+}
