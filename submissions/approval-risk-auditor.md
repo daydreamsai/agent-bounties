@@ -6,7 +6,7 @@
 **Author:** @allornothingai
 
 ## Links
-- **Live Deployment Link:** https://approval-risk-auditor.loca.lt/x402/agent (Reachable via x402 payment protocol)
+- **Live Deployment Link:** https://agent.allornothing.ai/ (Reachable via x402 payment protocol)
 - **Source Code:** Provided in `src/` directory of this PR.
 
 ## Acceptance Criteria Checklist
