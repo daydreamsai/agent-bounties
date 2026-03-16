@@ -1,0 +1,22 @@
+{
+  "name": "perps-funding-pulse",
+  "version": "1.0.0",
+  "description": "Fetch live funding rates, open interest, and skew for perpetual futures markets",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts"
+  },
+  "keywords": ["perps", "funding", "defi", "crypto"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@hono/node-server": "^1.19.11",
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "zod": "^4.3.6"
+  }
+}
