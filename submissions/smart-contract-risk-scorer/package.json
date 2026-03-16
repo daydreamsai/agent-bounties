@@ -1,0 +1,22 @@
+{
+  "name": "smart-contract-risk-scorer",
+  "version": "1.0.0",
+  "description": "Analyze smart contracts for security vulnerabilities, rug pull indicators, and malicious patterns",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts"
+  },
+  "keywords": ["smart-contract", "security", "defi", "crypto", "rug-pull", "honeypot"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@hono/node-server": "^1.19.11",
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "zod": "^4.3.6"
+  }
+}
