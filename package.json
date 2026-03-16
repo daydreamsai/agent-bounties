@@ -1,0 +1,29 @@
+{
+  "name": "agent-bounties",
+  "version": "1.0.0",
+  "description": "Welcome to the Daydreams AI Agent Bounties program! 🚀",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daydreamsai/agent-bounties.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/daydreamsai/agent-bounties/issues"
+  },
+  "homepage": "https://github.com/daydreamsai/agent-bounties#readme",
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "axios": "^1.13.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "viem": "^2.47.4",
+    "zod": "^4.3.6"
+  }
+}
