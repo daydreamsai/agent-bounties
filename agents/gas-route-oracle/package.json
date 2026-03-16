@@ -1,0 +1,21 @@
+{
+  "name": "gasroute-oracle",
+  "version": "0.1.0",
+  "description": "Choose cheapest chain and timing for EVM transactions",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.1.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.0.0"
+  },
+  "license": "MIT"
+}
