@@ -42,7 +42,7 @@ A real-time DeFi yield pool monitor that tracks APY and TVL across multiple prot
 
 ## Solana Wallet
 
-**Wallet Address:** `YOUR_SOLANA_WALLET_ADDRESS_HERE`
+**Wallet Address:** `CZkLs4m55JBffoowGUtyfqb5GrymUVxgr9kMTrXKfbJV`
 
 ---
 
