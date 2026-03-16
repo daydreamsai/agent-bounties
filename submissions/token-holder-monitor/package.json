@@ -1,0 +1,21 @@
+{
+  "name": "token-holder-monitor",
+  "version": "1.0.0",
+  "description": "Monitor token holder distributions, whale wallets, and centralization risks across multiple EVM chains",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts"
+  },
+  "keywords": ["token", "holders", "whale", "defi", "ethereum", "erc20", "concentration"],
+  "license": "MIT",
+  "dependencies": {
+    "@hono/node-server": "^1.19.11",
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "zod": "^4.3.6"
+  }
+}
