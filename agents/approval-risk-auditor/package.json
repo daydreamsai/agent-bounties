@@ -1,0 +1,20 @@
+{
+  "name": "approval-risk-auditor",
+  "version": "0.1.0",
+  "description": "Flag unlimited or stale ERC-20/NFT approvals and build revoke calls",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir dist",
+    "start": "bun run dist/index.js"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "viem": "^2.21.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  }
+}
