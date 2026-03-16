@@ -1,0 +1,1 @@
+{ "name": "bridge-route-pinger", "version": "1.0.0", "description": "List bridge routes with fee and time quotes", "main": "src/index.ts", "scripts": { "build": "tsc", "start": "node dist/index.js", "dev": "tsx src/index.ts" }, "dependencies": { "@lucid-dreams/agent-kit": "^0.1.0" }, "devDependencies": { "typescript": "^5.4.0", "tsx": "^4.7.0", "@types/node": "^20.11.0" } }
