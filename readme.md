@@ -41,12 +41,13 @@ The PR template will guide you through the required information:
 - Agent description
 - Live deployment link
 - Acceptance criteria checklist
-- Solana wallet address for payment
-- Additional resources
 
-## Requirements
+## How to Submit
 
-All submissions must:
+1. **Implement the agent** - Create a TypeScript file in the `src/` directory for your agent
+2. **Choose a bounty** - Browse the [issues](https://github.com/daydreamsai/agent-bounties/issues) and pick one to work on
+3. **Build your agent** - Use the [@lucid-dreams/agent-kit](https://www.npmjs.com/package/@lucid-dreams/agent-kit) or your preferred tools
+4. **Deploy** - Your agent must be deployed on a domain and reachable via x402
 
 - ✅ Meet the technical specifications in the bounty issue
 - ✅ Be deployed on a domain
