@@ -1,0 +1,50 @@
+[dir] .github
+[file] readme.md
+[dir] submissions
+[file] src/index.ts
+import { z } from "zod";
+import { createAgentApp } from "@lucid-dreams/agent-kit";
+
+const { app, addEntrypoint } = createAgentApp({
+  name: "perps-funding-pulse",
+  version: "0.1.0",
+  description: "Fetch current funding rate and open interest for perps markets",
+});
+
+const fetchFundingData = async (venueId: string, market: string) => {
+  // Placeholder for actual data fetching logic
+  // This should be replaced with actual API calls to the venue
+  return {
+    funding_rate: 0.001,
+    time_to_next: 3600, // in seconds
+    open_interest: 1000000,
+    skew: 1.2,
+  };
+};
+
+addEntrypoint({
+  key: "getFundingData",
+  description: "Fetch current funding rate, next tick, and open interest per market.",
+  input: z.object({
+    venue_ids: z.array(z.string()),
+    markets: z.array(z.string()),
+  }),
+  async handler({ input }) {
+    const results = await Promise.all(
+      input.venue_ids.flatMap(venueId =>
+        input.markets.map(async market => ({
+          venue_id: venueId,
+          market,
+          ...(await fetchFundingData(venueId, market)),
+        }))
+      )
+    );
+
+    return {
+      output: results,
+      usage: { total_tokens: results.length },
+    };
+  },
+});
+
+export default app;
