@@ -40,12 +40,13 @@ The PR template will guide you through the required information:
 
 - Agent description
 - Live deployment link
-- Acceptance criteria checklist
-- Solana wallet address for payment
-- Additional resources
-
-## Requirements
-
+- [Fresh Markets Watch](https://github.com/daydreamsai/agent-bounties/issues/1) - Monitor new AMM pairs
+- [Cross DEX Arbitrage Alert](https://github.com/daydreamsai/agent-bounties/issues/2) - Detect arbitrage opportunities
+- [Slippage Sentinel](https://github.com/daydreamsai/agent-bounties/issues/3) - Estimate safe slippage
+- [Bridge Route Pinger](https://github.com/daydreamsai/agent-bounties/issues/10) - Find best bridge routes
+- [GasRoute Oracle](https://github.com/daydreamsai/agent-bounties/issues/4) - Find cheapest chain for transactions
+- [Approval Risk Auditor](https://github.com/daydreamsai/agent-bounties/issues/5) - Flag risky token approvals
+- [Yield Pool Watcher](https://github.com/daydreamsai/agent-bounties/issues/6) - Track APY and TVL changes
 All submissions must:
 
 - ✅ Meet the technical specifications in the bounty issue
