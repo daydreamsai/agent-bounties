@@ -1,0 +1,58 @@
+[dir] .github
+[file] readme.md
+[dir] submissions
+[file] src/index.ts
+import { z } from "zod";
+import { createAgentApp } from "@lucid-dreams/agent-kit";
+import { calculateImpermanentLoss, calculateFeeAPR, getTradingVolume } from "./utils";
+
+const { app, addEntrypoint } = createAgentApp({
+  name: "lp-impermanent-loss-estimator",
+  version: "0.1.0",
+  description: "Calculate IL and fee APR for any LP position",
+});
+
+addEntrypoint({
+  key: "estimate",
+  description: "Calculate impermanent loss and fee APR for an LP position",
+  input: z.object({
+    pool_address: z.string(),
+    token_weights: z.array(z.number()),
+    deposit_amounts: z.array(z.number()),
+    window_hours: z.number(),
+  }),
+  async handler({ input }) {
+    const IL_percent = calculateImpermanentLoss(input.pool_address, input.token_weights, input.deposit_amounts, input.window_hours);
+    const fee_apr_est = calculateFeeAPR(input.pool_address, input.window_hours);
+    const volume_window = getTradingVolume(input.pool_address, input.window_hours);
+    const notes = "Ensure the pool address and token weights are correct for accurate results.";
+
+    return {
+      output: {
+        IL_percent,
+        fee_apr_est,
+        volume_window,
+        notes,
+      },
+      usage: { total_tokens: 0 }, // Placeholder for actual token usage calculation
+    };
+  },
+});
+
+export default app;
+
+// Mock functions for demonstration purposes
+function calculateImpermanentLoss(poolAddress: string, tokenWeights: number[], depositAmounts: number[], windowHours: number): number {
+  // Placeholder logic
+  return 0.5; // 0.5% IL
+}
+
+function calculateFeeAPR(poolAddress: string, windowHours: number): number {
+  // Placeholder logic
+  return 0.05; // 5% APR
+}
+
+function getTradingVolume(poolAddress: string, windowHours: number): number {
+  // Placeholder logic
+  return 100000; // 100,000 units of trading volume
+}
