@@ -1,0 +1,69 @@
+[dir] .github
+[file] readme.md
+[dir] submissions
+[file] src/agent.ts
+import { z } from "zod";
+import { createAgentApp } from "@lucid-dreams/agent-kit";
+
+const { app, addEntrypoint } = createAgentApp({
+  name: "cross-dex-arbitrage-alert",
+  version: "0.1.0",
+  description: "Detect cross-DEX token price spreads",
+});
+
+const arbitrageInput = z.object({
+  token_in: z.string(),
+  token_out: z.string(),
+  amount_in: z.number(),
+  chains: z.array(z.string()),
+});
+
+addEntrypoint({
+  key: "arbitrage",
+  description: "Detect cross-DEX token price spreads",
+  input: arbitrageInput,
+  async handler({ input }) {
+    // Placeholder logic for arbitrage detection
+    const { token_in, token_out, amount_in, chains } = input;
+
+    // Simulate fetching quotes from DEXs
+    const fetchQuotes = async (chain: string) => {
+      // This should be replaced with actual on-chain data fetching
+      return {
+        price: Math.random() * 1000, // Random price for demonstration
+        fee: Math.random() * 10, // Random fee for demonstration
+        gas: Math.random() * 1, // Random gas cost for demonstration
+      };
+    };
+
+    const routes = await Promise.all(chains.map(fetchQuotes));
+
+    // Calculate net spread and costs
+    const calculateNetSpread = (route: any) => {
+      const { price, fee, gas } = route;
+      const totalCost = price + fee + gas;
+      return totalCost;
+    };
+
+    const routeCosts = routes.map(calculateNetSpread);
+    const minCostIndex = routeCosts.indexOf(Math.min(...routeCosts));
+    const bestRoute = routes[minCostIndex];
+
+    // Placeholder for alternative routes and net spread in basis points
+    const altRoutes = routes.filter((_, index) => index !== minCostIndex);
+    const netSpreadBps = 0; // This should be calculated based on actual price differences
+    const estFillCost = bestRoute.price + bestRoute.fee + bestRoute.gas;
+
+    return {
+      output: {
+        best_route: bestRoute,
+        alt_routes: altRoutes,
+        net_spread_bps: netSpreadBps,
+        est_fill_cost: estFillCost,
+      },
+      usage: { total_tokens: 0 }, // Placeholder for usage tracking
+    };
+  },
+});
+
+export default app;
