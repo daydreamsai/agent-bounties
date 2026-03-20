@@ -1,0 +1,70 @@
+[dir] .github
+[file] readme.md
+[dir] submissions
+[file] src/yield-pool-watcher.ts
+import { z } from "zod";
+import { createAgentApp } from "@lucid-dreams/agent-kit";
+
+const { app, addEntrypoint } = createAgentApp({
+  name: "yield-pool-watcher",
+  version: "0.1.0",
+  description: "Track APY and TVL across pools and alert on changes",
+});
+
+const PoolMetrics = z.object({
+  protocol_id: z.string(),
+  pool_id: z.string(),
+  apy: z.number(),
+  tvl: z.number(),
+  // Add other metrics as needed
+});
+
+const ThresholdRules = z.object({
+  apy_threshold: z.number(),
+  tvl_threshold: z.number(),
+  // Add other thresholds as needed
+});
+
+addEntrypoint({
+  key: "monitorPools",
+  description: "Monitor yield pools for APY and TVL changes",
+  input: z.object({
+    protocol_ids: z.array(z.string()),
+    pools: z.array(z.string()),
+    threshold_rules: ThresholdRules,
+  }),
+  async handler({ input }) {
+    // Fetch current pool metrics from DeFi protocols
+    const poolMetrics: PoolMetrics[] = await fetchPoolMetrics(input.protocol_ids, input.pools);
+
+    // Calculate deltas and check against thresholds
+    const deltas = calculateDeltas(poolMetrics);
+    const alerts = checkThresholds(deltas, input.threshold_rules);
+
+    return {
+      output: {
+        pool_metrics: poolMetrics,
+        deltas,
+        alerts,
+      },
+      usage: { total_tokens: 0 }, // Placeholder for actual usage calculation
+    };
+  },
+});
+
+async function fetchPoolMetrics(protocolIds: string[], pools: string[]): Promise<PoolMetrics[]> {
+  // Placeholder for actual data fetching logic
+  return [];
+}
+
+function calculateDeltas(poolMetrics: PoolMetrics[]): any {
+  // Placeholder for actual delta calculation logic
+  return {};
+}
+
+function checkThresholds(deltas: any, thresholdRules: z.infer<typeof ThresholdRules>): any {
+  // Placeholder for actual threshold checking logic
+  return [];
+}
+
+export default app;
