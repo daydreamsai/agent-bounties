@@ -1,0 +1,19 @@
+{
+  "name": "bridge-route-pinger",
+  "version": "1.0.0",
+  "description": "Find best bridge routes with live fee and ETA quotes from Li.Fi, Socket, and Rango",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@hono/node-server": "^1.19.11",
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "zod": "^4.3.6"
+  }
+}
