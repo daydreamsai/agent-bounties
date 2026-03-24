@@ -1,0 +1,11 @@
+name = "lending-liquidation-sentinel-v2"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+NETWORK = "base"
+DEFAULT_PRICE = "1000"
+
+[env.production.vars]
+NETWORK = "base"
+DEFAULT_PRICE = "1000"

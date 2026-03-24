@@ -1,0 +1,20 @@
+{
+  "name": "lending-liquidation-sentinel-v2",
+  "version": "1.0.0",
+  "description": "Watch borrow positions and warn before liquidation risk",
+  "type": "module",
+  "main": "src/index-simple.ts",
+  "scripts": {
+    "dev": "npx tsx src/index-simple.ts",
+    "start": "node dist/index.js",
+    "build": "npx tsup src/index-simple.ts --outdir dist --format esm"
+  },
+  "dependencies": {
+    "hono": "^4.12.9",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0"
+  }
+}
