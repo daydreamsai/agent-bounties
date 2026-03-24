@@ -1,0 +1,20 @@
+{
+  "name": "cross-dex-arbitrage-alert-v2",
+  "version": "1.0.0",
+  "description": "Detect cross-DEX token price spreads for arbitrage opportunities",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "npx tsx src/index.ts",
+    "start": "node dist/index.js",
+    "build": "npx tsup src/index.ts --outdir dist --format esm"
+  },
+  "dependencies": {
+    "hono": "^4.6.14",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "tsx": "^4.7.0"
+  }
+}
