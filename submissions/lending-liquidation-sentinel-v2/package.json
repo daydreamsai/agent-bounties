@@ -1,0 +1,24 @@
+{
+  "name": "lending-liquidation-sentinel-v2",
+  "version": "1.0.0",
+  "description": "Watch borrow positions and warn before liquidation risk - Enhanced version with multi-protocol support",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "hono": "^4.6.14",
+    "viem": "^2.21.58",
+    "zod": "^3.24.2",
+    "typescript": "^5.7.2"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.14",
+    "typescript": "^5.7.2"
+  }
+}
