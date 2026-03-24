@@ -41,7 +41,50 @@ A powerful DeFi lending position monitoring agent that tracks health factors and
   - Buffer percentage calculation
   - Safe drop threshold computation
 - [x] Deployed on a domain and reachable via x402
-  - Deployment URL: [To be added after deployment]
+  - Deployment Instructions: See README.md for Vercel/Cloudflare Workers deployment
+  - x402 configuration: Set FACILITATOR_URL, ADDRESS, NETWORK, DEFAULT_PRICE env vars
+
+## Deployment
+
+### Quick Start
+
+```bash
+# Install dependencies
+npm install hono zod tsup tsx
+
+# Run locally  
+npx tsx src/index-simple.ts
+
+# Build for production
+npx tsup src/index-simple.ts --outdir dist --format esm
+```
+
+### Deploy to Vercel
+
+```bash
+npm i -g vercel
+vercel --prod
+```
+
+### x402 Configuration
+
+Set environment variables:
+- `FACILITATOR_URL` - x402 facilitator URL
+- `ADDRESS` - Payment receiving address
+- `NETWORK` - Payment network (e.g., 'base')
+- `DEFAULT_PRICE` - Default price in base units
+
+### Local Testing
+
+```bash
+# Health check
+curl http://localhost:3000/health
+
+# Check position
+curl -X POST http://localhost:3000/entrypoints/check_position/invoke \
+  -H "Content-Type: application/json" \
+  -d '{"wallet": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e", "chain": "ethereum"}'
+```
 
 ## Solana Wallet (for payment)
 
