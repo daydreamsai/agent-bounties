@@ -1,0 +1,23 @@
+{
+  "name": "lp-impermanent-loss-estimator",
+  "version": "0.1.0",
+  "description": "Calculate IL and fee APR for any LP position",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx src/server.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.12",
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
+    "viem": "^2.38.5",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0"
+  }
+}
