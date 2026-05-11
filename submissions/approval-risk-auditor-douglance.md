@@ -29,6 +29,7 @@ POST /entrypoints/audit-approvals/invoke
   "wallet": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
   "chains": ["ethereum", "base"],
   "token_addresses": [],
+  "nft_addresses": [],
   "stale_days": 180
 }
 ```
@@ -45,6 +46,7 @@ The agent returns:
 Revocation data is unsigned transaction calldata:
 
 - ERC-20: `approve(spender, 0)`
+- ERC-721 single-token approvals: `approve(address(0), tokenId)`
 - ERC-721/ERC-1155 operator approvals: `setApprovalForAll(operator, false)`
 
 ## x402 Reachability
@@ -55,7 +57,7 @@ Unauthenticated invocation returns the expected x402 payment challenge:
 curl -i -X POST \
   https://approval-risk-auditor.doug-lance.workers.dev/entrypoints/audit-approvals/invoke \
   -H 'content-type: application/json' \
-  -d '{"input":{"wallet":"0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045","chains":["ethereum"],"token_addresses":[],"stale_days":180}}'
+  -d '{"input":{"wallet":"0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045","chains":["ethereum"],"token_addresses":[],"nft_addresses":[],"stale_days":180}}'
 ```
 
 Expected response: HTTP `402` with `X-PAYMENT header is required` and an
@@ -66,7 +68,7 @@ Expected response: HTTP `402` with `X-PAYMENT header is required` and an
 - [x] Matches Etherscan-style approval log data for configured top tokens.
 - [x] Identifies unlimited ERC-20 approvals.
 - [x] Identifies stale approvals using `stale_days`.
-- [x] Identifies NFT/operator approvals.
+- [x] Identifies ERC-721 single-token and NFT/operator approvals.
 - [x] Provides valid unsigned revocation transaction data.
 - [x] Deployed on a public HTTPS domain.
 - [x] Reachable via x402.
