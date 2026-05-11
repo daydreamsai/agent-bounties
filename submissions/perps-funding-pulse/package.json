@@ -1,0 +1,32 @@
+{
+  "name": "perps-funding-pulse",
+  "version": "0.1.0",
+  "description": "Fetch current funding rate, next tick, and open interest per market for perpetuals exchanges",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts",
+    "serve": "bun run src/server.ts"
+  },
+  "keywords": [
+    "perps",
+    "funding",
+    "defi",
+    "agent",
+    "x402"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@hono/node-server": "^2.0.2",
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.3"
+  }
+}
