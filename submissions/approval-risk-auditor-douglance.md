@@ -13,6 +13,9 @@ https://approval-risk-auditor.doug-lance.workers.dev
 Agent manifest:
 https://approval-risk-auditor.doug-lance.workers.dev/.well-known/agent.json
 
+Source:
+https://github.com/douglance/approval-risk-auditor
+
 Entrypoint:
 
 ```text
