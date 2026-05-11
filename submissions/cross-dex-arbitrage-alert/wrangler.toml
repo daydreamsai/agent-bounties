@@ -1,0 +1,7 @@
+name = "cross-dex-arbitrage-alert"
+main = "src/worker.ts"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
