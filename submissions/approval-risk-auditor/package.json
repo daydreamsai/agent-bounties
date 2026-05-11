@@ -1,0 +1,23 @@
+{
+  "name": "approval-risk-auditor",
+  "version": "0.2.0",
+  "description": "Multi-chain ERC-20, ERC-721 & ERC-1155 approval risk auditor with revoke tx builder",
+  "type": "module",
+  "main": "dist/agent.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/agent.js",
+    "dev": "tsx src/agent.ts"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.1.0",
+    "zod": "^3.22.0",
+    "viem": "^2.0.0",
+    "dotenv": "^16.3.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "tsx": "^4.7.0",
+    "@types/node": "^20.0.0"
+  }
+}
