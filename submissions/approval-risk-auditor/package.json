@@ -1,6 +1,6 @@
 {
   "name": "approval-risk-auditor",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Multi-chain ERC-20, ERC-721 & ERC-1155 approval risk auditor with revoke tx builder",
   "type": "module",
   "main": "dist/agent.js",

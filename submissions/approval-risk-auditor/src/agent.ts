@@ -1,20 +1,10 @@
 /**
- * Warden: Approval Risk Auditor
+ * Warden: Approval Risk Auditor v0.2.1
  *
  * Entrypoint-based agent that scans EVM wallets for risky token approvals
  * and generates revocation transaction data.
  *
  * Bounty: $1000 — daydreamsai/agent-bounties#5
- *
- * Inputs:
- *   wallet: Wallet address to audit
- *   chains: EVM chains to scan (ethereum, polygon, bsc, arbitrum, optimism, base, avalanche)
- *
- * Returns:
- *   approvals[]      - All approvals found
- *   risk_flags[]     - Risk indicators per approval
- *   revoke_tx_data[] - Ready-to-use revoke transaction calldata
- *   summary          - Overall risk assessment
  */
 
 import { z } from "zod";
@@ -25,16 +15,15 @@ import {
   calculateRiskScore,
   generateRiskFlags,
   generateSummary,
-  getSeverity,
 } from "./risk.js";
 import {
   buildRevokeTransactions,
 } from "./revoke.js";
-import { AuditResult, RiskFlag, RevokeTxData } from "./types.js";
+import { AuditResult, RiskFlag } from "./types.js";
 
 const { app, addEntrypoint } = createAgentApp({
   name: "approval-risk-auditor",
-  version: "0.2.0",
+  version: "0.2.1",
   description:
     "Flag unlimited or stale ERC-20 / NFT approvals and build revoke calls. Supports 7 EVM chains.",
 });
@@ -47,17 +36,13 @@ addEntrypoint({
   input: z.object({
     wallet: z
       .string()
-      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format"),
+      .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address format")
+      .transform(w => w.toLowerCase()),
     chains: z
       .array(
         z.enum([
-          "ethereum",
-          "polygon",
-          "bsc",
-          "arbitrum",
-          "optimism",
-          "base",
-          "avalanche",
+          "ethereum", "polygon", "bsc", "arbitrum",
+          "optimism", "base", "avalanche",
         ])
       )
       .min(1, "At least one chain required")
@@ -71,60 +56,72 @@ addEntrypoint({
     const { wallet, chains } = input;
     const startTime = Date.now();
 
+    // Scan chains in parallel with individual error handling
+    const scanResults = await Promise.allSettled(
+      chains.map(async (chainName) => {
+        const chain = getChain(chainName);
+        if (!chain) throw new Error(`Unknown chain: ${chainName}`);
+        const apiKey = getApiKey(chain);
+        if (!apiKey) throw new Error(`No API key for ${chainName}`);
+
+        const approvals = await scanChain(chain, wallet);
+        return { chainName, approvals };
+      })
+    );
+
+    // Collect results
     const allApprovals: AuditResult["approvals"] = [];
-    const chainResults: {
-      approvals: AuditResult["approvals"];
-      flags: { flags: RiskFlag[]; score: number }[];
-    }[] = [];
     const chainsScanned: string[] = [];
 
-    // Scan each requested chain
-    for (const chainName of chains) {
-      const chain = getChain(chainName);
-      if (!chain) continue;
-
-      const apiKey = getApiKey(chain);
-      if (!apiKey) continue;
-
-      try {
-        const approvals = await scanChain(chain, wallet);
-        const flags = generateRiskFlags(approvals);
-
-        allApprovals.push(...approvals);
-        chainResults.push({ approvals, flags });
-        chainsScanned.push(chainName);
-      } catch (err) {
-        // Chain scan failed, skip it
-        continue;
+    for (const result of scanResults) {
+      if (result.status === "fulfilled") {
+        allApprovals.push(...result.value.approvals);
+        chainsScanned.push(result.value.chainName);
       }
     }
 
-    // Build risk scores array
-    const riskScores = allApprovals.map((_, idx) => {
-      // Find the matching risk result
-      let offset = 0;
-      for (const cr of chainResults) {
-        if (idx < offset + cr.approvals.length) {
-          return cr.flags[idx - offset].score;
-        }
-        offset += cr.approvals.length;
-      }
-      return 0;
-    });
+    if (allApprovals.length === 0) {
+      return {
+        output: {
+          wallet,
+          approvals: [],
+          riskFlags: [],
+          revokeTxData: [],
+          summary: {
+            totalApprovals: 0,
+            unlimitedCount: 0,
+            staleCount: 0,
+            criticalCount: 0,
+            highCount: 0,
+            chainsScanned,
+            overallRiskScore: 0,
+          },
+        },
+        usage: {
+          total_tokens: `Scan completed across ${chainsScanned.length} chain(s). No approvals found.`,
+        },
+      };
+    }
+
+    // Generate risk scores for each approval
+    const riskScores = allApprovals.map((approval) =>
+      calculateRiskScore(approval)
+    );
+
+    // Generate flags
+    const flaggedResults = generateRiskFlags(allApprovals);
 
     // Flatten all risk flags
     const allRiskFlags: RiskFlag[] = [];
-    for (const cr of chainResults) {
-      for (const rf of cr.flags) {
-        allRiskFlags.push(...rf.flags);
-      }
+    for (const fr of flaggedResults) {
+      allRiskFlags.push(...fr.flags);
     }
 
     // Build revoke transactions
     const revokeTxData = buildRevokeTransactions(allApprovals, riskScores);
 
     // Generate summary
-    const summary = generateSummary(allApprovals, chainResults.flatMap(cr => cr.flags), chainsScanned);
+    const summary = generateSummary(allApprovals, flaggedResults, chainsScanned);
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 

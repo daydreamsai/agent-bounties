@@ -1,42 +1,86 @@
 /**
  * Approval scanner — fetches token transfers and approval events from
  * Etherscan-compatible APIs, then reconstructs current approval state.
+ *
+ * v0.2.1 — Fixed: Topic1/2 swap, added rate limiting, pagination, timeouts.
  */
 
 import { ChainConfig, getChain, getApiKey, CHAINS } from "./chains.js";
 import { Approval, EtherscanTx, TOP_TOKENS } from "./types.js";
 
 const ERC20_APPROVAL_TOPIC = "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925";
-const ERC721_APPROVAL_TOPIC = "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"; // Same topic
-const ERC721_APPROVAL_FOR_ALL_TOPIC = "0x17307eab39ab6107e8899845ad3d59bd9653f200f220920489ca2b5937696c31";
+const MAX_TOKENS_PER_CHAIN = 30;
+const TOKEN_TX_PAGE_SIZE = 500;
+const LOGS_PAGE_SIZE = 100;
 
-/**
- * Fetch all token transfer transactions for a wallet on a chain
- */
-async function fetchTokenTxs(
-  chain: ChainConfig,
-  wallet: string,
-  action: "tokentx" | "tokennfttx" = "tokentx"
-): Promise<EtherscanTx[]> {
-  const apiKey = getApiKey(chain);
-  if (!apiKey) return [];
+// Rate limiter: max N calls per second per API key
+class RateLimiter {
+  private lastCall = 0;
+  private minInterval: number;
+  constructor(callsPerSec: number) { this.minInterval = 1000 / callsPerSec; }
+  async wait(): Promise<void> {
+    const now = Date.now();
+    const waitMs = Math.max(0, this.lastCall + this.minInterval - now);
+    if (waitMs > 0) await new Promise(r => setTimeout(r, waitMs));
+    this.lastCall = Date.now();
+  }
+}
 
-  const url = `${chain.apiUrl}?module=account&action=${action}&address=${wallet}&sort=desc&offset=100&apikey=${apiKey}`;
+const rl = new RateLimiter(4); // 4 calls/sec (Etherscan free tier = 5/sec)
 
+async function rateLimitedFetch(url: string, timeoutMs = 8000): Promise<Response> {
+  await rl.wait();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.status !== "1" || !Array.isArray(data.result)) {
-      return [];
-    }
-    return data.result as EtherscanTx[];
-  } catch {
-    return [];
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
 /**
- * Fetch approval event logs for a wallet from a token contract
+ * Fetch ERC-20 token transfers with pagination.
+ * Etherscan returns max 10,000 results per page; we page through up to 3 pages.
+ */
+async function fetchTokenTxs(
+  chain: ChainConfig,
+  wallet: string
+): Promise<EtherscanTx[]> {
+  const apiKey = getApiKey(chain);
+  if (!apiKey) return [];
+
+  const allTxs: EtherscanTx[] = [];
+  let page = 1;
+  const MAX_PAGES = 3; // up to 1,500 txs
+
+  while (page <= MAX_PAGES) {
+    const url = `${chain.apiUrl}?module=account&action=tokentx`
+      + `&address=${wallet}&page=${page}&offset=${TOKEN_TX_PAGE_SIZE}`
+      + `&sort=desc&apikey=${apiKey}`;
+
+    try {
+      const res = await rateLimitedFetch(url);
+      const data = await res.json();
+      if (data.status !== "1" || !Array.isArray(data.result)) break;
+      const pageTxs = data.result as EtherscanTx[];
+      allTxs.push(...pageTxs);
+      if (pageTxs.length < TOKEN_TX_PAGE_SIZE) break; // last page
+      page++;
+    } catch {
+      break;
+    }
+  }
+  return allTxs;
+}
+
+/**
+ * Fetch Approval event logs for a wallet as OWNER from a token contract.
+ *
+ * ERC-20 Approval(address indexed owner, address indexed spender, uint256 value)
+ * topic0 = Approval event signature
+ * topic1 = owner (the wallet being audited)
+ * topic2 = spender
  */
 async function fetchApprovalLogs(
   chain: ChainConfig,
@@ -46,19 +90,19 @@ async function fetchApprovalLogs(
   const apiKey = getApiKey(chain);
   if (!apiKey) return [];
 
-  // Encode wallet address as padded topic
-  const topic2 = "0x" + wallet.slice(2).toLowerCase().padStart(64, "0");
+  // Encode wallet as topic1 (owner position)
+  const topic1Owner = "0x" + wallet.slice(2).toLowerCase().padStart(64, "0");
 
   const url =
     `${chain.apiUrl}?module=logs&action=getLogs` +
     `&address=${tokenAddress}` +
     `&topic0=${ERC20_APPROVAL_TOPIC}` +
-    `&topic2=${topic2}` +
-    `&topic0_2_opr=and` +
-    `&sort=desc&offset=100&apikey=${apiKey}`;
+    `&topic1=${topic1Owner}` +
+    `&topic0_1_opr=and` +
+    `&offset=${LOGS_PAGE_SIZE}&apikey=${apiKey}`;
 
   try {
-    const res = await fetch(url);
+    const res = await rateLimitedFetch(url);
     const data = await res.json();
     return Array.isArray(data.result) ? data.result : [];
   } catch {
@@ -67,54 +111,11 @@ async function fetchApprovalLogs(
 }
 
 /**
- * Get the ERC-20 allowance on-chain for a wallet + token + spender
- * Uses a lightweight static call via public RPC
- */
-async function fetchAllowance(
-  chain: ChainConfig,
-  tokenAddress: string,
-  wallet: string,
-  spender: string
-): Promise<string> {
-  // ERC-20 allowance function selector: 0xdd62ed3e
-  // allowance(address owner, address spender)
-  const data =
-    "0xdd62ed3e" +
-    "000000000000000000000000" + wallet.slice(2) +
-    "000000000000000000000000" + spender.slice(2);
-
-  const rpcUrl = chain.rpcUrl || "https://eth.merkle.io";
-  const body = JSON.stringify({
-    jsonrpc: "2.0",
-    id: 1,
-    method: "eth_call",
-    params: [
-      { to: tokenAddress, data },
-      "latest",
-    ],
-  });
-
-  try {
-    const res = await fetch(rpcUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-    });
-    const result = await res.json();
-    if (result.result) {
-      return BigInt(result.result).toString();
-    }
-  } catch {}
-  return "0";
-}
-
-/**
  * Check if an approval amount represents "unlimited" (type(uint256).max)
  */
 export function isUnlimitedApproval(amount: string): boolean {
   if (!amount) return false;
   const b = BigInt(amount);
-  // Max uint256 is ~1.15e77, anything > 1e40 is effectively unlimited
   return b > BigInt(10) ** BigInt(40);
 }
 
@@ -130,10 +131,10 @@ export async function scanChain(
     ([, c]) => c.name === chain.name
   )?.[0] || chain.name;
 
-  // Get token transfers to discover tokens held or traded
+  // 1. Get token transfers to discover tokens held/traded
   const txs = await fetchTokenTxs(chain, wallet);
 
-  // Extract unique token addresses
+  // 2. Extract unique token addresses
   const tokenAddresses = new Set<string>();
   for (const tx of txs) {
     if (tx.contractAddress && tx.contractAddress !== "0x") {
@@ -141,16 +142,15 @@ export async function scanChain(
     }
   }
 
-  // Also add top tokens for this chain
+  // 3. Also add top tokens for this chain (always check critical ones)
   const topForChain = TOP_TOKENS[chain.chainId] || [];
   for (const addr of topForChain) {
     tokenAddresses.add(addr.toLowerCase());
   }
 
-  // Limit to top 30 tokens per chain (rate limit protection)
-  const tokensToCheck = Array.from(tokenAddresses).slice(0, 30);
+  const tokensToCheck = Array.from(tokenAddresses).slice(0, MAX_TOKENS_PER_CHAIN);
 
-  // Build token metadata map
+  // 4. Build token metadata map from transfer history
   const tokenMeta = new Map<string, { name: string; symbol: string; decimals: number }>();
   for (const tx of txs) {
     const addr = tx.contractAddress?.toLowerCase();
@@ -163,22 +163,20 @@ export async function scanChain(
     }
   }
 
-  // Fetch approval events and extract spender addresses per token
+  // 5. Fetch approval logs per token, extract spenders per owner
   for (const tokenAddr of tokensToCheck) {
     const logs = await fetchApprovalLogs(chain, tokenAddr, wallet);
 
-    // Group by spender, take the latest event per spender
+    // Group by spender, keep latest event per spender
     const spenderMap = new Map<string, any>();
     for (const log of logs) {
-      // topic1 = owner (wallet), topic2 = spender
       const topics = log.topics as string[];
+      // topic1 = owner, topic2 = spender
       const spender = "0x" + topics[2].slice(26).toLowerCase();
-      const amountHex = log.data;
-      // Parse the amount
+      const amountHex = log.data || "0x0";
       const amount = BigInt(amountHex).toString();
       const spenderLower = spender.toLowerCase();
 
-      // Only keep the latest event per spender
       if (!spenderMap.has(spenderLower) ||
           BigInt(log.blockNumber || "0") > BigInt(spenderMap.get(spenderLower).blockNumber || "0")) {
         spenderMap.set(spenderLower, {
@@ -191,23 +189,16 @@ export async function scanChain(
       }
     }
 
-    // Also try NFT tokens
-    const nftTxs = await fetchTokenTxs(chain, wallet, "tokennfttx");
-    for (const tx of nftTxs) {
-      const addr = tx.contractAddress?.toLowerCase();
-      if (addr && !tokensToCheck.includes(addr) && tokenAddresses.size < 40) {
-        // Check NFT approvals via isApprovedForAll for known marketplaces
-        // For simplicity, we'll note it
-      }
-    }
+    const meta = tokenMeta.get(tokenAddr) || {
+      name: "Unknown Token",
+      symbol: "???",
+      decimals: 18,
+    };
 
     // Convert spender map to approvals
     for (const [, entry] of spenderMap) {
-      const meta = tokenMeta.get(tokenAddr) || {
-        name: "Unknown",
-        symbol: "???",
-        decimals: 18,
-      };
+      // Skip zero-value approvals (these are revocations)
+      if (entry.amount === "0" || BigInt(entry.amount) === BigInt(0)) continue;
 
       approvals.push({
         tokenAddress: tokenAddr,

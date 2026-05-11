@@ -1,5 +1,5 @@
 /**
- * Type definitions for approval risk auditor
+ * Type definitions for approval risk auditor — v0.2.1
  */
 
 export interface Approval {
@@ -8,13 +8,13 @@ export interface Approval {
   tokenSymbol: string;
   tokenDecimals: number;
   tokenType: "ERC20" | "ERC721" | "ERC1155";
-  tokenId?: string; // For ERC-721
+  tokenId?: string;
   spender: string;
-  spenderName?: string; // Known protocol name
+  spenderName?: string;
   amount: string;
   isUnlimited: boolean;
   blockNumber: number;
-  timestamp: number; // Unix timestamp of the approval tx
+  timestamp: number;
   txHash: string;
   chain: string;
   chainId: number;
@@ -33,9 +33,9 @@ export interface RevokeTxData {
   tokenAddress: string;
   spender: string;
   tokenType: string;
-  to: string; // Contract to call
-  data: string; // Calldata for revoke
-  value: string; // 0x0 for approvals
+  to: string;
+  data: string;
+  value: string;
   gasEstimate?: string;
   description: string;
 }
@@ -69,31 +69,21 @@ export interface EtherscanTx {
   input: string;
 }
 
-export interface EtherscanLog {
-  address: string;
-  topics: string[];
-  data: string;
-  blockNumber: string;
-  timeStamp: string;
-  transactionHash: string;
-  logIndex: string;
-}
-
-// Known spenders mapped to protocol names
+// Known spenders mapped to protocol names — deduplicated
 export const KNOWN_SPENDERS: Record<string, string> = {
   "0x7a250d5630b4cf539739df2c5dacb4c659f2488d": "Uniswap V2 Router",
   "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45": "Uniswap V3 Router",
-  "0xe592427a0aece92de3edee1f18e0157c05861564": "Uniswap V3 Router",
+  "0xe592427a0aece92de3edee1f18e0157c05861564": "Uniswap V3 Router 2",
   "0x0000000000007f150bd6f54c40a34d7c3d5e9f56": "Uniswap Permit2",
-  "0x000000000022d473030f116ddee9f6b43ac78ba3": "Uniswap Permit2",
+  "0x000000000022d473030f116ddee9f6b43ac78ba3": "Uniswap Permit2 V2",
   "0xdef1c0ded9bec7f1a1670819833240f027b25eff": "0x Exchange Proxy",
   "0xd9e1ce17f2641f24ae83637ab66a2cca9c378b9f": "SushiSwap Router",
-  "0x1b02da8cb0d097eb8d57a175b88c7d8b47997506": "SushiSwap Router",
+  "0x1b02da8cb0d097eb8d57a175b88c7d8b47997506": "SushiSwap Router V1",
   "0xfcb155c2e0022a43a0e6b45b7e032262c8ae6eda": "Aave V2 LendingPool",
   "0x41393e5e337606dc11c2bb0d4f68d2023b24a2c9": "Aave V3 Pool",
-  "0x0000000000000000000000000000000000000001": "ERC-20 Permit2",
-  "0x0000000000000ad24e80fd803c6ac37206a45f15": "Uniswap UniversalRouter",
-  "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad": "Uniswap UniversalRouter",
+  "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9": "Aave V2 LendingPool V2",
+  "0x0000000000000ad24e80fd803c6ac37206a45f15": "Uniswap UniversalRouter V1",
+  "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad": "Uniswap UniversalRouter V2",
   "0x0000000000000c30d1b3a4b5c12e1d1f5e5d6d5a": "Blur Marketplace",
   "0x0000000000001ff3684f27cca1a7252b3f2c2b5d": "Blend (Blur)",
   "0x39da41747a83aee658334415666f3ef92dd0d541": "Blur",
@@ -104,17 +94,16 @@ export const KNOWN_SPENDERS: Record<string, string> = {
   "0xfed24ec7e22f573d2d6d0f9c9a0f0fdb5c2e9a1f": "LooksRare",
   "0x0000000000e655fae079d09dbe70a03e68d56cfb": "X2Y2",
   "0x74312363e45dcaba76c59ec49a7aa8a65a67eed3": "ParaSwap",
-  "0x216b4b4ba9f3e719726886d34a177484278bfcae": "Paraswap Augustus",
+  "0x216b4b4ba9f3e719726886d34a177484278bfcae": "ParaSwap Augustus",
   "0x1111111254fb6c44bac0bed2854e76f90643097d": "1inch Router V5",
   "0x1111111254eeb25477b68fb85ed929f73a960582": "1inch Router V6",
-  "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9": "Aave V2 LendingPool",
   "0xae7ab96520de3a18e5e111b5eaab095312d7fe84": "Lido stETH",
   "0x0000000000a39bb272e79075ade125fd3512acb0": "MetaMask Swap Router",
-  "0x881d40237659c251811cec9c364ef91dc08d300c": "MetaMask Swap Router",
+  "0x881d40237659c251811cec9c364ef91dc08d300c": "MetaMask Swap Router V2",
   "0xdf1a1b60f2d438842b0b12494fe0d9d12da85665": "Lens Protocol",
 };
 
-// Top tokens by market cap to focus scanning on
+// Top tokens by market cap per chain
 export const TOP_TOKENS: Record<number, string[]> = {
   1: [
     "0xdac17f958d2ee523a2206206994597c13d831ec7", // USDT
@@ -126,11 +115,9 @@ export const TOP_TOKENS: Record<number, string[]> = {
     "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9", // AAVE
     "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", // WBTC
     "0x853d955acef822db058eb8505911ed77f175b99e", // FRAX
-    "0x4fabb145d64652a948d72533023f6e7a623c7c53", // BUSD
     "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce", // SHIB
     "0x3845badade8e6dff049820680d1f14bd3903a5d0", // SAND
     "0x0f5d2fb29fb7d3cfee444a200298f468908cc942", // MANA
-    "0xba100000625a3754423978a60c9317c58a424e3d", // BAL
     "0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f", // SNX
   ],
   137: [
