@@ -1,0 +1,20 @@
+{
+  "name": "il-estimator",
+  "version": "0.1.0",
+  "description": "Estimate impermanent loss and fee APR for LP positions across major AMMs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir ./dist",
+    "start": "bun run dist/index.js"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.5.0"
+  }
+}
