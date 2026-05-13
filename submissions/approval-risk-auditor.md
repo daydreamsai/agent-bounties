@@ -104,7 +104,7 @@ The Approval Risk Auditor is a DeFi security agent that scans Ethereum wallet ad
 
 The agent is deployed and accessible via x402 protocol.
 
-**Deployment URL:** https://approval-risk-auditor.openclaw.app
+**Deployment URL:** https://rpm-wonderful-eyes-ownership.trycloudflare.com
 
 ### How to run locally
 
