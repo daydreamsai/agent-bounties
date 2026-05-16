@@ -1,0 +1,7 @@
+name = "perps-funding-pulse"
+main = "worker.ts"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
