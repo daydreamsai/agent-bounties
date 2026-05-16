@@ -5,13 +5,15 @@
     "moduleResolution": "bundler",
     "outDir": "dist",
     "rootDir": "src",
+    "lib": ["es2022"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "resolveJsonModule": true
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "tests"]

@@ -1,48 +1,87 @@
-import { z } from "zod";
+/**
+ * Types for the LP Impermanent Loss Estimator agent.
+ */
 
-/** Pool types supported by the estimator */
-export const PoolType = z.enum(["uniswap_v2", "uniswap_v3", "curve", "balancer"]);
-export type PoolType = z.infer<typeof PoolType>;
+/** Supported AMM types */
+export type AmmType = "uniswap_v2" | "uniswap_v3";
 
-/** Input schema for the IL estimator */
-export const EstimateILInput = z.object({
-  pool_address: z.string().describe("LP pool address"),
-  token_weights: z.array(z.number().min(0).max(1)).describe("Token weight distribution"),
-  deposit_amounts: z.array(z.number().positive()).describe("Amount of each token deposited"),
-  window_hours: z.number().positive().default(24).describe("Historical window for calculation"),
-  pool_type: PoolType.default("uniswap_v2").describe("Type of AMM pool"),
-  entry_price_ratio: z.number().positive().optional().describe("Price ratio at time of deposit"),
-  current_price_ratio: z.number().positive().optional().describe("Current price ratio"),
-});
+/** Token weight distribution */
+export type TokenWeights = [number, number];
 
-export type EstimateILInput = z.infer<typeof EstimateILInput>;
+/** Deposit amounts for each token */
+export type DepositAmounts = [string, string];
 
-/** Individual token analysis */
-export interface TokenAnalysis {
-  token_index: number;
-  weight: number;
-  deposit_amount: number;
-  current_value: number;
-  pnl_usd: number;
+/**
+ * Input schema for the estimate entrypoint.
+ */
+export interface EstimateInput {
+  pool_address: string;
+  amm_type?: AmmType;
+  token_weights?: TokenWeights;
+  deposit_amounts: DepositAmounts;
+  window_hours?: number;
+  /** Uniswap V3 specific: price range as [lower, upper] tick */
+  price_range?: [number, number];
+  /** Current price of token0 in terms of token1 */
+  current_price?: number;
+  /** Entry price at time of deposit */
+  entry_price?: number;
+  /** Current pool fee tier in basis points (e.g. 30 = 0.3%) */
+  fee_tier_bps?: number;
+  /** Pool TVL at entry */
+  tvl_entry?: number;
+  /** Current pool TVL */
+  tvl_current?: number;
+  /** Trading volume in the window (USD) */
+  volume_window?: number;
 }
 
-/** Output schema for the IL estimator */
-export interface EstimateILOutput {
-  IL_percent: number;
-  IL_usd: number;
+/**
+ * Output schema for the estimate entrypoint.
+ */
+export interface EstimateOutput {
+  /** Impermanent loss as a percentage (e.g. 2.5 = 2.5% loss) */
+  il_percent: number;
+  /** Estimated APR from fees (annualized percentage) */
   fee_apr_est: number;
+  /** Trading volume in the analysis window (USD) */
   volume_window: number;
-  break_even_price_ratio: number;
-  token_analyses: TokenAnalysis[];
-  pool_type: string;
+  /** Price ratio (current / entry) */
+  price_ratio: number;
+  /** Net P&L including IL and fees (percentage) */
+  net_pnl_percent: number;
+  /** Whether position is in profit (before IL) */
+  position_in_profit: boolean;
+  /** Additional context and warnings */
   notes: string[];
 }
 
-/** Historical price point */
-export interface PricePoint {
-  timestamp: number;
-  price_ratio: number;
-  volume_24h: number;
-  fees_24h: number;
-  tvl: number;
+/**
+ * Parameters for impermanent loss calculation.
+ */
+export interface ILParams {
+  ammType: AmmType;
+  priceRatio: number;
+  tokenWeights?: TokenWeights;
+  priceRange?: [number, number];
+}
+
+/**
+ * Fee APR estimation parameters.
+ */
+export interface FeeAprParams {
+  feeTierBps: number;
+  volumeWindow: number;
+  tvlCurrent: number;
+  windowHours: number;
+}
+
+/**
+ * Price ratio analysis result.
+ */
+export interface PriceAnalysis {
+  ratio: number;
+  deviationPercent: number;
+  direction: "up" | "down" | "flat";
+  severity: "low" | "medium" | "high" | "extreme";
 }

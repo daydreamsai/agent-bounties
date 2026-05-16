@@ -1,20 +1,30 @@
 {
   "name": "lp-impermanent-loss-estimator",
   "version": "0.1.0",
-  "description": "Calculate impermanent loss and fee APR for any LP position on Uniswap V2/V3",
+  "description": "Calculate impermanent loss and fee APR for any Uniswap V2/V3 LP position",
+  "type": "module",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "start": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "keywords": [
+    "defi",
+    "impermanent-loss",
+    "uniswap",
+    "lp",
+    "agent-kit"
+  ],
+  "license": "MIT",
   "dependencies": {
-    "@lucid-dreams/agent-kit": "^0.1.0",
-    "zod": "^3.23.0"
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "typescript": "^5.4.0",
-    "vitest": "^1.6.0"
+    "@types/node": "^25.8.0",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.0"
   }
 }
