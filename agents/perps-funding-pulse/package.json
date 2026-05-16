@@ -1,0 +1,20 @@
+{
+  "name": "perps-funding-pulse",
+  "version": "0.1.0",
+  "description": "Track perpetual futures funding rates across GMX, dYdX, Hyperliquid, and other DEXs. Identify arbitrage opportunities and monitor extreme funding events.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.1.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}

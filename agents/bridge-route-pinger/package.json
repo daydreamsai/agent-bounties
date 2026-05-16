@@ -1,0 +1,20 @@
+{
+  "name": "bridge-route-pinger",
+  "version": "0.1.0",
+  "description": "Monitor cross-chain bridge routes, track latency and availability across Stargate, Across, Hop, and others",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.1.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
