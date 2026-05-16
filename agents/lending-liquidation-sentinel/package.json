@@ -1,0 +1,10 @@
+{
+  "name": "@daydreams/lending-liquidation-sentinel",
+  "version": "1.0.0",
+  "description": "Lending liquidation sentinel agent for Daydreams bounties",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "node --experimental-strip-types tests/calculations.test.ts"
+  },
+  "dependencies": {}
+}
