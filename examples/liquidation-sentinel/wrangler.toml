@@ -1,0 +1,9 @@
+name = "jarvis-bounty-hunter"
+main = "server.ts"
+compatibility_date = "2024-05-01"
+
+[vars]
+NODE_ENV = "production"
+SOLANA_TREASURY_ADDRESS = "2WktXRjaQ4GKhj6FJhUSndTBLVjxrk43TQwyywehneDA"
+
+# Usage: wrangler deploy
