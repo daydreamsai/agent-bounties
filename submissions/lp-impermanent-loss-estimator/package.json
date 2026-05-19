@@ -1,0 +1,30 @@
+{
+  "name": "lp-impermanent-loss-estimator",
+  "version": "0.1.0",
+  "description": "Calculate IL and fee APR for any LP position or simulated deposit",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "npx tsx src/server.ts",
+    "dev": "npx tsx watch src/server.ts"
+  },
+  "keywords": [
+    "defi",
+    "lp",
+    "impermanent-loss",
+    "yield",
+    "agent",
+    "x402"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@hono/node-server": "^2.0.2",
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.3"
+  }
+}
