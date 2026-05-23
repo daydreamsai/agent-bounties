@@ -11,7 +11,7 @@
 - Manifest: https://approval-risk-auditor.tolga-730.workers.dev/.well-known/agent.json
 - Entrypoints: https://approval-risk-auditor.tolga-730.workers.dev/entrypoints
 - Canonical invoke: `POST https://approval-risk-auditor.tolga-730.workers.dev/entrypoints/audit_approvals/invoke`
-- Compatibility invoke: `POST /entrypoints/audit-approvals/invoke` and `POST /invoke`
+- Compatibility invoke: `POST /entrypoints/audit-approvals/invoke`, `POST /entrypoints/audit/invoke`, and `POST /invoke`
 
 ## Repository
 
@@ -30,11 +30,11 @@ The Approval Risk Auditor scans EVM wallets for risky ERC-20 and NFT approvals a
 
 Features:
 
-- ERC-20 approval log scanning for curated major assets across Ethereum, Base, Polygon, Arbitrum, and Optimism.
+- ERC-20 approval log scanning for curated major assets across Ethereum, Base, Polygon, Arbitrum, Optimism, BSC, Avalanche, Fantom, and Gnosis.
 - Current `allowance(owner, spender)` validation before reporting, so already-revoked/zero allowances are ignored.
 - Etherscan-compatible explorer fallback hooks for ERC-20 `Approval` logs when explorer API keys are configured.
 - NFT `ApprovalForAll` discovery hooks through RPC/global logs where supported plus explorer fallback hooks.
-- Risk flags for unlimited allowances, nonzero allowances, stale approvals, and NFT operator approvals.
+- Risk flags for unlimited allowances, nonzero allowances, stale approvals, NFT operator approvals, and unknown spender EOAs/contracts when bytecode checks are available.
 - Revoke calldata for:
   - ERC-20: `approve(spender, 0)`
   - NFT: `setApprovalForAll(operator, false)`
@@ -71,16 +71,16 @@ npm run build
 # TypeScript clean
 
 npm test
-# 3 test files passed, 20 tests passed
+# 3 test files passed, 23 tests passed
 ```
 
 Smoke-tested live deployment:
 
 - `GET /health` returns ok metadata.
 - `GET /.well-known/agent.json` returns the manifest.
-- `GET /entrypoints` includes `audit_approvals` and alias `audit-approvals`.
+- `GET /entrypoints` includes `audit_approvals` and aliases `audit-approvals` and `audit`.
 - Unpaid `POST /entrypoints/audit_approvals/invoke` returns HTTP 402 with x402 payment requirements.
-- Unpaid `POST /entrypoints/audit-approvals/invoke` returns HTTP 402 with the same canonical x402 resource.
+- Unpaid `POST /entrypoints/audit-approvals/invoke` and `POST /entrypoints/audit/invoke` return HTTP 402 with the same canonical x402 resource.
 - Unpaid legacy `POST /invoke` returns HTTP 402.
 
 ## Notes
