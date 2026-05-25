@@ -1,6 +1,21 @@
-## Perps Funding Pulse Agent
+# Perps Funding Pulse Agent
 
-This agent fetches perpetuals funding data from major venues in real-time.
+This agent fetches current funding rate, next tick, and open interest per market for perpetuals.
+
+## Features
+
+- Real-time funding rate data
+- Open interest tracking
+- Long/short skew analysis
+- x402-compatible API endpoint
+
+## Usage
+
+
+
+Welcome to the Daydreams AI Agent Bounties program! 🚀
+
+## About
 
 This repository hosts bounties for building AI agents that solve real DeFi and Web3 problems. Each bounty is worth **$1,000** and is awarded on a **first-come, first-served** basis to qualifying submissions.
 
