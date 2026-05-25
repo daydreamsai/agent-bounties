@@ -1,17 +1,4 @@
-# Perps Funding Pulse Agent
-
-This agent fetches current funding rate, next tick, and open interest per market for perpetuals.
-
-## Features
-
-- Real-time funding rate data
-- Open interest tracking
-- Long/short skew analysis
-- x402-compatible API endpoint
-
-## Usage
-
-
+# Agent Bountes
 
 Welcome to the Daydreams AI Agent Bounties program! 🚀
 
@@ -23,23 +10,23 @@ This repository hosts bounties for building AI agents that solve real DeFi and W
 
 Browse our [open issues](https://github.com/daydreamsai/agent-bounties/issues) to see all available bounties. Each bounty includes:
 
-- Clear specification with inputs and outputs
-- Acceptance criteria
-- Deployment requirements (must be reachable via x402)
-- $1000 reward
-
-### Featured Bounties
+1. [Fresh Markets Watch](https://github.com/daydreamsai/agent-bounties/issues/1) - Monitor new AMM pairs
+2. [Cross DEX Arbitrage Alert](https://github.com/daydreamsai/agent-bounties/issues/2) - Detect arbitrage opportunities
+3. [Slippage Sentinel](https://github.com/daydreamsai/agent-bounties/issues/3) - Estimate safe slippage
+4. [GasRoute Oracle](https://github.com/daydreamsai/agent-bounties/issues/4) - Find cheapest chain for transactions  
+5. [Approval Risk Auditor](https://github.com/daydreamsai/agent-bounties/issues/5) - Flag risky token approvals
+6. [Yield Pool Watcher](https://github.com/daydreamsai/agent-bounties/issues/6) - Track APY and TVL changes
 
 1. [Fresh Markets Watch](https://github.com/daydreamsai/agent-bounties/issues/1) - Monitor new AMM pairs
 2. [Cross DEX Arbitrage Alert](https://github.com/daydreamsai/agent-bounties/issues/2) - Detect arbitrage opportunities
 3. [Slippage Sentinel](https://github.com/daydreamsai/agent-bounties/issues/3) - Estimate safe slippage
 4. [GasRoute Oracle](https://github.com/daydreamsai/agent-bounties/issues/4) - Find cheapest chain for transactions
-5. [Approval Risk Auditor](https://github.com/daydreamsai/agent-bounties/issues/5) - Flag risky token approvals
-6. [Yield Pool Watcher](https://github.com/daydreamsai/agent-bounties/issues/6) - Track APY and TVL changes
-7. [LP Impermanent Loss Estimator](https://github.com/daydreamsai/agent-bounties/issues/7) - Calculate IL and fees
 8. [Perps Funding Pulse](https://github.com/daydreamsai/agent-bounties/issues/8) - Fetch perpetuals funding data
 9. [Lending Liquidation Sentinel](https://github.com/daydreamsai/agent-bounties/issues/9) - Monitor liquidation risk
-10. [Bridge Route Pinger](https://github.com/daydreamsai/agent-bounties/issues/10) - Find best bridge routes
+10. [Bridge Route Pinger](https://github.com/daydreamsai/agent-bounties/issues/10) - Find best bridge routes  
+
+## How to Submit
+
 
 ## How to Submit
 
