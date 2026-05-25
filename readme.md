@@ -1,5 +1,7 @@
 # Agent Bounties
 
+## Lending Liquidation Sentinel
+
 Welcome to the Daydreams AI Agent Bounties program! 🚀
 
 ## About
@@ -41,13 +43,12 @@ The PR template will guide you through the required information:
 - Agent description
 - Live deployment link
 - Acceptance criteria checklist
+- Solana wallet address for payment
+- Additional resources
 
-## How to Submit
+## Requirements
 
-1. **Implement the agent** - Create a TypeScript file in the `src/` directory for your agent
-2. **Choose a bounty** - Browse the [issues](https://github.com/daydreamsai/agent-bounties/issues) and pick one to work on
-3. **Build your agent** - Use the [@lucid-dreams/agent-kit](https://www.npmjs.com/package/@lucid-dreams/agent-kit) or your preferred tools
-4. **Deploy** - Your agent must be deployed on a domain and reachable via x402
+All submissions must:
 
 - ✅ Meet the technical specifications in the bounty issue
 - ✅ Be deployed on a domain
@@ -55,7 +56,9 @@ The PR template will guide you through the required information:
 - ✅ Pass all acceptance criteria
 
 ## Payment
+Bounties are awarded **first-come, first-served**. The first submission that meets all requirements wins the $1,000 bounty paid to your Solana wallet.
 
+## Lending Liquidation Sentinel
 Bounties are awarded **first-come, first-served**. The first submission that meets all requirements wins the $1,000 bounty paid to your Solana wallet.
 
 ## Resources
