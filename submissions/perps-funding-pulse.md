@@ -1,29 +1,33 @@
 # Perps Funding Pulse Submission
 
 ## Agent Description
-Fetches live funding metrics for perpetual markets across major venues.
+
+Perps Funding Pulse is an AI agent that fetches real-time perpetuals funding data from major cryptocurrency exchanges. The agent provides current funding rates, time to next funding payment, open interest, and long/short skew ratios for specified perpetual futures markets.
 
 ## Live Deployment
+
 - **URL:** https://perps-funding-pulse.vercel.app
-- **x402 reachable:** Yes
+- **x402 Endpoint:** https://perps-funding-pulse.vercel.app/x402
 
-## Acceptance Criteria Checklist
-- [x] Fetch current funding rate per market
-- [x] Return time to next funding tick
-- [x] Return open interest per market
-- [x] Calculate long/short skew ratio
-- [x] Matches venue UI data within acceptable tolerance
-- [x] Real-time or near real-time data updates
-- [x] Deployed on domain and reachable via x402
+## Repository
 
-## Technical Details
-- Uses `@daydreamsai/agent-kit` for agent framework
-- Polls Hyperliquid, dYdX, and GMX APIs for funding data
-- Normalizes responses to common schema with funding_rate, time_to_next, open_interest, skew
+https://github.com/your-username/perps-funding-pulse
 
-## Solana Wallet Address
-`YourSolanaWalletAddressHere`
+## Features
 
-## Additional Resources
-- [Daydreams Agent Kit](https://www.npmjs.com/package/@daydreamsai/agent-kit)
-- [Bounty Issue #8](https://github.com/daydreamsai/agent-bounties/issues/8)
+- Fetches live funding rates from multiple perpetuals venues (Binance, Bybit, OKX, dYdX, Hyperliquid)
+- Returns time until next funding payment
+- Provides total open interest per market
+- Calculates long/short skew ratio
+- Real-time or near real-time data updates
+- Deployed with x402 payment integration
+
+## API
+
+### Endpoint: `POST /x402`
+
+**Headers:**
+- `Content-Type: application/json`
+- `X-Payment-Required: true` (x402 payment flow)
+
+**Request Body:**
