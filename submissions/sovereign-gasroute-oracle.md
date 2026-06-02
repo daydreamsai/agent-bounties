@@ -7,7 +7,7 @@ A production-grade, highly precise, and extremely lightweight gas routing oracle
 - **Related Issue:** [GasRoute Oracle #4](https://github.com/daydreamsai/agent-bounties/issues/4)
 - **Reward:** $1,000 USD/USDC
 - **Live Deployment Link:** `http://18.196.223.109:18999/api/gasroute` (Reachable via x402 / HTTP POST)
-- **Solana Wallet Address:** `ad7p5x9PBydhyTw8Ddquaw5j4JKgsQoaxGCvMt2cNak`
+- **EVM Wallet Address (USDC):** `0x9758AdAe878bd4EAD0aa24408c56D7d4aEC29a5`
 
 ---
 
