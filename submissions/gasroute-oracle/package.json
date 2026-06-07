@@ -1,0 +1,23 @@
+{
+  "name": "gasroute-oracle",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "start": "tsx src/server.ts"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "latest",
+    "@x402/core": "^2.14.0",
+    "@x402/evm": "^2.14.0",
+    "@x402/express": "^2.14.0",
+    "@x402/paywall": "^2.14.0",
+    "express": "^5.1.0",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}

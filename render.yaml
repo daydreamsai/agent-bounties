@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: slippage-sentinel
+    runtime: docker
+    dockerContext: submissions/slippage-sentinel
+    dockerfilePath: submissions/slippage-sentinel/Dockerfile
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: X402_PAY_TO
+        sync: false
+      - key: X402_NETWORK
+        value: eip155:84532
+      - key: X402_FACILITATOR_URL
+        value: https://x402.org/facilitator
+      - key: X402_PRICE
+        value: "$0.001"
+  - type: web
+    name: gasroute-oracle
+    runtime: docker
+    dockerContext: submissions/gasroute-oracle
+    dockerfilePath: submissions/gasroute-oracle/Dockerfile
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: X402_PAY_TO
+        sync: false
+      - key: X402_NETWORK
+        value: eip155:84532
+      - key: X402_FACILITATOR_URL
+        value: https://x402.org/facilitator
+      - key: X402_PRICE
+        value: "$0.001"
