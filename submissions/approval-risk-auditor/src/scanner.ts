@@ -9,9 +9,10 @@ import {
   parseAbi,
   toBytes,
   type Log,
-  type PublicClient
+  type PublicClient,
+  type Chain
 } from 'viem';
-import { arbitrum, base, mainnet, optimism, polygon } from 'viem/chains';
+import { arbitrum, avalanche, base, bsc, fantom, gnosis, mainnet, optimism, polygon } from 'viem/chains';
 import { attachRiskScore, erc20RevokeTx, erc721TokenRevokeTx, maxUint256, operatorRevokeTx } from './calldata.js';
 import { getChainConfig, type ChainConfig } from './chains.js';
 import { baseRiskFlags, isLikelyHighValue } from './risk.js';
@@ -455,7 +456,18 @@ async function safeBlock(client: AnyClient, blockNumber: bigint) {
 }
 
 function createClient(chain: SupportedChain, config: ChainConfig): AnyClient {
-  const viemChain = chain === 'ethereum' ? mainnet : chain === 'base' ? base : chain === 'polygon' ? polygon : chain === 'arbitrum' ? arbitrum : optimism;
+  const viemChains: Record<SupportedChain, Chain> = {
+    ethereum: mainnet,
+    base,
+    polygon,
+    arbitrum,
+    optimism,
+    bsc,
+    avalanche,
+    gnosis,
+    fantom
+  };
+  const viemChain = viemChains[chain];
   return createPublicClient({ chain: viemChain, transport: http(config.rpcUrl, { timeout: 20_000 }) }) as AnyClient;
 }
 

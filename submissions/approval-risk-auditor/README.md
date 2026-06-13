@@ -15,7 +15,7 @@ It does not request private keys, does not sign transactions, and does not broad
 }
 ```
 
-Supported chains: `ethereum`, `base`, `polygon`, `arbitrum`, `optimism`.
+Supported chains: `ethereum`, `base`, `polygon`, `arbitrum`, `optimism`, `bsc`, `avalanche`, `gnosis`, `fantom`.
 
 ## Output
 
@@ -95,7 +95,9 @@ The server exposes:
 - `GET /.well-known/agent.json`
 - `GET /entrypoints`
 - `POST /entrypoints/audit_approvals/invoke`
+- `POST /entrypoints/audit-approvals/invoke`
 - `POST /entrypoints/audit/invoke`
+- `POST /invoke`
 
 If `X402_PAY_TO` is set, invoke routes are protected by `@x402/express`. Set `X402_FACILITATOR_URL` to the facilitator used by the deployment, for example `https://facilitator.openx402.ai`.
 
@@ -111,6 +113,6 @@ PUBLIC_BASE_URL=http://127.0.0.1:8792 \
 npm start
 ```
 
-An unpaid `POST /entrypoints/audit_approvals/invoke` should return HTTP 402 with a `PAYMENT-REQUIRED` header. Public validation against the deployment URL returned Base USDC, amount `10000` atomic units (`$0.01`), and payout wallet `0x1f0130669ca6fd02e025a984cc038f139df19a2f`.
+An unpaid protected POST should return HTTP 402 with a `PAYMENT-REQUIRED` header. Public validation against the deployment URL returned Base USDC, amount `10000` atomic units (`$0.01`), and payout wallet `0x1f0130669ca6fd02e025a984cc038f139df19a2f`.
 
 The current public deployment uses a Cloudflare Tunnel URL. A stable custom hostname can be pointed at the same service without code changes by setting `PUBLIC_BASE_URL` and restarting the server.

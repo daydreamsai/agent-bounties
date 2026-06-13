@@ -8,14 +8,14 @@ Issue: #5 - Approval Risk Auditor
 
 Implementation path: `submissions/approval-risk-auditor`
 
-The agent audits EVM wallet approvals across Ethereum, Base, Polygon, Arbitrum, and Optimism. It indexes Approval and ApprovalForAll logs, validates current on-chain state with `allowance`, `getApproved`, and `isApprovedForAll`, then returns active approvals with risk flags and unsigned revoke transaction calldata.
+The agent audits EVM wallet approvals across Ethereum, Base, Polygon, Arbitrum, Optimism, BSC, Avalanche, Gnosis, and Fantom. It indexes Approval and ApprovalForAll logs, validates current on-chain state with `allowance`, `getApproved`, and `isApprovedForAll`, then returns active approvals with risk flags and unsigned revoke transaction calldata.
 
 Data collection uses Etherscan v2 logs when `ETHERSCAN_API_KEY` is available. Without an explorer key, the fallback public RPC path limits default historical scanning to the latest 750,000 blocks to avoid unreliable broad `eth_getLogs` calls; callers can still pass explicit `from_block` values.
 
 ## Inputs
 
 - `wallet`: EVM wallet address
-- `chains`: supported chain names, for example `["ethereum", "base", "polygon", "arbitrum"]`
+- `chains`: supported chain names, for example `["ethereum", "base", "polygon", "arbitrum", "bsc"]`
 - optional `stale_days`
 - optional `token_addresses` filter
 
@@ -67,7 +67,7 @@ Tests cover:
 Current local validation:
 
 - `npm run build` passes
-- `npm test` passes 9 tests
+- `npm test` passes 10 tests
 - `npm run lint` passes
 - local unpaid x402 invoke returns HTTP 402 with a decodable `PAYMENT-REQUIRED` header for Base USDC, amount `10000` atomic units, and payout wallet `0x1f0130669ca6fd02e025a984cc038f139df19a2f`
 - public unpaid x402 invoke against the deployment URL returns HTTP 402 with a decodable `PAYMENT-REQUIRED` header whose resource URL is `https://gpt55.558686.xyz/approval-risk-auditor/entrypoints/audit_approvals/invoke`
@@ -84,7 +84,9 @@ Live deployment:
 The implementation includes an Express server with `@x402/express` protection for:
 
 - `POST /entrypoints/audit_approvals/invoke`
+- `POST /entrypoints/audit-approvals/invoke`
 - `POST /entrypoints/audit/invoke`
+- `POST /invoke`
 
 The current deployment uses a Cloudflare Tunnel hostname and has been verified reachable via HTTPS and x402. A stable custom hostname can point at the same server by setting `PUBLIC_BASE_URL` and restarting the service.
 

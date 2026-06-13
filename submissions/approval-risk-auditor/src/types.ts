@@ -1,6 +1,16 @@
 import { z } from 'zod';
 
-export const supportedChains = ['ethereum', 'base', 'polygon', 'arbitrum', 'optimism'] as const;
+export const supportedChains = [
+  'ethereum',
+  'base',
+  'polygon',
+  'arbitrum',
+  'optimism',
+  'bsc',
+  'avalanche',
+  'gnosis',
+  'fantom'
+] as const;
 export type SupportedChain = (typeof supportedChains)[number];
 
 export const auditInputSchema = z.object({

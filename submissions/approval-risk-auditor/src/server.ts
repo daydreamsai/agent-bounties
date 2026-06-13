@@ -5,6 +5,7 @@ import { paymentMiddleware, x402ResourceServer } from '@x402/express';
 import { HTTPFacilitatorClient } from '@x402/core/server';
 import { ExactEvmScheme } from '@x402/evm/exact/server';
 import { auditApprovalRisk, agentMetadata } from './agent.js';
+import { supportedChains } from './types.js';
 
 const port = Number(process.env.PORT || 8787);
 const payTo = process.env.X402_PAY_TO || '';
@@ -18,6 +19,56 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
+const invokePaths = [
+  '/entrypoints/audit_approvals/invoke',
+  '/entrypoints/audit-approvals/invoke',
+  '/entrypoints/audit/invoke',
+  '/invoke'
+];
+
+const auditInputJsonSchema = {
+  type: 'object',
+  required: ['wallet', 'chains'],
+  properties: {
+    wallet: { type: 'string', pattern: '^0x[a-fA-F0-9]{40}$' },
+    chains: { type: 'array', items: { enum: supportedChains } },
+    stale_days: { type: 'integer', default: 90 },
+    from_block: { type: 'object', additionalProperties: { type: 'integer' } },
+    token_addresses: { type: 'array', items: { type: 'string' } }
+  }
+};
+
+const agentEntrypoints = [
+  {
+    key: 'audit_approvals',
+    method: 'POST',
+    path: '/entrypoints/audit_approvals/invoke',
+    description: 'Audit wallet token/NFT approvals and return revoke calldata.',
+    input_schema: auditInputJsonSchema
+  },
+  {
+    key: 'audit-approvals',
+    method: 'POST',
+    path: '/entrypoints/audit-approvals/invoke',
+    description: 'Alias for audit_approvals, useful for clients that prefer hyphenated entrypoint names.',
+    input_schema: auditInputJsonSchema
+  },
+  {
+    key: 'audit',
+    method: 'POST',
+    path: '/entrypoints/audit/invoke',
+    description: 'Short alias for approval risk audits.',
+    input_schema: auditInputJsonSchema
+  },
+  {
+    key: 'legacy_invoke',
+    method: 'POST',
+    path: '/invoke',
+    description: 'Legacy invoke alias for simple x402 clients.',
+    input_schema: auditInputJsonSchema
+  }
+];
+
 app.get('/health', (_req, res) => {
   res.json({ ok: true, ...agentMetadata });
 });
@@ -26,24 +77,10 @@ app.get('/.well-known/agent.json', (_req, res) => {
   res.json({
     ...agentMetadata,
     url: publicBaseUrl,
-    entrypoints: [{
-      key: 'audit_approvals',
-      method: 'POST',
-      path: '/entrypoints/audit_approvals/invoke',
-      description: 'Audit wallet token/NFT approvals and return revoke calldata.',
-      input_schema: {
-        type: 'object',
-        required: ['wallet', 'chains'],
-        properties: {
-          wallet: { type: 'string', pattern: '^0x[a-fA-F0-9]{40}$' },
-          chains: { type: 'array', items: { enum: ['ethereum', 'base', 'polygon', 'arbitrum', 'optimism'] } },
-          stale_days: { type: 'integer', default: 90 },
-          token_addresses: { type: 'array', items: { type: 'string' } }
-        }
-      }
-    }],
+    supported_chains: supportedChains,
+    entrypoints: agentEntrypoints,
     x402: {
-      protected: ['/entrypoints/audit_approvals/invoke', '/entrypoints/audit/invoke'],
+      protected: invokePaths,
       network,
       price: x402Price
     }
@@ -52,10 +89,7 @@ app.get('/.well-known/agent.json', (_req, res) => {
 
 app.get('/entrypoints', (_req, res) => {
   res.json({
-    entrypoints: [
-      { key: 'audit_approvals', method: 'POST', path: '/entrypoints/audit_approvals/invoke' },
-      { key: 'audit', method: 'POST', path: '/entrypoints/audit/invoke' }
-    ]
+    entrypoints: agentEntrypoints.map(({ key, method, path }) => ({ key, method, path }))
   });
 });
 
@@ -90,9 +124,17 @@ if (payTo) {
   app.use(paymentMiddleware(
     {
       'POST /entrypoints/audit_approvals/invoke': protectedRoute,
+      'POST /entrypoints/audit-approvals/invoke': {
+        ...protectedRoute,
+        resource: `${publicBaseUrl}/entrypoints/audit-approvals/invoke`
+      },
       'POST /entrypoints/audit/invoke': {
         ...protectedRoute,
         resource: `${publicBaseUrl}/entrypoints/audit/invoke`
+      },
+      'POST /invoke': {
+        ...protectedRoute,
+        resource: `${publicBaseUrl}/invoke`
       }
     },
     resourceServer,
@@ -102,7 +144,7 @@ if (payTo) {
   ));
 }
 
-app.post(['/entrypoints/audit_approvals/invoke', '/entrypoints/audit/invoke'], async (req, res, next) => {
+app.post(invokePaths, async (req, res, next) => {
   try {
     const output = await auditApprovalRisk(req.body);
     res.json({ output, usage: { approvals_scanned: output.approvals.length } });

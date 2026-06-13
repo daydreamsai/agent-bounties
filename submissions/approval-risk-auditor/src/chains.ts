@@ -43,6 +43,34 @@ export const chainConfigs: Record<SupportedChain, ChainConfig> = {
     explorerApiUrl: 'https://api.etherscan.io/v2/api',
     rpcUrl: process.env.OPTIMISM_RPC_URL || 'https://optimism.publicnode.com',
     defaultFromBlock: 110_000_000n
+  },
+  bsc: {
+    name: 'bsc',
+    chainId: 56,
+    explorerApiUrl: 'https://api.etherscan.io/v2/api',
+    rpcUrl: process.env.BSC_RPC_URL || 'https://bsc.publicnode.com',
+    defaultFromBlock: 33_000_000n
+  },
+  avalanche: {
+    name: 'avalanche',
+    chainId: 43114,
+    explorerApiUrl: 'https://api.etherscan.io/v2/api',
+    rpcUrl: process.env.AVALANCHE_RPC_URL || 'https://avalanche-c-chain-rpc.publicnode.com',
+    defaultFromBlock: 35_000_000n
+  },
+  gnosis: {
+    name: 'gnosis',
+    chainId: 100,
+    explorerApiUrl: 'https://api.etherscan.io/v2/api',
+    rpcUrl: process.env.GNOSIS_RPC_URL || 'https://gnosis-rpc.publicnode.com',
+    defaultFromBlock: 28_000_000n
+  },
+  fantom: {
+    name: 'fantom',
+    chainId: 250,
+    explorerApiUrl: 'https://api.etherscan.io/v2/api',
+    rpcUrl: process.env.FANTOM_RPC_URL || 'https://fantom.drpc.org',
+    defaultFromBlock: 70_000_000n
   }
 };
 

@@ -30,3 +30,12 @@ test('invalid wallet and unsupported chain are rejected before scanning', () => 
     /Invalid option/
   );
 });
+
+test('extended EVM chains are accepted by input validation', () => {
+  const parsed = auditInputSchema.parse({
+    wallet: '0x0000000000000000000000000000000000000001',
+    chains: ['bsc', 'avalanche', 'gnosis', 'fantom']
+  });
+
+  assert.deepEqual(parsed.chains, ['bsc', 'avalanche', 'gnosis', 'fantom']);
+});
