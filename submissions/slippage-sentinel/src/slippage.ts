@@ -43,7 +43,8 @@ const POOL_ABI = parseAbi([
 ]);
 
 const ERC20_ABI = parseAbi(['function decimals() view returns (uint8)', 'function symbol() view returns (string)']);
-const SWAP_EVENT = parseAbiItem('event Swap(address indexed sender, uint256 amount0In, uint256 amount1In, uint256 amount0Out, uint256 amount1Out, address indexed to)');
+const UNISWAP_V2_SWAP_EVENT = parseAbiItem('event Swap(address indexed sender, uint256 amount0In, uint256 amount1In, uint256 amount0Out, uint256 amount1Out, address indexed to)');
+const SOLIDLY_SWAP_EVENT = parseAbiItem('event Swap(address indexed sender, address indexed to, uint256 amount0In, uint256 amount1In, uint256 amount0Out, uint256 amount1Out)');
 
 const STABLECOINS: Partial<Record<SupportedChain, Set<string>>> = {
   ethereum: new Set(['0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', '0xdac17f958d2ee523a2206206994597c13d831ec7', '0x6b175474e89094c44da98b954eedeac495271d0f']),
@@ -141,6 +142,13 @@ function numFromUnits(value: bigint, decimals: number): number {
   return Number(formatUnits(value, decimals));
 }
 
+function swapVolumeUsd(args: { amount0In: bigint; amount1In: bigint; amount0Out: bigint; amount1Out: bigint }, meta0: { decimals: number }, meta1: { decimals: number }, stable0: boolean, otherUsd: number): number {
+  const amount0 = numFromUnits(args.amount0In + args.amount0Out, meta0.decimals);
+  const amount1 = numFromUnits(args.amount1In + args.amount1Out, meta1.decimals);
+  if (stable0) return amount0 > 0 ? amount0 : amount1 * otherUsd;
+  return amount1 > 0 ? amount1 : amount0 * otherUsd;
+}
+
 async function tokenMeta(client: ReturnType<typeof createPublicClient>, address: `0x${string}`, fallbackSymbol: string): Promise<{ decimals: number; symbol: string }> {
   const known = KNOWN_TOKENS[address.toLowerCase()];
   if (known) return known;
@@ -188,20 +196,30 @@ async function onChainPoolHint(input: SlippageInput): Promise<{ depth: PoolDepth
       try {
         const blockNumber = await client.getBlockNumber();
         const fromBlock = blockNumber > 8000n ? blockNumber - 8000n : 0n;
-        const logs = await client.getLogs({ address: poolAddress as `0x${string}`, event: SWAP_EVENT, fromBlock, toBlock: blockNumber });
-        volumes = logs.flatMap((log) => {
+        const [v2Logs, solidlyLogs] = await Promise.all([
+          client.getLogs({ address: poolAddress as `0x${string}`, event: UNISWAP_V2_SWAP_EVENT, fromBlock, toBlock: blockNumber }).catch(() => []),
+          client.getLogs({ address: poolAddress as `0x${string}`, event: SOLIDLY_SWAP_EVENT, fromBlock, toBlock: blockNumber }).catch(() => [])
+        ]);
+        const v2Volumes = v2Logs.flatMap((log) => {
           try {
-            const decoded = decodeEventLog({ abi: [SWAP_EVENT], data: log.data, topics: log.topics });
+            const decoded = decodeEventLog({ abi: [UNISWAP_V2_SWAP_EVENT], data: log.data, topics: log.topics });
             const args = decoded.args as { amount0In: bigint; amount1In: bigint; amount0Out: bigint; amount1Out: bigint };
-            const amount0 = numFromUnits(args.amount0In + args.amount0Out, meta0.decimals);
-            const amount1 = numFromUnits(args.amount1In + args.amount1Out, meta1.decimals);
-            if (stable0) return [amount0 > 0 ? amount0 : amount1 * otherUsd];
-            return [amount1 > 0 ? amount1 : amount0 * otherUsd];
+            return [swapVolumeUsd(args, meta0, meta1, stable0, otherUsd)];
           } catch {
             return [];
           }
         });
-        if (logs.length === 0) warnings.push('No standard UniswapV2-style Swap logs found in the recent on-chain window; recent_trade_size_p95 is unavailable for this pool ABI.');
+        const solidlyVolumes = solidlyLogs.flatMap((log) => {
+          try {
+            const decoded = decodeEventLog({ abi: [SOLIDLY_SWAP_EVENT], data: log.data, topics: log.topics });
+            const args = decoded.args as { amount0In: bigint; amount1In: bigint; amount0Out: bigint; amount1Out: bigint };
+            return [swapVolumeUsd(args, meta0, meta1, stable0, otherUsd)];
+          } catch {
+            return [];
+          }
+        });
+        volumes = [...v2Volumes, ...solidlyVolumes];
+        if (volumes.length === 0) warnings.push('No decodable UniswapV2/Solidly-style Swap logs found in the recent on-chain window; recent_trade_size_p95 is unavailable for this pool ABI.');
       } catch {
         warnings.push('Standard Swap log fetch or decode failed; recent_trade_size_p95 is unavailable for this pool ABI/RPC window.');
         volumes = [];
