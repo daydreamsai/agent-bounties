@@ -84,10 +84,10 @@ AUDIT_WALLET=0x0000000000000000000000000000000000000001 AUDIT_CHAINS=base npm ru
 
 Current public deployment:
 
-- Base URL: `https://cardiovascular-complement-recommended-seo.trycloudflare.com`
-- Health: `https://cardiovascular-complement-recommended-seo.trycloudflare.com/health`
-- Agent manifest: `https://cardiovascular-complement-recommended-seo.trycloudflare.com/.well-known/agent.json`
-- x402 invoke: `POST https://cardiovascular-complement-recommended-seo.trycloudflare.com/entrypoints/audit_approvals/invoke`
+- Base URL: `https://gpt55.558686.xyz/approval-risk-auditor`
+- Health: `https://gpt55.558686.xyz/approval-risk-auditor/health`
+- Agent manifest: `https://gpt55.558686.xyz/approval-risk-auditor/.well-known/agent.json`
+- x402 invoke: `POST https://gpt55.558686.xyz/approval-risk-auditor/entrypoints/audit_approvals/invoke`
 
 The server exposes:
 

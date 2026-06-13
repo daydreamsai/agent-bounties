@@ -70,16 +70,16 @@ Current local validation:
 - `npm test` passes 9 tests
 - `npm run lint` passes
 - local unpaid x402 invoke returns HTTP 402 with a decodable `PAYMENT-REQUIRED` header for Base USDC, amount `10000` atomic units, and payout wallet `0x1f0130669ca6fd02e025a984cc038f139df19a2f`
-- public unpaid x402 invoke against the deployment URL returns HTTP 402 with a decodable `PAYMENT-REQUIRED` header whose resource URL is `https://cardiovascular-complement-recommended-seo.trycloudflare.com/entrypoints/audit_approvals/invoke`
+- public unpaid x402 invoke against the deployment URL returns HTTP 402 with a decodable `PAYMENT-REQUIRED` header whose resource URL is `https://gpt55.558686.xyz/approval-risk-auditor/entrypoints/audit_approvals/invoke`
 
 ## Deployment / x402
 
 Live deployment:
 
-- Base URL: `https://cardiovascular-complement-recommended-seo.trycloudflare.com`
-- Health: `https://cardiovascular-complement-recommended-seo.trycloudflare.com/health`
-- Manifest: `https://cardiovascular-complement-recommended-seo.trycloudflare.com/.well-known/agent.json`
-- Invoke: `POST https://cardiovascular-complement-recommended-seo.trycloudflare.com/entrypoints/audit_approvals/invoke`
+- Base URL: `https://gpt55.558686.xyz/approval-risk-auditor`
+- Health: `https://gpt55.558686.xyz/approval-risk-auditor/health`
+- Manifest: `https://gpt55.558686.xyz/approval-risk-auditor/.well-known/agent.json`
+- Invoke: `POST https://gpt55.558686.xyz/approval-risk-auditor/entrypoints/audit_approvals/invoke`
 
 The implementation includes an Express server with `@x402/express` protection for:
 
