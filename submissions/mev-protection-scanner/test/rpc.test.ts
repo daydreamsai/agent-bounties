@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { hexWeiToGwei, infuraWssUrlForChain, normalizeTx, parsePendingHashMessage } from '../src/rpc.js';
+import { hexWeiToGwei, infuraWssUrlForChain, normalizeTx, parsePendingHashMessage, pendingWssUrlsForChain } from '../src/rpc.js';
 
 test('converts wei hex to gwei', () => {
   assert.equal(hexWeiToGwei('0x3b9aca00'), 1);
@@ -20,7 +20,7 @@ test('normalizes JSON-RPC transaction shape', () => {
   assert.equal(tx.value_eth, 1);
 });
 
-test('parses Infura newPendingTransactions subscription messages', () => {
+test('parses newPendingTransactions subscription messages', () => {
   const hash = '0x' + 'a'.repeat(64);
 
   assert.equal(parsePendingHashMessage(JSON.stringify({ params: { result: hash } })), hash);
@@ -43,6 +43,29 @@ test('selects chain-specific Infura WebSocket URLs before generic fallback', () 
 
     delete process.env.INFURA_BASE_WSS_URL;
     assert.equal(infuraWssUrlForChain('base'), 'wss://generic.example');
+  } finally {
+    restoreEnv('INFURA_WSS_URL', oldGeneric);
+    restoreEnv('INFURA_ETHEREUM_WSS_URL', oldEth);
+    restoreEnv('INFURA_BASE_WSS_URL', oldBase);
+  }
+});
+
+test('uses Infura before public WSS and exposes a public Ethereum fallback', () => {
+  const oldGeneric = process.env.INFURA_WSS_URL;
+  const oldEth = process.env.INFURA_ETHEREUM_WSS_URL;
+  const oldBase = process.env.INFURA_BASE_WSS_URL;
+  try {
+    delete process.env.INFURA_WSS_URL;
+    delete process.env.INFURA_ETHEREUM_WSS_URL;
+    delete process.env.INFURA_BASE_WSS_URL;
+    const publicOnly = pendingWssUrlsForChain('eth');
+    assert.equal(publicOnly[0].source, 'public-wss:eth:newPendingTransactions:eth.drpc.org');
+
+    process.env.INFURA_ETHEREUM_WSS_URL = 'wss://eth.example';
+    const withInfura = pendingWssUrlsForChain('eth');
+    assert.equal(withInfura[0].source, 'infura-wss:eth:newPendingTransactions');
+    assert.equal(withInfura[0].url, 'wss://eth.example');
+    assert.equal(withInfura[1].source, 'public-wss:eth:newPendingTransactions:eth.drpc.org');
   } finally {
     restoreEnv('INFURA_WSS_URL', oldGeneric);
     restoreEnv('INFURA_ETHEREUM_WSS_URL', oldEth);

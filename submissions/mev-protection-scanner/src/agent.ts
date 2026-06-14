@@ -5,7 +5,7 @@ import { inputSchema, type MevInput, type MevOutput } from './types.js';
 export const agentMetadata = {
   name: 'mev-protection-scanner',
   version: '0.1.0',
-  description: 'Scores MEV risk from Infura WebSocket pending transactions, public pending-block, fee-history, and optional transaction lookup signals.'
+  description: 'Scores MEV risk from live pending-transaction WebSocket, pending-block, fee-history, and optional transaction lookup signals.'
 };
 
 export async function runMevScanner(rawInput: unknown): Promise<MevOutput> {
@@ -18,24 +18,24 @@ export async function scanMev(input: MevInput): Promise<MevOutput> {
   const chain = input.chain || 'eth';
   const rpc = new RpcClient(chain);
   const notes = [
-    'Uses Infura WebSocket pending-transaction sampling when configured, with public RPC pending-block and fee-history fallback; no transaction signing is required.',
+    'Uses Infura WebSocket when configured, otherwise a public pending-transaction WebSocket when available, with public RPC pending-block fallback; no transaction signing is required.',
     'Risk score is an actionable pre-trade indicator, not a guarantee that a specific attacker will execute.'
   ];
   const dataSources = [`rpc:${chain}:fee-history`];
   const pendingLimit = input.max_pending_txs || 20;
 
-  const [infuraPending, feeHistory, tx] = await Promise.all([
-    rpc.infuraPendingTransactions(pendingLimit).catch(() => []),
+  const [wssPending, feeHistory, tx] = await Promise.all([
+    rpc.pendingTransactions(pendingLimit).catch(() => null),
     rpc.feeHistory().catch(() => ({ p50: null, p90: null })),
     input.transaction_hash ? rpc.txByHash(input.transaction_hash).catch(() => null) : Promise.resolve(null)
   ]);
-  let pending = infuraPending;
-  if (pending.length > 0) {
-    dataSources.push(`infura-wss:${chain}:newPendingTransactions`);
+  let pending = wssPending?.transactions || [];
+  if (wssPending && pending.length > 0) {
+    dataSources.push(wssPending.source);
   } else {
     pending = await rpc.pendingBlock(pendingLimit).catch(() => []);
     dataSources.push(`rpc:${chain}:pending-block`);
-    notes.push('Infura WebSocket pending transaction stream was not configured or returned no transaction details during the sample window; used public pending-block fallback');
+    notes.push('pending-transaction WebSocket stream was unavailable or returned no transaction details during the sample window; used public pending-block fallback');
   }
   if (input.transaction_hash) dataSources.push(`rpc:${chain}:transaction`);
   if (pending.length === 0) notes.push('pending block sample timed out or was unavailable; score falls back to fee-history and notional-size signals');

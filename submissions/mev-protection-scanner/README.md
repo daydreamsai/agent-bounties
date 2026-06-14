@@ -1,15 +1,15 @@
 # MEV Protection Scanner
 
-`mev-protection-scanner` scores MEV risk for a planned trade or optional pending transaction using live public RPC signals.
+`mev-protection-scanner` scores MEV risk for a planned trade or optional pending transaction using live public mempool and RPC signals.
 
 It uses:
 
-- Infura WebSocket `eth_subscribe` on `newPendingTransactions` when `INFURA_WSS_URL`, `INFURA_ETHEREUM_WSS_URL`, or `INFURA_BASE_WSS_URL` is configured
+- `eth_subscribe/newPendingTransactions` over WebSocket. Infura is preferred when `INFURA_WSS_URL`, `INFURA_ETHEREUM_WSS_URL`, or `INFURA_BASE_WSS_URL` is configured. Ethereum also has a public default fallback at `wss://eth.drpc.org`.
 - `eth_getBlockByNumber("pending", true)` for a bounded pending transaction sample
 - `eth_feeHistory` priority-fee percentiles
 - optional `eth_getTransactionByHash` for a specific pending transaction
 
-It does not require private keys, does not sign transactions, and does not broadcast transactions. If no Infura WebSocket URL is configured, it falls back to public pending-block sampling.
+It does not require private keys, does not sign transactions, and does not broadcast transactions. It does not claim a private Infura or Blocknative stream unless such a provider is configured externally; when the public WSS fallback is used, `data_sources` reports `public-wss:...`.
 
 ## Input
 
@@ -51,7 +51,6 @@ The scanner combines:
 - swap-like pending calldata selectors
 - high-gas competitor count
 - fee-history p50/p90 spread
-- Infura WebSocket pending-transaction sampling when configured
 - user's gas percentile when a transaction hash is provided, otherwise p50 fee-history
 - notional trade size from `amount_in`
 
@@ -70,7 +69,7 @@ npm audit --audit-level=moderate
 MEV_TOKEN_IN=USDC MEV_TOKEN_OUT=ETH MEV_AMOUNT_IN=10000 MEV_DEX=uniswap-v2 MEV_CHAIN=eth npm run mev:sample
 ```
 
-Tests cover swap selector detection, gas percentile math, risk classification, deterministic scoring evidence, wei-to-gwei conversion, and JSON-RPC transaction normalization.
+Tests cover swap selector detection, gas percentile math, risk classification, deterministic scoring evidence, wei-to-gwei conversion, JSON-RPC transaction normalization, WebSocket pending-hash parsing, and provider precedence.
 
 ## x402
 

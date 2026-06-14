@@ -6,6 +6,11 @@ const rpcUrls: Record<SupportedChain, string[]> = {
   base: ['https://base.drpc.org', 'https://base-rpc.publicnode.com']
 };
 
+const publicPendingWssUrls: Record<SupportedChain, string[]> = {
+  eth: ['wss://eth.drpc.org'],
+  base: []
+};
+
 export class RpcClient {
   constructor(readonly chain: SupportedChain, private readonly urls = rpcUrls[chain]) {}
 
@@ -39,18 +44,20 @@ export class RpcClient {
     return txs.map(normalizeTx);
   }
 
-  async infuraPendingTransactions(limit: number): Promise<PendingTxSample[]> {
-    const wssUrl = infuraWssUrlForChain(this.chain);
-    if (!wssUrl) return [];
+  async pendingTransactions(limit: number): Promise<{ source: string; transactions: PendingTxSample[] } | null> {
+    for (const { source, url } of pendingWssUrlsForChain(this.chain)) {
+      const hashes = await subscribePendingHashes(url, limit, 1800).catch(() => []);
+      if (hashes.length === 0) continue;
 
-    const hashes = await subscribePendingHashes(wssUrl, limit, 1600);
-    const out: PendingTxSample[] = [];
-    for (const hash of hashes) {
-      const tx = await this.txByHash(hash).catch(() => null);
-      if (tx) out.push(tx);
-      if (out.length >= limit) break;
+      const out: PendingTxSample[] = [];
+      for (const hash of hashes) {
+        const tx = await this.txByHash(hash).catch(() => null);
+        if (tx) out.push(tx);
+        if (out.length >= limit) break;
+      }
+      if (out.length > 0) return { source, transactions: out };
     }
-    return out;
+    return null;
   }
 
   async feeHistory(): Promise<{ p50: number | null; p90: number | null }> {
@@ -65,6 +72,16 @@ export class RpcClient {
     const tx = await this.rpc<Record<string, unknown> | null>('eth_getTransactionByHash', [hash], 1000);
     return tx ? normalizeTx(tx) : null;
   }
+}
+
+export function pendingWssUrlsForChain(chain: SupportedChain): Array<{ source: string; url: string }> {
+  const urls: Array<{ source: string; url: string }> = [];
+  const infura = infuraWssUrlForChain(chain);
+  if (infura) urls.push({ source: `infura-wss:${chain}:newPendingTransactions`, url: infura });
+  for (const url of publicPendingWssUrls[chain]) {
+    urls.push({ source: `public-wss:${chain}:newPendingTransactions:${new URL(url).host}`, url });
+  }
+  return urls;
 }
 
 export function infuraWssUrlForChain(chain: SupportedChain): string | undefined {
@@ -98,7 +115,7 @@ async function subscribePendingHashes(wssUrl: string, limit: number, timeoutMs: 
       try {
         ws.close();
       } catch {
-        // ignored: connection may already be closed by the provider
+        // The provider may already have closed the socket.
       }
       resolve([...hashes].slice(0, limit));
     };
