@@ -1,7 +1,16 @@
 import { dexes } from './dexes.js';
 import { formatUnits, getAmountOut, parseUnits, round, spreadBps } from './math.js';
 import { factoryPair, nativeUsdPrice, pairReserves, pairTokens, RpcClient, tokenDecimals, tokenUsdPrice } from './rpc.js';
-import { inputSchema, type ArbInput, type ArbOpportunity, type ArbOutput, type DexConfig, type QuoteRoute, type SupportedChain } from './types.js';
+import {
+  inputSchema,
+  type ArbCalculationEvidence,
+  type ArbInput,
+  type ArbOpportunity,
+  type ArbOutput,
+  type DexConfig,
+  type QuoteRoute,
+  type SupportedChain
+} from './types.js';
 
 export const agentMetadata = {
   name: 'cross-dex-arbitrage-alert',
@@ -44,6 +53,7 @@ export async function detectArbitrage(input: ArbInput): Promise<ArbOutput> {
     quotes,
     warnings,
     data_sources: [...dataSources].sort(),
+    calculation_evidence: buildArbCalculationEvidence(),
     confidence: confidence(quotes, warnings)
   };
 }
@@ -151,6 +161,100 @@ function buildOpportunities(quotes: QuoteRoute[], thresholdBps: number): ArbOppo
     const bProfit = b.roundtrip_profit_token_in ?? Number.NEGATIVE_INFINITY;
     return bProfit === aProfit ? b.net_spread_bps - a.net_spread_bps : bProfit - aProfit;
   });
+}
+
+export function buildArbCalculationEvidence(): ArbCalculationEvidence {
+  const cases = [
+    {
+      name: 'large one-way spread rejected when round trip loses token_in',
+      threshold_bps: 0,
+      quotes: [
+        fixtureQuote('high-output-unprofitable', '110', 110, 109, '90000', '100000'),
+        fixtureQuote('lower-output-reference', '100', 100, 100, '90000', '100000')
+      ],
+      expected_opportunity_count: 0,
+      expected_best_route: false
+    },
+    {
+      name: 'profitable round trip produces best route',
+      threshold_bps: 0,
+      quotes: [
+        fixtureQuote('high-output-profitable', '120', 120, 119, '120000', '100000'),
+        fixtureQuote('lower-output-reference', '100', 100, 100, '120000', '100000')
+      ],
+      expected_opportunity_count: 1,
+      expected_best_route: true
+    },
+    {
+      name: 'threshold filters otherwise profitable route',
+      threshold_bps: 3000,
+      quotes: [
+        fixtureQuote('high-output-profitable', '120', 120, 119, '120000', '100000'),
+        fixtureQuote('lower-output-reference', '100', 100, 100, '120000', '100000')
+      ],
+      expected_opportunity_count: 0,
+      expected_best_route: false
+    }
+  ];
+
+  const results = cases.map((testCase) => {
+    const opportunities = buildOpportunities(testCase.quotes, testCase.threshold_bps);
+    const actualBestRoute = opportunities.length > 0;
+    const roundtripProfit = opportunities[0]?.roundtrip_profit_token_in ?? null;
+    const pass =
+      opportunities.length === testCase.expected_opportunity_count &&
+      actualBestRoute === testCase.expected_best_route &&
+      (roundtripProfit === null || roundtripProfit > 0);
+    return {
+      name: testCase.name,
+      threshold_bps: testCase.threshold_bps,
+      expected_opportunity_count: testCase.expected_opportunity_count,
+      actual_opportunity_count: opportunities.length,
+      expected_best_route: testCase.expected_best_route,
+      actual_best_route: actualBestRoute,
+      roundtrip_profit_token_in: round(roundtripProfit, 8),
+      pass
+    };
+  });
+  const passCount = results.filter((testCase) => testCase.pass).length;
+  return {
+    case_count: results.length,
+    pass_count: passCount,
+    pass_rate_pct: round((passCount / results.length) * 100, 6) ?? 0,
+    cases: results
+  };
+}
+
+function fixtureQuote(
+  dex: string,
+  amountOut: string,
+  amountOutDecimal: number,
+  netOutputAfterCost: number,
+  reserveIn: string,
+  reserveOut: string
+): QuoteRoute {
+  return {
+    chain: 'base',
+    dex,
+    factory: '0x0000000000000000000000000000000000000000',
+    pair: '0x0000000000000000000000000000000000000001',
+    token_in: '0x0000000000000000000000000000000000000002',
+    token_out: '0x0000000000000000000000000000000000000003',
+    amount_in: '100',
+    amount_out: amountOut,
+    amount_out_decimal: amountOutDecimal,
+    fee_bps: 30,
+    gas_cost_usd: 0,
+    gas_cost_token_out: 0,
+    est_fill_cost: amountOutDecimal - netOutputAfterCost,
+    net_output_after_cost: netOutputAfterCost,
+    quote_block: 'fixture',
+    quote_source: 'deterministic-fixture',
+    reserve_in: reserveIn,
+    reserve_out: reserveOut,
+    decimals_in: 0,
+    decimals_out: 0
+  };
 }
 
 function roundTripProfitTokenIn(buy: QuoteRoute, sell: QuoteRoute): number | null {

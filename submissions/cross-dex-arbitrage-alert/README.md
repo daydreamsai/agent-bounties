@@ -28,6 +28,7 @@ Supported chains: `base`, `eth`.
 - `quotes`: raw DEX quotes with pair address, amount out, fee bps, gas, and block
 - `warnings`: unavailable pools or failed quote sources
 - `data_sources`: RPC and price sources used
+- `calculation_evidence`: deterministic fixture summary showing profitable and non-profitable route handling
 - `confidence`: simple coverage score
 
 ## Method
@@ -52,6 +53,7 @@ ARB_TOKEN_IN=0x4200000000000000000000000000000000000006 ARB_TOKEN_OUT=0x833589fC
 ```
 
 Tests cover constant-product fee math, spread calculation, unit parsing/formatting, and ABI address/uint handling.
+They also cover deterministic arbitrage evidence so a large one-way quote spread is not mistaken for a profitable round trip.
 
 ## x402
 

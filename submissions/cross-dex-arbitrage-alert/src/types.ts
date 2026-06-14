@@ -57,6 +57,24 @@ export type ArbOpportunity = {
   notes: string[];
 };
 
+export type ArbCalculationEvidenceCase = {
+  name: string;
+  threshold_bps: number;
+  expected_opportunity_count: number;
+  actual_opportunity_count: number;
+  expected_best_route: boolean;
+  actual_best_route: boolean;
+  roundtrip_profit_token_in: number | null;
+  pass: boolean;
+};
+
+export type ArbCalculationEvidence = {
+  case_count: number;
+  pass_count: number;
+  pass_rate_pct: number;
+  cases: ArbCalculationEvidenceCase[];
+};
+
 export type ArbOutput = {
   token_in: string;
   token_out: string;
@@ -69,5 +87,6 @@ export type ArbOutput = {
   quotes: QuoteRoute[];
   warnings: string[];
   data_sources: string[];
+  calculation_evidence: ArbCalculationEvidence;
   confidence: number;
 };
