@@ -22,7 +22,7 @@ const invokePaths = ['/entrypoints/get_funding_pulse/invoke', '/entrypoints/fund
 const inputSchema = {
   type: 'object',
   properties: {
-    venue_ids: { type: 'array', items: { enum: ['hyperliquid', 'binance', 'bybit'] }, default: ['hyperliquid'] },
+    venue_ids: { type: 'array', items: { enum: ['hyperliquid', 'binance', 'bybit', 'okx'] }, default: ['hyperliquid'] },
     markets: { type: 'array', items: { type: 'string' }, default: ['BTC', 'ETH'] },
     include_raw: { type: 'boolean', default: false }
   }
@@ -36,7 +36,7 @@ const entrypoints = [
 
 app.get('/health', (_req, res) => res.json({ ok: true, ...agentMetadata }));
 app.get('/.well-known/agent.json', (_req, res) => {
-  res.json({ ...agentMetadata, url: publicBaseUrl, supported_venues: ['hyperliquid', 'binance', 'bybit'], entrypoints, x402: { protected: invokePaths, network, price: x402Price } });
+  res.json({ ...agentMetadata, url: publicBaseUrl, supported_venues: ['hyperliquid', 'binance', 'bybit', 'okx'], entrypoints, x402: { protected: invokePaths, network, price: x402Price } });
 });
 app.get('/entrypoints', (_req, res) => res.json({ entrypoints: entrypoints.map(({ key, method, path }) => ({ key, method, path })) }));
 
