@@ -17,7 +17,7 @@ export async function runPerpsFundingPulse(rawInput: unknown): Promise<PulseOutp
   return {
     metrics,
     warnings,
-    data_sources: ['hyperliquid:info', 'binance:fapi', 'bybit:v5'],
+    data_sources: ['hyperliquid:info', 'binance:fapi', 'bybit:v5', 'okx:v5'],
     calculation_evidence: buildPulseCalculationEvidence(),
     fetched_at: new Date().toISOString()
   };
