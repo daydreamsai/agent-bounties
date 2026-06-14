@@ -83,6 +83,13 @@ export type ScoreCalculationEvidence = {
     final_score: number;
     final_level: 'low' | 'medium' | 'high' | 'critical';
   };
+  source_pattern_coverage: {
+    pattern_count: number;
+    severity_counts: Record<Severity, number>;
+    fixture_detected_count: number;
+    fixture_detected_ids: string[];
+    passes_minimum_50_patterns: boolean;
+  };
   validation_cases: ScoreCalculationCase[];
   case_count: number;
   pass_count: number;
