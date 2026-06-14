@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { acrossTestInternals } from '../src/across.js';
 import { bridgeInputSchema } from '../src/types.js';
 import { testInternals } from '../src/lifi.js';
 import { buildBridgeCalculationEvidence, selectBestRoute } from '../src/pinger.js';
 
 test('input schema applies defaults and validates from address', () => {
   const parsed = bridgeInputSchema.parse({});
-  assert.equal(parsed.token, 'ETH');
+  assert.equal(parsed.token, 'USDC');
   assert.equal(parsed.from_chain, 'base');
   assert.throws(() => bridgeInputSchema.parse({ from_address: 'not-wallet' }));
 });
@@ -45,6 +46,35 @@ test('normalizeQuote sums LI.FI fee and gas costs', () => {
   assert.deepEqual(route.included_steps, ['AcrossV4']);
 });
 
+test('normalizeAcrossQuote maps official suggested-fees into a bridge route', () => {
+  const route = acrossTestInternals.normalizeAcrossQuote({
+    estimatedFillTimeSec: 122,
+    totalRelayFee: { total: '315' },
+    relayerGasFee: { total: '177' },
+    relayerCapitalFee: { total: '100' },
+    lpFee: { total: '38' },
+    outputAmount: '999685',
+    quoteBlock: '25318840',
+    id: 'quote-1',
+    inputToken: { symbol: 'USDC', decimals: 6, chainId: 8453 },
+    outputToken: { symbol: 'USDC', decimals: 6, chainId: 10 }
+  }, {
+    token: 'USDC',
+    amount: '1',
+    from_chain: 'base',
+    to_chain: 'optimism',
+    from_address: '0x0000000000000000000000000000000000000001',
+    slippage: 0.005
+  });
+
+  assert.equal(route.data_source, 'across:suggested-fees');
+  assert.equal(route.eta_minutes, 3);
+  assert.equal(route.fee_usd, 0.0003);
+  assert.equal(route.gas_fee_usd, 0.0002);
+  assert.equal(route.to_amount_usd, 0.9997);
+  assert.match(route.route_id, /^across:25318840:/);
+});
+
 test('best route ranking prefers highest USD output after total fees', () => {
   const expensive = {
     route_id: 'expensive',
@@ -75,8 +105,8 @@ test('best route ranking prefers highest USD output after total fees', () => {
 test('bridge calculation evidence summarizes route ranking fixtures', () => {
   const evidence = buildBridgeCalculationEvidence();
 
-  assert.equal(evidence.case_count, 3);
-  assert.equal(evidence.pass_count, 3);
+  assert.equal(evidence.case_count, 4);
+  assert.equal(evidence.pass_count, 4);
   assert.equal(evidence.pass_rate_pct, 100);
   assert.ok(evidence.cases.every((testCase) => testCase.pass));
 });
