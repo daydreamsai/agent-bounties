@@ -14,7 +14,7 @@ It does not request exchange credentials, place orders, sign messages, or broadc
 }
 ```
 
-Supported venues: `hyperliquid`, `binance`, `bybit`. The deployment defaults to Hyperliquid because it is the most consistently reachable public venue from the current host; Binance and Bybit remain available when the caller asks for them and the host network can reach those APIs.
+Supported venues: `hyperliquid`, `binance`, `bybit`, `okx`. The deployment defaults to Hyperliquid because it is the most consistently reachable public venue from the current host; Binance, Bybit, and OKX remain available when the caller asks for them and the host network can reach those APIs.
 
 ## Output
 
@@ -24,8 +24,8 @@ Supported venues: `hyperliquid`, `binance`, `bybit`. The deployment defaults to 
   "warnings": [],
   "data_sources": [],
   "calculation_evidence": {
-    "case_count": 4,
-    "pass_count": 4,
+    "case_count": 5,
+    "pass_count": 5,
     "pass_rate_pct": 100
   },
   "fetched_at": "2026-06-14T00:00:00.000Z"
@@ -34,15 +34,16 @@ Supported venues: `hyperliquid`, `binance`, `bybit`. The deployment defaults to 
 
 Each metric includes venue, market, symbol, funding rate, funding rate in bps, funding interval, next funding time, seconds to next funding, open interest, USD open interest where the venue exposes or permits calculation, mark/index price, skew, skew source, source timestamp, and data source.
 
-`calculation_evidence` verifies deterministic normalization fixtures: funding rate to bps, open-interest USD multiplication, missing open-interest handling, and unavailable skew staying `null` instead of being fabricated.
+`calculation_evidence` verifies deterministic normalization fixtures: funding rate to bps, open-interest USD multiplication, missing open-interest handling, unavailable skew staying `null` instead of being fabricated, and an available OKX long/short ratio being preserved as numeric `skew`.
 
 ## Data Sources
 
 - Hyperliquid `POST /info` with `type=metaAndAssetCtxs` for funding, mark/oracle price, and open interest.
 - Binance USD-M Futures `/fapi/v1/premiumIndex`, `/fapi/v1/openInterest`, and `/futures/data/globalLongShortAccountRatio` for funding, next funding time, open interest, and global long/short account ratio.
 - Bybit v5 `/market/tickers?category=linear` for funding, next funding time, funding interval, open interest, and mark/index price.
+- OKX v5 `/public/funding-rate`, `/public/open-interest`, and `/rubik/stat/contracts/long-short-account-ratio` for funding, open interest, and contract long/short skew.
 
-Skew availability is venue-specific. Binance exposes a public global long/short account ratio, while the selected Hyperliquid and Bybit public endpoints do not expose equivalent skew. Missing skew is returned as `null` with a warning instead of fabricated data.
+Skew availability is venue-specific. Binance and OKX expose public long/short ratios, while the selected Hyperliquid and Bybit public endpoints do not expose equivalent skew. Missing skew is returned as `null` with a warning instead of fabricated data.
 
 ## Local Validation
 
@@ -61,6 +62,14 @@ Optional live scan:
 ```bash
 PERPS_VENUE_IDS=hyperliquid \
 PERPS_MARKETS=BTC,ETH,SOL \
+npm run pulse:sample
+```
+
+Optional OKX skew scan, from networks that can reach OKX:
+
+```bash
+PERPS_VENUE_IDS=okx \
+PERPS_MARKETS=BTC,ETH \
 npm run pulse:sample
 ```
 
