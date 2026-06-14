@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { LiquidationCalculationEvidence } from './aave.js';
 
 export const positionSchema = z.object({
   protocol_id: z.string().optional(),
@@ -41,5 +42,6 @@ export interface SentinelOutput {
   positions: LendingPositionRisk[];
   warnings: string[];
   data_sources: string[];
+  calculation_evidence: LiquidationCalculationEvidence;
   fetched_at: string;
 }

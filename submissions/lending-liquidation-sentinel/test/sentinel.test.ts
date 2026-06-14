@@ -31,3 +31,23 @@ test('liquidation price calculation uses supplied single-position data', () => {
   const liq = testInternals.calculateLiquidationPrice({ collateral_amount: 1, debt_amount: 1000, debt_price_usd: 1, liquidation_threshold: 0.8 });
   assert.equal(liq, 1250);
 });
+
+test('liquidation price calculation handles multiple deterministic fixtures', () => {
+  assert.equal(testInternals.calculateLiquidationPrice({ collateral_amount: 2, debt_amount: 1500, debt_price_usd: 1, liquidation_threshold: 0.75 }), 1000);
+  assert.equal(testInternals.calculateLiquidationPrice({ collateral_amount: 0.1, debt_amount: 4000, debt_price_usd: 1, liquidation_threshold: 0.8 }), 50000);
+  assert.equal(testInternals.calculateLiquidationPrice({ collateral_amount: 1000, debt_amount: 750, debt_price_usd: 1, liquidation_threshold: 0.9 }), 0.8333);
+});
+
+test('liquidation price calculation returns null without enough single-position data', () => {
+  const liq = testInternals.calculateLiquidationPrice({ collateral_amount: 1, debt_amount: 1000, debt_price_usd: 1 });
+  assert.equal(liq, null);
+});
+
+test('calculation evidence summarizes liquidation price fixture accuracy', () => {
+  const evidence = testInternals.buildLiquidationCalculationEvidence();
+  assert.equal(evidence.case_count, 5);
+  assert.equal(evidence.pass_count, 5);
+  assert.equal(evidence.pass_rate_pct, 100);
+  assert.ok(evidence.max_absolute_error_usd <= 0.0001);
+  assert.ok(evidence.cases.every((testCase) => testCase.pass));
+});

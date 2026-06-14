@@ -70,6 +70,78 @@ export function calculateLiquidationPrice(position: PositionInput): number | nul
   return Math.round(((debtAmount * debtPrice) / (collateralAmount * liquidationThreshold)) * 10000) / 10000;
 }
 
+export type LiquidationPriceFixture = {
+  name: string;
+  position: PositionInput;
+  expected_liq_price: number | null;
+  actual_liq_price: number | null;
+  absolute_error_usd: number | null;
+  pass: boolean;
+};
+
+export type LiquidationCalculationEvidence = {
+  case_count: number;
+  pass_count: number;
+  pass_rate_pct: number;
+  max_absolute_error_usd: number;
+  cases: LiquidationPriceFixture[];
+};
+
+const LIQUIDATION_PRICE_FIXTURES = [
+  {
+    name: '1 ETH collateral, 1000 USDC debt, 80% LT',
+    position: { collateral_symbol: 'ETH', debt_symbol: 'USDC', collateral_amount: 1, debt_amount: 1000, debt_price_usd: 1, liquidation_threshold: 0.8 },
+    expected_liq_price: 1250
+  },
+  {
+    name: '2 ETH collateral, 1500 USDC debt, 75% LT',
+    position: { collateral_symbol: 'ETH', debt_symbol: 'USDC', collateral_amount: 2, debt_amount: 1500, debt_price_usd: 1, liquidation_threshold: 0.75 },
+    expected_liq_price: 1000
+  },
+  {
+    name: '0.1 WBTC collateral, 4000 USDC debt, 80% LT',
+    position: { collateral_symbol: 'WBTC', debt_symbol: 'USDC', collateral_amount: 0.1, debt_amount: 4000, debt_price_usd: 1, liquidation_threshold: 0.8 },
+    expected_liq_price: 50000
+  },
+  {
+    name: '1000 stable collateral, 750 USDC debt, 90% LT',
+    position: { collateral_symbol: 'USDC', debt_symbol: 'USDC', collateral_amount: 1000, debt_amount: 750, debt_price_usd: 1, liquidation_threshold: 0.9 },
+    expected_liq_price: 0.8333
+  },
+  {
+    name: 'missing liquidation threshold returns null',
+    position: { collateral_symbol: 'ETH', debt_symbol: 'USDC', collateral_amount: 1, debt_amount: 1000, debt_price_usd: 1 },
+    expected_liq_price: null
+  }
+] as const;
+
+export function buildLiquidationCalculationEvidence(): LiquidationCalculationEvidence {
+  const cases = LIQUIDATION_PRICE_FIXTURES.map((fixture) => {
+    const actual = calculateLiquidationPrice(fixture.position);
+    const absoluteError = actual === null || fixture.expected_liq_price === null ? null : Math.abs(actual - fixture.expected_liq_price);
+    const pass = fixture.expected_liq_price === null ? actual === null : absoluteError !== null && absoluteError <= 0.0001;
+    return {
+      name: fixture.name,
+      position: fixture.position,
+      expected_liq_price: fixture.expected_liq_price,
+      actual_liq_price: actual,
+      absolute_error_usd: absoluteError,
+      pass
+    };
+  });
+  const numericErrors = cases
+    .map((testCase) => testCase.absolute_error_usd)
+    .filter((error): error is number => error !== null);
+  const passCount = cases.filter((testCase) => testCase.pass).length;
+  return {
+    case_count: cases.length,
+    pass_count: passCount,
+    pass_rate_pct: Math.round((passCount / cases.length) * 10000) / 100,
+    max_absolute_error_usd: Math.max(0, ...numericErrors),
+    cases
+  };
+}
+
 async function rpcCall<T>(url: string, method: string, params: unknown[]): Promise<T> {
   const response = await fetch(url, {
     method: 'POST',
@@ -116,4 +188,12 @@ export async function fetchAaveAccountRisk(protocolId: string, wallet: string, a
   };
 }
 
-export const testInternals = { encodeGetUserAccountData, decodeUintWords, healthFactorToNumber, bufferPercent, baseToUsd, calculateLiquidationPrice };
+export const testInternals = {
+  encodeGetUserAccountData,
+  decodeUintWords,
+  healthFactorToNumber,
+  bufferPercent,
+  baseToUsd,
+  calculateLiquidationPrice,
+  buildLiquidationCalculationEvidence
+};

@@ -1,4 +1,4 @@
-import { fetchAaveAccountRisk } from './aave.js';
+import { buildLiquidationCalculationEvidence, fetchAaveAccountRisk } from './aave.js';
 import { sentinelInputSchema, type SentinelOutput } from './types.js';
 
 export async function runLendingLiquidationSentinel(rawInput: unknown): Promise<SentinelOutput> {
@@ -16,6 +16,7 @@ export async function runLendingLiquidationSentinel(rawInput: unknown): Promise<
     positions,
     warnings,
     data_sources: ['aave-v3:Pool.getUserAccountData'],
+    calculation_evidence: buildLiquidationCalculationEvidence(),
     fetched_at: new Date().toISOString()
   };
 }

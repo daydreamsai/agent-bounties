@@ -24,6 +24,12 @@ Supported protocol IDs: `aave-v3-base`, `aave-v3-arbitrum`.
   "positions": [],
   "warnings": [],
   "data_sources": [],
+  "calculation_evidence": {
+    "case_count": 5,
+    "pass_count": 5,
+    "pass_rate_pct": 100,
+    "max_absolute_error_usd": 0
+  },
   "fetched_at": "2026-06-14T00:00:00.000Z"
 }
 ```
@@ -31,6 +37,8 @@ Supported protocol IDs: `aave-v3-base`, `aave-v3-arbitrum`.
 Each position includes `health_factor`, `buffer_percent`, `alert_threshold_hit`, total collateral/debt USD, available borrow USD, liquidation threshold bps, LTV bps, and source notes.
 
 `liq_price` is returned only when the caller supplies single-position collateral/debt details. Aave's aggregate account health factor alone is not enough to produce a reliable single liquidation price for multi-asset positions, so the service does not fabricate one.
+
+`calculation_evidence` is a deterministic fixture summary for the liquidation-price formula. It covers ETH, WBTC, and stable-collateral examples plus a missing-parameter case that must return `null`.
 
 ## Data Sources
 
@@ -45,6 +53,14 @@ npm test
 npm run lint
 npm audit --audit-level=moderate
 ```
+
+Tests cover:
+
+- Aave `getUserAccountData(address)` calldata encoding
+- account data word decoding, health factor conversion, and buffer percentage
+- liquidation price calculation for multiple supplied single-position fixtures
+- null `liq_price` when a single-position liquidation threshold is missing
+- `calculation_evidence` 100% pass rate and max absolute error at or below `$0.0001`
 
 Optional live scan:
 
