@@ -14,10 +14,16 @@ test('input schema rejects unsupported venues', () => {
   assert.throws(() => pulseInputSchema.parse({ venue_ids: ['unknown'], markets: ['BTC'] }));
 });
 
+test('input schema accepts OKX venue for public long-short ratio skew', () => {
+  const parsed = pulseInputSchema.parse({ venue_ids: ['okx'], markets: ['BTC'] });
+  assert.deepEqual(parsed.venue_ids, ['okx']);
+});
+
 test('market normalizer accepts common perps symbols', () => {
   assert.equal(testInternals.normalizeMarket('btcusdt'), 'BTC');
   assert.equal(testInternals.normalizeMarket('ETH-PERP'), 'ETH');
   assert.equal(testInternals.normalizeMarket(' sol/usdt '), 'SOL');
+  assert.equal(testInternals.okxSymbol('btc'), 'BTC-USDT-SWAP');
 });
 
 test('numeric parser returns null for missing or invalid values', () => {
@@ -42,8 +48,8 @@ test('funding and open interest helpers normalize venue values', () => {
 test('calculation evidence summarizes funding pulse normalization checks', () => {
   const evidence = testInternals.buildPulseCalculationEvidence();
 
-  assert.equal(evidence.case_count, 4);
-  assert.equal(evidence.pass_count, 4);
+  assert.equal(evidence.case_count, 5);
+  assert.equal(evidence.pass_count, 5);
   assert.equal(evidence.pass_rate_pct, 100);
   assert.ok(evidence.cases.every((testCase) => testCase.pass));
 });
