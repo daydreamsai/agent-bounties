@@ -1,4 +1,4 @@
-import { fetchVenue } from './sources.js';
+import { buildPulseCalculationEvidence, fetchVenue } from './sources.js';
 import { pulseInputSchema, type PulseOutput } from './types.js';
 
 export async function runPerpsFundingPulse(rawInput: unknown): Promise<PulseOutput> {
@@ -18,6 +18,7 @@ export async function runPerpsFundingPulse(rawInput: unknown): Promise<PulseOutp
     metrics,
     warnings,
     data_sources: ['hyperliquid:info', 'binance:fapi', 'bybit:v5'],
+    calculation_evidence: buildPulseCalculationEvidence(),
     fetched_at: new Date().toISOString()
   };
 }

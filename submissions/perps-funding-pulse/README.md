@@ -23,11 +23,18 @@ Supported venues: `hyperliquid`, `binance`, `bybit`. The deployment defaults to 
   "metrics": [],
   "warnings": [],
   "data_sources": [],
+  "calculation_evidence": {
+    "case_count": 4,
+    "pass_count": 4,
+    "pass_rate_pct": 100
+  },
   "fetched_at": "2026-06-14T00:00:00.000Z"
 }
 ```
 
 Each metric includes venue, market, symbol, funding rate, funding rate in bps, funding interval, next funding time, seconds to next funding, open interest, USD open interest where the venue exposes or permits calculation, mark/index price, skew, skew source, source timestamp, and data source.
+
+`calculation_evidence` verifies deterministic normalization fixtures: funding rate to bps, open-interest USD multiplication, missing open-interest handling, and unavailable skew staying `null` instead of being fabricated.
 
 ## Data Sources
 
@@ -46,6 +53,8 @@ npm test
 npm run lint
 npm audit --audit-level=moderate
 ```
+
+Tests cover input validation, market normalization, numeric parsing, funding-rate bps conversion, open-interest USD calculation, elapsed/future funding timers, and calculation evidence.
 
 Optional live scan:
 

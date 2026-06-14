@@ -31,3 +31,19 @@ test('secondsUntil floors elapsed timestamps at zero', () => {
   const future = testInternals.secondsUntil(Date.now() + 60000);
   assert.ok(future !== null && future > 0 && future <= 60);
 });
+
+test('funding and open interest helpers normalize venue values', () => {
+  assert.equal(testInternals.fundingRateBps(0.000125), 1.25);
+  assert.equal(testInternals.fundingRateBps(null), null);
+  assert.equal(testInternals.openInterestUsd(12.5, 64000), 800000);
+  assert.equal(testInternals.openInterestUsd(null, 64000), null);
+});
+
+test('calculation evidence summarizes funding pulse normalization checks', () => {
+  const evidence = testInternals.buildPulseCalculationEvidence();
+
+  assert.equal(evidence.case_count, 4);
+  assert.equal(evidence.pass_count, 4);
+  assert.equal(evidence.pass_rate_pct, 100);
+  assert.ok(evidence.cases.every((testCase) => testCase.pass));
+});

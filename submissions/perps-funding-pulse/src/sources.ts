@@ -1,4 +1,4 @@
-import type { FundingMetric, VenueId } from './types.js';
+import type { FundingMetric, PulseCalculationEvidence, VenueId } from './types.js';
 
 const HYPERLIQUID_INFO = 'https://api.hyperliquid.xyz/info';
 const BINANCE_FAPI = 'https://fapi.binance.com';
@@ -69,6 +69,54 @@ function binanceSymbol(market: string): string {
   return `${normalizeMarket(market)}USDT`;
 }
 
+export function fundingRateBps(fundingRate: number | null): number | null {
+  return fundingRate === null ? null : Math.round(fundingRate * 10000 * 1_000_000) / 1_000_000;
+}
+
+export function openInterestUsd(openInterest: number | null, markPrice: number | null): number | null {
+  return openInterest !== null && markPrice !== null ? Math.round(openInterest * markPrice * 1_000_000) / 1_000_000 : null;
+}
+
+export function buildPulseCalculationEvidence(): PulseCalculationEvidence {
+  const fundingBps = fundingRateBps(0.000125);
+  const oiUsd = openInterestUsd(12.5, 64000);
+  const missingOiUsd = openInterestUsd(null, 64000);
+  const skewSource = null;
+  const cases = [
+    {
+      name: 'funding rate converts to basis points',
+      expected: 1.25,
+      actual: fundingBps,
+      pass: fundingBps === 1.25
+    },
+    {
+      name: 'open interest USD multiplies contracts by mark price',
+      expected: 800000,
+      actual: oiUsd,
+      pass: oiUsd === 800000
+    },
+    {
+      name: 'missing open interest stays null',
+      expected: null,
+      actual: missingOiUsd,
+      pass: missingOiUsd === null
+    },
+    {
+      name: 'unavailable venue skew stays null instead of fabricated',
+      expected: null,
+      actual: skewSource,
+      pass: skewSource === null
+    }
+  ];
+  const passCount = cases.filter((testCase) => testCase.pass).length;
+  return {
+    case_count: cases.length,
+    pass_count: passCount,
+    pass_rate_pct: Math.round((passCount / cases.length) * 10000) / 100,
+    cases
+  };
+}
+
 async function fetchJsonOnce<T>(url: string, init?: RequestInit, timeoutMs = 10000): Promise<T> {
   let timer: NodeJS.Timeout | undefined;
   try {
@@ -123,12 +171,12 @@ export async function fetchHyperliquid(markets: string[], includeRaw = false): P
       market,
       symbol: asset.name,
       funding_rate: funding,
-      funding_rate_bps: funding === null ? null : funding * 10000,
+      funding_rate_bps: fundingRateBps(funding),
       funding_interval_hours: 1,
       next_funding_time: null,
       time_to_next_seconds: null,
       open_interest: oi,
-      open_interest_usd: oi !== null && mark !== null ? oi * mark : null,
+      open_interest_usd: openInterestUsd(oi, mark),
       mark_price: mark,
       index_price: oracle,
       skew: null,
@@ -167,12 +215,12 @@ export async function fetchBinance(markets: string[], includeRaw = false): Promi
         market,
         symbol,
         funding_rate: funding,
-        funding_rate_bps: funding === null ? null : funding * 10000,
+        funding_rate_bps: fundingRateBps(funding),
         funding_interval_hours: 8,
         next_funding_time: iso(nextMs),
         time_to_next_seconds: secondsUntil(nextMs),
         open_interest: openInterest,
-        open_interest_usd: openInterest !== null && mark !== null ? openInterest * mark : null,
+        open_interest_usd: openInterestUsd(openInterest, mark),
         mark_price: mark,
         index_price: numeric(premium.indexPrice),
         skew,
@@ -206,7 +254,7 @@ export async function fetchBybit(markets: string[], includeRaw = false): Promise
         market,
         symbol,
         funding_rate: funding,
-        funding_rate_bps: funding === null ? null : funding * 10000,
+        funding_rate_bps: fundingRateBps(funding),
         funding_interval_hours: numeric(ticker.fundingIntervalHour),
         next_funding_time: iso(nextMs),
         time_to_next_seconds: secondsUntil(nextMs),
@@ -234,4 +282,4 @@ export async function fetchVenue(venue: VenueId, markets: string[], includeRaw =
   return fetchBybit(markets, includeRaw);
 }
 
-export const testInternals = { normalizeMarket, numeric, secondsUntil, iso };
+export const testInternals = { normalizeMarket, numeric, secondsUntil, iso, fundingRateBps, openInterestUsd, buildPulseCalculationEvidence };

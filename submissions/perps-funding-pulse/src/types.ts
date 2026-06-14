@@ -35,5 +35,20 @@ export interface PulseOutput {
   metrics: FundingMetric[];
   warnings: string[];
   data_sources: string[];
+  calculation_evidence: PulseCalculationEvidence;
   fetched_at: string;
+}
+
+export interface PulseCalculationEvidenceCase {
+  name: string;
+  expected: number | string | null;
+  actual: number | string | null;
+  pass: boolean;
+}
+
+export interface PulseCalculationEvidence {
+  case_count: number;
+  pass_count: number;
+  pass_rate_pct: number;
+  cases: PulseCalculationEvidenceCase[];
 }
