@@ -57,5 +57,8 @@ test('calculation evidence summarizes gas route fee model checks', () => {
   assert.equal(evidence.pass_count, 4);
   assert.equal(evidence.pass_rate_pct, 100);
   assert.ok(evidence.max_gas_error_pct < 1);
+  assert.equal(evidence.within_5pct_case_count, 1);
+  assert.equal(evidence.within_5pct_pass_count, 1);
+  assert.equal(evidence.within_5pct_threshold_pct, 5);
   assert.ok(evidence.cases.every((testCase) => testCase.pass));
 });
