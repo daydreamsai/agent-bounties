@@ -30,6 +30,7 @@ export const dexes: DexConfig[] = [
     name: 'Uniswap V2 Ethereum',
     chain: 'eth',
     factory: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
+    router: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
     feeBps: 30,
     swapGasUnits: 160_000
   },
@@ -38,6 +39,7 @@ export const dexes: DexConfig[] = [
     name: 'SushiSwap V2 Ethereum',
     chain: 'eth',
     factory: '0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac',
+    router: '0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F',
     feeBps: 30,
     swapGasUnits: 160_000
   }
