@@ -35,7 +35,21 @@ Supported GeckoTerminal networks: `eth`, `base`, `polygon_pos`, `arbitrum`, `opt
     "pass_count": 6,
     "pass_rate_pct": 100,
     "max_relative_error_pct": 0,
-    "relative_error_threshold_pct": 10
+    "relative_error_threshold_pct": 10,
+    "realized_pool_case_count": 1,
+    "realized_pool_pass_count": 1,
+    "realized_pool_max_relative_error_pct": 0,
+    "realized_pool_cases": [
+      {
+        "name": "eth:0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640:ohlcv-24h",
+        "source": "geckoterminal:ohlcv:eth",
+        "price_relative": 1.0223,
+        "expected_IL_percent": -0.0061,
+        "actual_IL_percent": -0.0061,
+        "relative_error_pct": 0,
+        "pass": true
+      }
+    ]
   },
   "confidence": 0.95
 }
@@ -51,7 +65,7 @@ Supported GeckoTerminal networks: `eth`, `base`, `polygon_pos`, `arbitrum`, `opt
 - Fee APR uses observed volume and TVL:
   - `fee_apr_est = (volume_window * fee_bps / 10000 / tvl_usd) * (24 / window_hours) * 365 * 100`
 - `net_apr_after_il_est` annualizes the observed window IL drag and adds the observed-window fee APR estimate.
-- `backtest_summary` is a deterministic analytical fixture check for the IL formula. It compares the runtime estimator math against known 50/50 constant-product and weighted-pool results, including 4x, 0.25x, 1.21x, equal-move, and small-move cases. Current fixtures require all nonzero cases to stay below 10% relative error.
+- `backtest_summary` includes deterministic analytical fixture checks for the IL formula and, when GeckoTerminal OHLCV is available, a realized-pool case built from the observed pool start/end close prices for the requested window. Both deterministic and realized-pool nonzero cases use a 10% relative-error threshold.
 
 ## Data Sources
 
@@ -88,6 +102,7 @@ Tests cover:
 - equal-weight constant product IL against known 0.25x and 1.21x price-move results
 - weighted 80/20 IL against an independent expected fixture
 - deterministic backtest summary with 100% pass rate and max relative error below 10%
+- realized-pool OHLCV backtest case reporting below-10% relative error
 - weighted pool normalization and zero-IL equal-price movement
 - fee APR annualization from observed volume/TVL
 - input validation
