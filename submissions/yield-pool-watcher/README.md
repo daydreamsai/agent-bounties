@@ -1,6 +1,6 @@
 # Yield Pool Watcher
 
-`yield-pool-watcher` tracks DeFi pool APY and TVL from DefiLlama, computes deltas, and emits threshold-based alerts for spikes or drains.
+`yield-pool-watcher` tracks DeFi pool APY and TVL from DefiLlama, computes deltas, and emits threshold-based alerts for spikes or drains. For Aave V3 on Base, it also scans on-chain `ReserveDataUpdated` logs from the Aave V3 Pool to provide block-level APY signals.
 
 It does not request private keys, sign transactions, or broadcast transactions.
 
@@ -38,7 +38,17 @@ It does not request private keys, sign transactions, or broadcast transactions.
     "chart_points_checked": 5,
     "chart_latest_at": "2026-06-13T23:00:00.000Z",
     "chart_lag_seconds": 3600,
-    "block_level_precision": false
+    "block_level_precision": true
+  },
+  "block_level_signals": [],
+  "block_level_evidence": {
+    "enabled": true,
+    "latest_block": 1,
+    "from_block": 1,
+    "to_block": 1,
+    "raw_log_count": 0,
+    "decoded_signal_count": 0,
+    "source": "aave-v3:ReserveDataUpdated"
   },
   "data_sources": [],
   "fetched_at": "2026-06-14T00:00:00.000Z"
@@ -50,10 +60,13 @@ It does not request private keys, sign transactions, or broadcast transactions.
 - DefiLlama yields `/pools` for current APY, TVL, chain, project, token metadata, IL risk, exposure, and predictions.
 - DefiLlama yields `/chart/{pool}` for recent historical APY/TVL points when available.
 - In-process memory snapshots as a fallback for immediate repeat-call deltas.
+- Base public RPC `eth_getLogs` for Aave V3 Pool `ReserveDataUpdated` events, used as block-level APY signals for Aave V3 on Base.
 
-The service does not fabricate per-block updates. It reports the actual data source used for each delta: `defillama_chart`, `service_memory`, or `none`.
+The service does not fabricate per-block updates. It reports the actual data source used for each delta: `defillama_chart`, `service_memory`, `aave_v3_block_event`, or `none`.
 
-Each delta includes `previous_observed_at`, `current_observed_at`, and `sample_interval_seconds` when the source provides enough timing evidence. The top-level `freshness` object reports provider latency and source lag explicitly, including `block_level_precision: false`.
+Each delta includes `previous_observed_at`, `current_observed_at`, and `sample_interval_seconds` when the source provides enough timing evidence. The top-level `freshness` object reports provider latency and source lag explicitly. `block_level_precision` is true when the Aave V3 Base on-chain event adapter is enabled; DefiLlama chart deltas remain chart-level and are not misreported as block-level.
+
+`block_level_signals` includes reserve address, block number, timestamp, transaction hash, log index, liquidity APY, and variable borrow APY from Aave V3 `ReserveDataUpdated` logs. `block_level_evidence` reports the scanned block range, raw log count, decoded signal count, and source.
 
 ## Alerts
 
@@ -84,7 +97,7 @@ YIELD_LIMIT=5 \
 npm run watch:sample
 ```
 
-The live sample should include `freshness.chart_lag_seconds`, `freshness.pools_endpoint_latency_ms`, `freshness.block_level_precision`, and delta-level `sample_interval_seconds`.
+The live sample should include `freshness.chart_lag_seconds`, `freshness.pools_endpoint_latency_ms`, `freshness.block_level_precision`, delta-level `sample_interval_seconds`, `block_level_evidence`, and recent `block_level_signals` when Base has emitted Aave V3 `ReserveDataUpdated` logs in the scanned block window.
 
 ## x402
 
