@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const venueSchema = z.enum(['hyperliquid', 'binance', 'bybit']);
+export const venueSchema = z.enum(['hyperliquid', 'binance', 'bybit', 'okx']);
 
 export const pulseInputSchema = z.object({
   venue_ids: z.array(venueSchema).default(['hyperliquid']),
