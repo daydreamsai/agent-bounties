@@ -32,5 +32,8 @@ test('deterministic backtest fixtures are fully covered', () => {
   assert.equal(summary.covered_count, 6);
   assert.equal(summary.pass_rate_pct, 100);
   assert.equal(summary.max_shortfall_bps, 0);
+  assert.equal(summary.simulated_swap_count, 100);
+  assert.ok(summary.simulated_prevented_revert_rate_pct >= 95);
+  assert.equal(summary.simulated_required_threshold_pct, 95);
   assert.ok(summary.cases.every((item) => item.recommended_bps >= item.required_bps));
 });
