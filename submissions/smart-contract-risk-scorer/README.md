@@ -43,6 +43,12 @@ Supported chains: `ethereum`, `polygon`, `arbitrum`, `optimism`, `base`.
       "final_score": 44,
       "final_level": "medium"
     },
+    "source_pattern_coverage": {
+      "pattern_count": 54,
+      "severity_counts": { "low": 11, "medium": 33, "high": 9, "critical": 1 },
+      "fixture_detected_count": 17,
+      "passes_minimum_50_patterns": true
+    },
     "case_count": 7,
     "pass_count": 7,
     "pass_rate_pct": 100
@@ -82,7 +88,7 @@ Findings are weighted by severity and converted to:
 
 Confidence increases when live RPC, verified source, GoPlus, Token Sniffer, and deep metadata are available. Missing paid or unavailable data sources lower confidence instead of being treated as clean.
 
-Every response includes `calculation_evidence`, which exposes the severity weights, confidence penalty, critical floor, live score inputs, live arithmetic, duplicate-finding detection, threshold validation cases, and recommendation-mapping validation. This is deterministic metadata; it does not replace live RPC/explorer evidence and does not fabricate third-party results.
+Every response includes `calculation_evidence`, which exposes the severity weights, confidence penalty, critical floor, live score inputs, live arithmetic, source-pattern coverage, duplicate-finding detection, threshold validation cases, and recommendation-mapping validation. This is deterministic metadata; it does not replace live RPC/explorer evidence and does not fabricate third-party results.
 
 ## Local Validation
 
