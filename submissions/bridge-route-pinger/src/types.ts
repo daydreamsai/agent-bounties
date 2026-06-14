@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const bridgeInputSchema = z.object({
-  token: z.string().min(1).default('ETH'),
-  amount: z.union([z.string().min(1), z.number().positive()]).default('0.001'),
+  token: z.string().min(1).default('USDC'),
+  amount: z.union([z.string().min(1), z.number().positive()]).default('1'),
   from_chain: z.string().min(1).default('base'),
   to_chain: z.string().min(1).default('optimism'),
   from_address: z.string().regex(/^0x[a-fA-F0-9]{40}$/).default('0x0000000000000000000000000000000000000001'),
