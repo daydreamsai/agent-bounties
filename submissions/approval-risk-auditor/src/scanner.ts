@@ -15,6 +15,7 @@ import {
 import { arbitrum, avalanche, base, bsc, fantom, gnosis, mainnet, optimism, polygon } from 'viem/chains';
 import { attachRiskScore, erc20RevokeTx, erc721TokenRevokeTx, maxUint256, operatorRevokeTx } from './calldata.js';
 import { getChainConfig, type ChainConfig } from './chains.js';
+import { buildApprovalCalculationEvidence } from './evidence.js';
 import { baseRiskFlags, isLikelyHighValue } from './risk.js';
 import type { ApprovalRecord, AuditInput, AuditOutput, RiskFlag, SupportedChain } from './types.js';
 
@@ -96,7 +97,8 @@ export async function auditApprovals(rawInput: AuditInput): Promise<AuditOutput>
     risk_flags: Object.fromEntries(approvals.map((approval) => [approval.id, approval.risk_flags])),
     revoke_tx_data: approvals.map((approval) => approval.revoke_tx_data),
     warnings,
-    data_sources: [...dataSources].sort()
+    data_sources: [...dataSources].sort(),
+    calculation_evidence: buildApprovalCalculationEvidence()
   };
 }
 

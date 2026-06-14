@@ -25,7 +25,12 @@ Supported chains: `ethereum`, `base`, `polygon`, `arbitrum`, `optimism`, `bsc`, 
   "risk_flags": {},
   "revoke_tx_data": [],
   "warnings": [],
-  "data_sources": []
+  "data_sources": [],
+  "calculation_evidence": {
+    "case_count": 6,
+    "pass_count": 6,
+    "pass_rate_pct": 100
+  }
 }
 ```
 
@@ -38,6 +43,8 @@ Each approval includes the token, spender/operator, standard, current allowance 
 - ERC721/ERC1155 operator approval: `setApprovalForAll(operator, false)`
 
 All revoke entries are unsigned transaction data with `to`, `data`, `value`, `chain`, and a human-readable description.
+
+`calculation_evidence` is a deterministic fixture summary for revoke calldata and risk scoring. It covers ERC20, ERC721 token, and operator revoke calldata, stale approval flags, high-value approval detection, and score capping.
 
 ## Data Sources
 
@@ -71,6 +78,8 @@ npm run build
 npm test
 npm run lint
 ```
+
+Tests cover calldata encoding, stale and high-value risk flags, invalid input handling, extended chain acceptance, and calculation evidence.
 
 Optional live scan:
 

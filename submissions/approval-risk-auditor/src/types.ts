@@ -79,4 +79,19 @@ export type AuditOutput = {
   revoke_tx_data: RevokeTxData[];
   warnings: string[];
   data_sources: string[];
+  calculation_evidence: ApprovalCalculationEvidence;
+};
+
+export type ApprovalCalculationEvidenceCase = {
+  name: string;
+  expected: string | number | boolean | string[];
+  actual: string | number | boolean | string[];
+  pass: boolean;
+};
+
+export type ApprovalCalculationEvidence = {
+  case_count: number;
+  pass_count: number;
+  pass_rate_pct: number;
+  cases: ApprovalCalculationEvidenceCase[];
 };
