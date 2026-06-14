@@ -48,6 +48,7 @@ export interface SlippageOutput {
   min_safe_slip_bps: number;
   pool_depths: PoolDepth[];
   recent_trade_size_p95: number | null;
+  backtest_summary: SlippageBacktestSummary;
   route: {
     chain: SupportedChain;
     dex: string;
@@ -56,4 +57,25 @@ export interface SlippageOutput {
   } | null;
   warnings: string[];
   data_sources: string[];
+}
+
+export interface SlippageBacktestCase {
+  name: string;
+  amount_usd: number;
+  reserve_usd: number;
+  fee_bps: number | null;
+  volatility_1h_pct: number | null;
+  recent_trade_p95_usd: number | null;
+  required_bps: number;
+  recommended_bps: number;
+  covered: boolean;
+}
+
+export interface SlippageBacktestSummary {
+  scenario_count: number;
+  covered_count: number;
+  pass_rate_pct: number;
+  max_shortfall_bps: number;
+  cases: SlippageBacktestCase[];
+  note: string;
 }

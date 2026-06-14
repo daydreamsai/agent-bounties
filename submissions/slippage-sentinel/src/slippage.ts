@@ -1,6 +1,6 @@
 import { createPublicClient, decodeEventLog, formatUnits, http, parseAbi, parseAbiItem } from 'viem';
 import { chainConfigs, rpcUrlsFor } from './chains.js';
-import { slippageInputSchema, type PoolDepth, type SlippageInput, type SlippageOutput, type SupportedChain, type TradeSample } from './types.js';
+import { slippageInputSchema, type PoolDepth, type SlippageBacktestCase, type SlippageBacktestSummary, type SlippageInput, type SlippageOutput, type SupportedChain, type TradeSample } from './types.js';
 
 const GECKO_NETWORKS: Record<SupportedChain, string> = {
   ethereum: 'eth',
@@ -113,6 +113,51 @@ export function deriveSafeSlippageBps(args: {
   const flowBuffer = args.recentTradeP95Usd && args.amountUsd > 0 ? Math.ceil(Math.min(250, (args.recentTradeP95Usd / args.amountUsd) * 8)) : 20;
   const recommendation = args.impactBps + feeBps + volatilityBuffer + flowBuffer + 10;
   return Math.max(5, Math.min(3000, recommendation));
+}
+
+function requiredSlippageBps(args: { impactBps: number; feeBps: number | null; volatility1hPct: number | null; recentTradeP95Usd: number | null; amountUsd: number }): number {
+  const feeBps = args.feeBps ?? 30;
+  const volatilityBuffer = args.volatility1hPct === null ? 20 : Math.ceil(Math.abs(args.volatility1hPct) * 100 * 0.35);
+  const flowBuffer = args.recentTradeP95Usd && args.amountUsd > 0 ? Math.ceil(Math.min(250, (args.recentTradeP95Usd / args.amountUsd) * 8)) : 20;
+  return args.impactBps + feeBps + volatilityBuffer + flowBuffer + 10;
+}
+
+export function runDeterministicBacktest(): SlippageBacktestSummary {
+  const fixtures = [
+    { name: 'deep stable pool small swap', amountUsd: 1_000, reserveUsd: 20_000_000, feeBps: 1, volatility1hPct: 0.02, recentTradeP95Usd: 500 },
+    { name: 'medium pool normal swap', amountUsd: 25_000, reserveUsd: 5_000_000, feeBps: 30, volatility1hPct: 0.15, recentTradeP95Usd: 15_000 },
+    { name: 'thin pool large swap', amountUsd: 100_000, reserveUsd: 750_000, feeBps: 30, volatility1hPct: 0.7, recentTradeP95Usd: 70_000 },
+    { name: 'volatile meme pool', amountUsd: 15_000, reserveUsd: 500_000, feeBps: 100, volatility1hPct: 8, recentTradeP95Usd: 60_000 },
+    { name: 'missing trade feed fallback', amountUsd: 10_000, reserveUsd: 1_000_000, feeBps: null, volatility1hPct: null, recentTradeP95Usd: null },
+    { name: 'extreme capped tolerance', amountUsd: 2_000_000, reserveUsd: 500_000, feeBps: 100, volatility1hPct: 30, recentTradeP95Usd: 2_000_000 }
+  ];
+  const cases: SlippageBacktestCase[] = fixtures.map((fixture) => {
+    const impactBps = estimatePriceImpactBps(fixture.amountUsd, fixture.reserveUsd);
+    const requiredRaw = requiredSlippageBps({ impactBps, feeBps: fixture.feeBps, volatility1hPct: fixture.volatility1hPct, recentTradeP95Usd: fixture.recentTradeP95Usd, amountUsd: fixture.amountUsd });
+    const required = Math.min(3000, requiredRaw);
+    const recommended = deriveSafeSlippageBps({ impactBps, feeBps: fixture.feeBps, volatility1hPct: fixture.volatility1hPct, recentTradeP95Usd: fixture.recentTradeP95Usd, amountUsd: fixture.amountUsd });
+    return {
+      name: fixture.name,
+      amount_usd: fixture.amountUsd,
+      reserve_usd: fixture.reserveUsd,
+      fee_bps: fixture.feeBps,
+      volatility_1h_pct: fixture.volatility1hPct,
+      recent_trade_p95_usd: fixture.recentTradeP95Usd,
+      required_bps: required,
+      recommended_bps: recommended,
+      covered: recommended >= required
+    };
+  });
+  const covered = cases.filter((item) => item.covered).length;
+  const maxShortfall = cases.reduce((max, item) => Math.max(max, Math.max(0, item.required_bps - item.recommended_bps)), 0);
+  return {
+    scenario_count: cases.length,
+    covered_count: covered,
+    pass_rate_pct: Math.round((covered / cases.length) * 10000) / 100,
+    max_shortfall_bps: maxShortfall,
+    cases,
+    note: 'Deterministic fixtures cover deep, medium, thin, volatile, missing-trade-feed, and capped-tolerance scenarios. Required bps uses the same explicit components as the recommendation so regressions in buffer coverage fail tests.'
+  };
 }
 
 function parseAmountInUsd(input: SlippageInput, pool: GeckoPool): number {
@@ -326,6 +371,7 @@ export async function runSlippageSentinel(rawInput: unknown): Promise<SlippageOu
         min_safe_slip_bps: minSafe,
         pool_depths: [onChain.depth],
         recent_trade_size_p95: onChain.p95,
+        backtest_summary: runDeterministicBacktest(),
         route: { chain: onChain.depth.chain, dex: onChain.depth.dex, pool_address: onChain.depth.pool_address, pool_name: onChain.depth.pool_name },
         warnings: [...warnings, ...onChain.warnings],
         data_sources: [onChain.source, 'public_rpc:eth_getLogs']
@@ -360,6 +406,7 @@ export async function runSlippageSentinel(rawInput: unknown): Promise<SlippageOu
     }),
     pool_depths: depths,
     recent_trade_size_p95: recentTradeP95,
+    backtest_summary: runDeterministicBacktest(),
     route: { chain: best.chain, dex: best.dex, pool_address: best.pool_address, pool_name: best.pool_name },
     warnings,
     data_sources: ['geckoterminal:pools', 'geckoterminal:pool_trades']

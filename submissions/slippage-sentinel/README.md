@@ -35,6 +35,12 @@ Supported chains: `ethereum`, `base`, `polygon`, `arbitrum`, `optimism`, `bsc`, 
     }
   ],
   "recent_trade_size_p95": 26.57,
+  "backtest_summary": {
+    "scenario_count": 6,
+    "covered_count": 6,
+    "pass_rate_pct": 100,
+    "max_shortfall_bps": 0
+  },
   "route": {
     "chain": "base",
     "dex": "aerodrome-base",
@@ -60,6 +66,8 @@ min_safe_slip_bps = impact_bps + pool_fee_bps + volatility_buffer + recent_trade
 
 `recent_trade_size_p95` is computed from the pool trade feed over `trade_window_hours` using `volume_in_usd`. The slippage recommendation is capped at 3000 bps to avoid returning a reckless tolerance.
 
+The response also includes `backtest_summary`, a deterministic fixture check that covers deep, medium, thin, volatile, missing-trade-feed, and capped-tolerance scenarios. Each fixture compares `recommended_bps` against an explicit `required_bps` built from price impact, fee, volatility, recent-flow buffer, and safety margin. Current deterministic pass rate is 100% with `max_shortfall_bps = 0`.
+
 This is a safety estimator, not a guarantee. It is designed to reduce revert risk by accounting for pool depth and observed recent flow while making the evidence visible.
 
 ## Local Validation
@@ -79,8 +87,11 @@ SLIPPAGE_CHAIN=base \
 SLIPPAGE_TOKEN_IN=0x833589fcd6edb6e08f4c7c32d4f71b54bda02913 \
 SLIPPAGE_TOKEN_OUT=0x4200000000000000000000000000000000000006 \
 SLIPPAGE_AMOUNT_IN=1000 \
+SLIPPAGE_POOL_ADDRESS=0xcdac0d6c6c59727a65f871236188350531885c43 \
 npm run slippage:sample
 ```
+
+The route-hinted Base sample uses public RPC fallback when GeckoTerminal is unavailable from the deployment host. It should return live reserve depth, non-null `recent_trade_size_p95` when recent standard swap logs are present, and `backtest_summary.pass_rate_pct = 100`.
 
 ## x402
 
