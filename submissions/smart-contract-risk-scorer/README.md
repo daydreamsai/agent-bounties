@@ -32,6 +32,21 @@ Supported chains: `ethereum`, `polygon`, `arbitrum`, `optimism`, `base`.
   "external_checks": [],
   "contract_info": {},
   "recommendations": [],
+  "calculation_evidence": {
+    "method": "severity-weighted deterministic score with confidence penalty and critical floor",
+    "severity_weights": { "low": 4, "medium": 10, "high": 20, "critical": 35 },
+    "risk_thresholds": { "low": "0-24", "medium": "25-54", "high": "55-79", "critical": "80-100" },
+    "live_calculation": {
+      "raw_severity_score": 40,
+      "confidence_penalty": 4,
+      "critical_floor_applied": 0,
+      "final_score": 44,
+      "final_level": "medium"
+    },
+    "case_count": 7,
+    "pass_count": 7,
+    "pass_rate_pct": 100
+  },
   "confidence": 0.72
 }
 ```
@@ -66,6 +81,8 @@ Findings are weighted by severity and converted to:
 - `critical`: 80-100
 
 Confidence increases when live RPC, verified source, GoPlus, Token Sniffer, and deep metadata are available. Missing paid or unavailable data sources lower confidence instead of being treated as clean.
+
+Every response includes `calculation_evidence`, which exposes the severity weights, confidence penalty, critical floor, live score inputs, live arithmetic, duplicate-finding detection, threshold validation cases, and recommendation-mapping validation. This is deterministic metadata; it does not replace live RPC/explorer evidence and does not fabricate third-party results.
 
 ## Local Validation
 

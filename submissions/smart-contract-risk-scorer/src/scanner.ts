@@ -8,7 +8,7 @@ import {
 } from 'viem';
 import { getChainConfig } from './chains.js';
 import { analyzeSourcePatterns } from './patterns.js';
-import { dedupeFindings, recommendationsFor, scoreFindings } from './risk.js';
+import { buildScoreCalculationEvidence, dedupeFindings, recommendationsFor, scoreFindings } from './risk.js';
 import type {
   ContractInfo,
   ExternalCheck,
@@ -138,6 +138,7 @@ export async function scoreContractRisk(input: ScoreInput): Promise<ScoreOutput>
   const findings = dedupeFindings(vulnerabilities);
   const confidence = computeConfidence({ isContract, externalChecks, hasSource: Boolean(etherscan.sourceCode), scanDepth });
   const score = scoreFindings(findings, confidence);
+  const recommendations = recommendationsFor(findings);
 
   return {
     ...score,
@@ -157,7 +158,8 @@ export async function scoreContractRisk(input: ScoreInput): Promise<ScoreOutput>
       code_size_bytes: code ? (code.length - 2) / 2 : 0,
       implementation_address: implementationAddress
     },
-    recommendations: recommendationsFor(findings),
+    recommendations,
+    calculation_evidence: buildScoreCalculationEvidence(findings, confidence, recommendations),
     confidence,
     generated_at: new Date().toISOString(),
     scan_depth: scanDepth,

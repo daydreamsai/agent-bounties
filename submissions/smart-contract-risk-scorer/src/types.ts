@@ -57,6 +57,38 @@ export type ContractInfo = {
   implementation_address?: string;
 };
 
+export type ScoreCalculationCase = {
+  name: string;
+  expected: Record<string, unknown>;
+  actual: Record<string, unknown>;
+  passed: boolean;
+};
+
+export type ScoreCalculationEvidence = {
+  method: string;
+  severity_weights: Record<Severity, number>;
+  risk_thresholds: Record<'low' | 'medium' | 'high' | 'critical', string>;
+  confidence_penalties: Array<{ when: string; penalty: number }>;
+  critical_floor: number;
+  live_inputs: {
+    finding_count: number;
+    finding_ids: string[];
+    duplicate_finding_ids: string[];
+    confidence: number;
+  };
+  live_calculation: {
+    raw_severity_score: number;
+    confidence_penalty: number;
+    critical_floor_applied: number;
+    final_score: number;
+    final_level: 'low' | 'medium' | 'high' | 'critical';
+  };
+  validation_cases: ScoreCalculationCase[];
+  case_count: number;
+  pass_count: number;
+  pass_rate_pct: number;
+};
+
 export type ScoreOutput = {
   risk_score: number;
   risk_level: 'low' | 'medium' | 'high' | 'critical';
@@ -65,6 +97,7 @@ export type ScoreOutput = {
   external_checks: ExternalCheck[];
   contract_info: ContractInfo;
   recommendations: string[];
+  calculation_evidence: ScoreCalculationEvidence;
   confidence: number;
   generated_at: string;
   scan_depth: 'quick' | 'deep';
