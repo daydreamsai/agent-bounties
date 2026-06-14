@@ -19,6 +19,7 @@ export type DexConfig = {
   name: string;
   chain: SupportedChain;
   factory: string;
+  router?: string;
   feeBps: number;
   swapGasUnits: number;
 };
@@ -40,6 +41,9 @@ export type QuoteRoute = {
   net_output_after_cost: number;
   quote_block: string;
   quote_source: string;
+  router?: string;
+  router_amount_out?: string;
+  router_quote_error_pct?: number | null;
   reserve_in?: string;
   reserve_out?: string;
   decimals_in?: number;
