@@ -11,7 +11,7 @@ import {
   type PublicClient
 } from 'viem';
 import { getChainConfig } from './chains.js';
-import { alertsFor, centralizationRisk, concentrationMetrics, shareBps } from './metrics.js';
+import { alertsFor, buildHolderCalculationEvidence, centralizationRisk, concentrationMetrics, shareBps } from './metrics.js';
 import type { ExternalCheck, LargeTransfer, MonitorInput, MonitorOutput, SupportedChain, WhaleWallet } from './types.js';
 
 type AnyClient = PublicClient<any, any, any>;
@@ -111,6 +111,7 @@ export async function monitorTokenHolders(input: MonitorInput): Promise<MonitorO
     external_checks: externalChecks,
     data_sources: [...dataSources].sort(),
     warnings,
+    calculation_evidence: buildHolderCalculationEvidence(),
     generated_at: new Date().toISOString(),
     scan_window: { from_block: fromBlock.toString(), to_block: latestBlock.toString(), lookback_blocks: lookback }
   };

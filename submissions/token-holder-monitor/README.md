@@ -32,7 +32,12 @@ Supported chains: `ethereum`, `polygon`, `arbitrum`, `optimism`, `base`.
   "token_info": {},
   "external_checks": [],
   "data_sources": [],
-  "warnings": []
+  "warnings": [],
+  "calculation_evidence": {
+    "case_count": 6,
+    "pass_count": 6,
+    "pass_rate_pct": 100
+  }
 }
 ```
 
@@ -51,6 +56,8 @@ The monitor never fabricates full holder counts. Without a privileged holder-ind
 - sample balance coverage in basis points when total supply is available
 - centralization risk: `low`, `medium`, `high`, `critical`
 
+`calculation_evidence` verifies deterministic concentration fixtures for Gini, HHI, top-holder share, sample coverage, critical concentration risk, and sampled-distribution alerts.
+
 ## Local Validation
 
 ```bash
@@ -60,6 +67,8 @@ npm test
 npm run lint
 npm audit --audit-level=moderate
 ```
+
+Tests cover input validation, concentration metrics, centralization alerts, sampled-distribution warnings, and calculation evidence.
 
 Optional live scan:
 

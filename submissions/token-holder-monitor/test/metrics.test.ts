@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { alertsFor, centralizationRisk, concentrationMetrics, giniCoefficient, hhiIndex } from '../src/metrics.js';
+import { alertsFor, buildHolderCalculationEvidence, centralizationRisk, concentrationMetrics, giniCoefficient, hhiIndex } from '../src/metrics.js';
 
 test('concentration metrics calculate gini, hhi, and top-holder shares', () => {
   const balances = [50n, 25n, 15n, 10n];
@@ -19,4 +19,13 @@ test('centralization risk and alerts flag concentrated holder sets', () => {
   const alerts = alertsFor(metrics, 3, true);
   assert.ok(alerts.some((alert) => alert.type === 'concentration_risk'));
   assert.ok(alerts.some((alert) => alert.type === 'sampled_distribution'));
+});
+
+test('calculation evidence summarizes holder concentration fixtures', () => {
+  const evidence = buildHolderCalculationEvidence();
+
+  assert.equal(evidence.case_count, 6);
+  assert.equal(evidence.pass_count, 6);
+  assert.equal(evidence.pass_rate_pct, 100);
+  assert.ok(evidence.cases.every((testCase) => testCase.pass));
 });

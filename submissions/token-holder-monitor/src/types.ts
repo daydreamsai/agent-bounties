@@ -80,10 +80,25 @@ export type MonitorOutput = {
   external_checks: ExternalCheck[];
   data_sources: string[];
   warnings: string[];
+  calculation_evidence: HolderCalculationEvidence;
   generated_at: string;
   scan_window: {
     from_block: string;
     to_block: string;
     lookback_blocks: number;
   };
+};
+
+export type HolderCalculationEvidenceCase = {
+  name: string;
+  expected: number | string | boolean;
+  actual: number | string | boolean;
+  pass: boolean;
+};
+
+export type HolderCalculationEvidence = {
+  case_count: number;
+  pass_count: number;
+  pass_rate_pct: number;
+  cases: HolderCalculationEvidenceCase[];
 };

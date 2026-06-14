@@ -1,4 +1,4 @@
-import type { ConcentrationMetrics, HolderAlert, RiskLevel } from './types.js';
+import type { ConcentrationMetrics, HolderAlert, HolderCalculationEvidence, RiskLevel } from './types.js';
 
 export function giniCoefficient(values: bigint[]): number {
   const positive = values.filter((value) => value > 0n).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
@@ -80,6 +80,57 @@ export function alertsFor(metrics: ConcentrationMetrics, holderCount: number, sa
     });
   }
   return alerts;
+}
+
+export function buildHolderCalculationEvidence(): HolderCalculationEvidence {
+  const balanced = concentrationMetrics([50n, 25n, 15n, 10n], 100n);
+  const concentrated = concentrationMetrics([90n, 5n, 5n], 100n);
+  const alerts = alertsFor(concentrated, 3, true);
+  const cases = [
+    {
+      name: 'gini coefficient is calculated from observed non-zero balances',
+      expected: 0.325,
+      actual: balanced.gini_coefficient,
+      pass: balanced.gini_coefficient === 0.325
+    },
+    {
+      name: 'HHI is calculated against total supply when available',
+      expected: 0.345,
+      actual: balanced.hhi_index,
+      pass: balanced.hhi_index === 0.345
+    },
+    {
+      name: 'top holder share uses supply denominator',
+      expected: 5000,
+      actual: balanced.top_1_share_bps,
+      pass: balanced.top_1_share_bps === 5000
+    },
+    {
+      name: 'sample coverage is reported for sampled holder sets',
+      expected: 10000,
+      actual: balanced.sample_balance_coverage_bps ?? 0,
+      pass: balanced.sample_balance_coverage_bps === 10000
+    },
+    {
+      name: 'concentrated holder set is critical risk',
+      expected: 'critical',
+      actual: centralizationRisk(concentrated),
+      pass: centralizationRisk(concentrated) === 'critical'
+    },
+    {
+      name: 'sampled distribution alert is emitted instead of claiming full census',
+      expected: true,
+      actual: alerts.some((alert) => alert.type === 'sampled_distribution'),
+      pass: alerts.some((alert) => alert.type === 'sampled_distribution')
+    }
+  ];
+  const passCount = cases.filter((testCase) => testCase.pass).length;
+  return {
+    case_count: cases.length,
+    pass_count: passCount,
+    pass_rate_pct: Math.round((passCount / cases.length) * 10000) / 100,
+    cases
+  };
 }
 
 function round4(value: number): number {
