@@ -26,12 +26,23 @@ If `factories` is empty, the service scans configured V2/V3 factories for the ch
   "markets": [],
   "warnings": [],
   "scanned": {},
+  "scan_evidence": {
+    "requested_window_minutes": 10,
+    "requested_blocks": 300,
+    "scanned_blocks": 301,
+    "raw_log_count": 0,
+    "decoded_market_count": 0,
+    "decode_failure_count": 0,
+    "observed_false_positive_rate_pct": 0
+  },
   "data_sources": [],
   "fetched_at": "2026-06-14T00:00:00.000Z"
 }
 ```
 
 Each market includes `pair_address`, `tokens`, `factory`, `protocol`, `event_type`, `fee`, `created_at`, `block_number`, `transaction_hash`, and `log_index`.
+
+`scan_evidence` records the exact block span, configured factories, event topics, raw log count, decoded market count, decode failures, and observed false-positive rate for the current invocation. The scanner requests logs only from configured factory addresses and exact `PairCreated` / `PoolCreated` topics, then counts malformed decodes as failures instead of silently accepting them.
 
 `init_liquidity` is enriched with read-only on-chain evidence when possible:
 
