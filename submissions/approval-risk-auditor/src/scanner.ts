@@ -112,6 +112,7 @@ type ApprovalEvent = {
   tokenId?: bigint;
   approved?: boolean;
   blockNumber: bigint;
+  logIndex?: number;
   transactionHash?: `0x${string}`;
 };
 
@@ -217,6 +218,7 @@ export function decodeApprovalLog(chain: SupportedChain, log: Log, owner: `0x${s
           spender: getAddress(String(decoded.args.approved)),
           tokenId: decoded.args.tokenId as bigint,
           blockNumber: log.blockNumber || 0n,
+          logIndex: typeof log.logIndex === 'number' ? log.logIndex : undefined,
           transactionHash: log.transactionHash || undefined
         };
       }
@@ -234,6 +236,7 @@ export function decodeApprovalLog(chain: SupportedChain, log: Log, owner: `0x${s
         spender: getAddress(String(decoded.args.spender)),
         value: decoded.args.value as bigint,
         blockNumber: log.blockNumber || 0n,
+        logIndex: typeof log.logIndex === 'number' ? log.logIndex : undefined,
         transactionHash: log.transactionHash || undefined
       };
     }
@@ -251,6 +254,7 @@ export function decodeApprovalLog(chain: SupportedChain, log: Log, owner: `0x${s
         spender: getAddress(String(decoded.args.operator)),
         approved: Boolean(decoded.args.approved),
         blockNumber: log.blockNumber || 0n,
+        logIndex: typeof log.logIndex === 'number' ? log.logIndex : undefined,
         transactionHash: log.transactionHash || undefined
       };
     }
@@ -382,14 +386,19 @@ async function eventToCurrentApproval(args: {
   });
 }
 
-function latestEventByApproval(events: ApprovalEvent[]): Map<string, ApprovalEvent> {
+export function latestEventByApproval(events: ApprovalEvent[]): Map<string, ApprovalEvent> {
   const map = new Map<string, ApprovalEvent>();
   for (const event of events) {
     const key = approvalId(event.chain, event.token, event.spender, event.tokenId !== undefined ? `token:${event.tokenId}` : event.standard === 'operator' ? 'operator' : 'erc20');
     const prev = map.get(key);
-    if (!prev || event.blockNumber >= prev.blockNumber) map.set(key, event);
+    if (!prev || isNewerApprovalEvent(event, prev)) map.set(key, event);
   }
   return map;
+}
+
+function isNewerApprovalEvent(candidate: ApprovalEvent, current: ApprovalEvent) {
+  if (candidate.blockNumber !== current.blockNumber) return candidate.blockNumber > current.blockNumber;
+  return (candidate.logIndex ?? -1) >= (current.logIndex ?? -1);
 }
 
 async function tokenMeta(client: AnyClient, token: `0x${string}`): Promise<{ symbol?: string; name?: string; decimals?: number }> {
@@ -482,8 +491,15 @@ export function explorerLogToViemLog(item: unknown): Log {
     topics,
     data: (typeof row.data === 'string' ? row.data : '0x') as `0x${string}`,
     blockNumber: BigInt(typeof row.blockNumber === 'string' ? row.blockNumber : '0'),
+    logIndex: parseExplorerNumber(row.logIndex),
     transactionHash: typeof row.transactionHash === 'string' ? row.transactionHash as `0x${string}` : undefined
   } as Log;
+}
+
+function parseExplorerNumber(value: unknown): number | undefined {
+  if (typeof value === 'number') return value;
+  if (typeof value !== 'string' || value.length === 0) return undefined;
+  return Number(BigInt(value));
 }
 
 function addressTopic(address: string): `0x${string}` {
