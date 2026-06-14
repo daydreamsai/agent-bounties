@@ -1,4 +1,5 @@
 import type { ScoreCalculationCase, ScoreCalculationEvidence, Severity, Vulnerability } from './types.js';
+import { analyzeSourcePatterns, maliciousSourcePatterns } from './patterns.js';
 
 const severityWeights: Record<Severity, number> = {
   low: 4,
@@ -77,10 +78,46 @@ export function buildScoreCalculationEvidence(
       final_score: details.risk_score,
       final_level: details.risk_level
     },
+    source_pattern_coverage: buildSourcePatternCoverage(),
     validation_cases: allCases,
     case_count: allCases.length,
     pass_count: passCount,
     pass_rate_pct: Math.round((passCount / allCases.length) * 100)
+  };
+}
+
+function buildSourcePatternCoverage(): ScoreCalculationEvidence['source_pattern_coverage'] {
+  const severityCounts = maliciousSourcePatterns.reduce<Record<Severity, number>>((counts, pattern) => {
+    counts[pattern.severity] += 1;
+    return counts;
+  }, { low: 0, medium: 0, high: 0, critical: 0 });
+  const fixtureFindings = analyzeSourcePatterns(`
+    contract PatternCoverageToken is Ownable {
+      mapping(address => bool) public isBlacklisted;
+      mapping(address => bool) public isWhitelisted;
+      bool public tradingEnabled;
+      bool public swapEnabled;
+      uint256 public maxTxAmount;
+      uint256 public maxWallet;
+      uint256 public sellTax;
+      uint256 public buyTax;
+      address public marketingWallet;
+      function setSellFee(uint256 value) external onlyOwner { sellTax = value; }
+      function setRouter(address newRouter) external onlyOwner {}
+      function mint(address to, uint256 amount) external onlyOwner { _mint(to, amount); }
+      function rescueToken(address token) external onlyOwner {}
+      function forceTransfer(address from, address to, uint256 amount) external onlyOwner {}
+      function upgradeTo(address implementation) external onlyOwner {}
+      function kill() external onlyOwner { selfdestruct(payable(msg.sender)); }
+      function auth() external view returns (bool) { return tx.origin == msg.sender; }
+    }
+  `);
+  return {
+    pattern_count: maliciousSourcePatterns.length,
+    severity_counts: severityCounts,
+    fixture_detected_count: fixtureFindings.length,
+    fixture_detected_ids: fixtureFindings.map((finding) => finding.id).sort(),
+    passes_minimum_50_patterns: maliciousSourcePatterns.length >= 50
   };
 }
 
