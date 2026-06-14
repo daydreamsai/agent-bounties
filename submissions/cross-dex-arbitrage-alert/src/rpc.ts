@@ -6,6 +6,7 @@ const getPairSelector = '0xe6a43905';
 const getReservesSelector = '0x0902f1ac';
 const token0Selector = '0x0dfe1681';
 const token1Selector = '0xd21220a7';
+const getAmountsOutSelector = '0xd06ca61f';
 
 const rpcUrls: Record<SupportedChain, string[]> = {
   base: ['https://base-rpc.publicnode.com', 'https://base.drpc.org'],
@@ -95,6 +96,11 @@ export async function pairReserves(rpc: RpcClient, pair: string): Promise<{ rese
   };
 }
 
+export async function routerGetAmountsOut(rpc: RpcClient, router: string, amountIn: bigint, path: [string, string]): Promise<bigint> {
+  const result = await rpc.call(router, getAmountsOutCalldata(amountIn, path));
+  return decodeGetAmountsOut(result);
+}
+
 export async function tokenUsdPrice(chain: SupportedChain, token: string): Promise<number | null> {
   const url = `https://coins.llama.fi/prices/current/${llamaChains[chain]}:${token}`;
   const response = await undiciFetch(url, { headers: { accept: 'application/json', 'user-agent': 'cross-dex-arbitrage-alert/0.1' } });
@@ -116,6 +122,30 @@ export async function nativeUsdPrice(): Promise<number | null> {
 
 export function encodeAddress(address: string): string {
   return cleanHex(address).padStart(64, '0');
+}
+
+export function encodeUint(value: bigint): string {
+  if (value < 0n) throw new Error('uint value cannot be negative');
+  return value.toString(16).padStart(64, '0');
+}
+
+export function getAmountsOutCalldata(amountIn: bigint, path: [string, string]): string {
+  return [
+    getAmountsOutSelector,
+    encodeUint(amountIn),
+    encodeUint(64n),
+    encodeUint(2n),
+    encodeAddress(path[0]),
+    encodeAddress(path[1])
+  ].join('');
+}
+
+export function decodeGetAmountsOut(hex: string): bigint {
+  const clean = cleanHex(hex);
+  if (clean.length < 256) throw new Error('invalid getAmountsOut result');
+  const length = BigInt(`0x${clean.slice(64, 128)}`);
+  if (length < 2n) throw new Error('getAmountsOut returned fewer than two amounts');
+  return BigInt(`0x${clean.slice(192, 256)}`);
 }
 
 export function decodeAddress(hex: string): string {
