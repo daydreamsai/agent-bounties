@@ -1,6 +1,6 @@
 import { dexes } from './dexes.js';
 import { formatUnits, getAmountOut, parseUnits, round, spreadBps } from './math.js';
-import { factoryPair, nativeUsdPrice, pairReserves, pairTokens, RpcClient, tokenDecimals, tokenUsdPrice } from './rpc.js';
+import { factoryPair, nativeUsdPrice, pairReserves, pairTokens, routerGetAmountsOut, RpcClient, tokenDecimals, tokenUsdPrice } from './rpc.js';
 import {
   inputSchema,
   type ArbCalculationEvidence,
@@ -97,6 +97,20 @@ async function quoteChain(chain: SupportedChain, chainDexes: DexConfig[], input:
       const reserveIn = tokenInIs0 ? reserve0 : reserve1;
       const reserveOut = tokenInIs0 ? reserve1 : reserve0;
       const amountOutRaw = getAmountOut(amountInRaw, reserveIn, reserveOut, dex.feeBps);
+      let routerAmountOutRaw: bigint | null = null;
+      let routerQuoteErrorPct: number | null = null;
+      if (dex.router) {
+        try {
+          routerAmountOutRaw = await routerGetAmountsOut(rpc, dex.router, amountInRaw, [input.token_in, input.token_out]);
+          routerQuoteErrorPct = relativeErrorPct(amountOutRaw, routerAmountOutRaw);
+          dataSources.add(`router:${chain}:${dex.name}`);
+          if (routerQuoteErrorPct !== null && routerQuoteErrorPct > 1) {
+            warnings.push(`${dex.name} reserve quote differs from router getAmountsOut by ${round(routerQuoteErrorPct, 6)}%`);
+          }
+        } catch (error) {
+          warnings.push(`${dex.name} router getAmountsOut validation failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
       const amountOutDecimal = Number(formatUnits(amountOutRaw, decimalsOut));
       const gasCostUsd = nativeUsd === null ? null : Number(formatUnits(gasPrice * BigInt(dex.swapGasUnits), 18)) * nativeUsd;
       const gasCostTokenOut = gasCostUsd === null || !tokenOutUsd ? null : gasCostUsd / tokenOutUsd;
@@ -117,7 +131,10 @@ async function quoteChain(chain: SupportedChain, chainDexes: DexConfig[], input:
         est_fill_cost: round(estFillCost, 8) ?? 0,
         net_output_after_cost: round(amountOutDecimal - estFillCost, 8) ?? amountOutDecimal,
         quote_block: block,
-        quote_source: 'constant-product-v2-reserves',
+        quote_source: routerAmountOutRaw === null ? 'constant-product-v2-reserves' : 'constant-product-v2-reserves+router-getAmountsOut',
+        router: dex.router,
+        router_amount_out: routerAmountOutRaw?.toString(),
+        router_quote_error_pct: round(routerQuoteErrorPct, 8),
         reserve_in: reserveIn.toString(),
         reserve_out: reserveOut.toString(),
         decimals_in: decimalsIn,
@@ -161,6 +178,13 @@ function buildOpportunities(quotes: QuoteRoute[], thresholdBps: number): ArbOppo
     const bProfit = b.roundtrip_profit_token_in ?? Number.NEGATIVE_INFINITY;
     return bProfit === aProfit ? b.net_spread_bps - a.net_spread_bps : bProfit - aProfit;
   });
+}
+
+function relativeErrorPct(calculated: bigint, reference: bigint): number | null {
+  if (reference === 0n) return calculated === 0n ? 0 : null;
+  const scale = 1_000_000_000_000n;
+  const diff = calculated > reference ? calculated - reference : reference - calculated;
+  return Number((diff * scale) / reference) / Number(scale) * 100;
 }
 
 export function buildArbCalculationEvidence(): ArbCalculationEvidence {
