@@ -38,5 +38,24 @@ export interface BridgeOutput {
   best_route: BridgeRoute | null;
   warnings: string[];
   data_sources: string[];
+  calculation_evidence: BridgeCalculationEvidence;
   fetched_at: string;
+}
+
+export interface BridgeCalculationEvidenceCase {
+  name: string;
+  expected_best_route_id: string | null;
+  actual_best_route_id: string | null;
+  expected_fee_usd: number | null;
+  actual_fee_usd: number | null;
+  expected_eta_minutes: number | null;
+  actual_eta_minutes: number | null;
+  pass: boolean;
+}
+
+export interface BridgeCalculationEvidence {
+  case_count: number;
+  pass_count: number;
+  pass_rate_pct: number;
+  cases: BridgeCalculationEvidenceCase[];
 }

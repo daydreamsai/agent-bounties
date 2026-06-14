@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { bridgeInputSchema } from '../src/types.js';
 import { testInternals } from '../src/lifi.js';
+import { buildBridgeCalculationEvidence, selectBestRoute } from '../src/pinger.js';
 
 test('input schema applies defaults and validates from address', () => {
   const parsed = bridgeInputSchema.parse({});
@@ -42,4 +43,40 @@ test('normalizeQuote sums LI.FI fee and gas costs', () => {
   assert.equal(route.fee_usd, 0.15);
   assert.equal(route.eta_minutes, 2);
   assert.deepEqual(route.included_steps, ['AcrossV4']);
+});
+
+test('best route ranking prefers highest USD output after total fees', () => {
+  const expensive = {
+    route_id: 'expensive',
+    tool: 'fixture',
+    bridge: 'fixture',
+    from_chain: 'base',
+    to_chain: 'optimism',
+    from_token: 'ETH',
+    to_token: 'ETH',
+    from_amount: '1000',
+    to_amount: '1000',
+    to_amount_min: '990',
+    from_amount_usd: 100,
+    to_amount_usd: 101,
+    eta_minutes: 2,
+    fee_usd: 3,
+    gas_fee_usd: 1,
+    bridge_fee_usd: 2,
+    requirements: [],
+    included_steps: [],
+    data_source: 'fixture'
+  };
+  const cheaper = { ...expensive, route_id: 'cheaper', to_amount_usd: 100, fee_usd: 0.5, gas_fee_usd: 0.2, bridge_fee_usd: 0.3 };
+
+  assert.equal(selectBestRoute([expensive, cheaper])?.route_id, 'cheaper');
+});
+
+test('bridge calculation evidence summarizes route ranking fixtures', () => {
+  const evidence = buildBridgeCalculationEvidence();
+
+  assert.equal(evidence.case_count, 3);
+  assert.equal(evidence.pass_count, 3);
+  assert.equal(evidence.pass_rate_pct, 100);
+  assert.ok(evidence.cases.every((testCase) => testCase.pass));
 });

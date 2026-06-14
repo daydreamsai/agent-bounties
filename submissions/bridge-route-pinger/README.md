@@ -27,11 +27,18 @@ Common supported chain aliases include `ethereum`, `base`, `optimism`, `polygon`
   "best_route": null,
   "warnings": [],
   "data_sources": ["lifi:v1:quote"],
+  "calculation_evidence": {
+    "case_count": 3,
+    "pass_count": 3,
+    "pass_rate_pct": 100
+  },
   "fetched_at": "2026-06-14T00:00:00.000Z"
 }
 ```
 
 Each route includes the bridge/tool, source/destination chain and token, input/output amounts, minimum output, USD input/output estimates, ETA minutes, gas fee USD, bridge fee USD, total fee USD, requirements, and included route steps.
+
+`calculation_evidence` verifies deterministic route normalization and ranking fixtures: fee split to total fee, ETA handling, best route by output after total fees, and lower-fee fallback when USD output is unavailable.
 
 ## Data Source
 
@@ -48,6 +55,8 @@ npm test
 npm run lint
 npm audit --audit-level=moderate
 ```
+
+Tests cover input validation, chain/token resolution, decimal amount conversion, LI.FI quote normalization, best-route ranking, and route calculation evidence.
 
 Optional live quote:
 
