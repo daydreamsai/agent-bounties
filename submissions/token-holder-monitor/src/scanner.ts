@@ -48,7 +48,7 @@ export async function monitorTokenHolders(input: MonitorInput): Promise<MonitorO
 
   const [meta, transferResult] = await Promise.all([
     readTokenMeta(client, token),
-    collectTransfers({ chain: input.chain, token, client, fromBlock, toBlock: latestBlock }, warnings)
+    collectTransfers({ chain: input.chain, token, client, fromBlock, toBlock: latestBlock, minHolders: input.min_holders || 100 }, warnings)
   ]);
   externalChecks.push(transferResult.check);
   if (transferResult.check.status === 'ok') dataSources.add(transferResult.check.provider);
@@ -123,6 +123,7 @@ async function collectTransfers(args: {
   client: AnyClient;
   fromBlock: bigint;
   toBlock: bigint;
+  minHolders: number;
 }, warnings: string[]): Promise<{ transfers: TransferEvent[]; check: ExternalCheck }> {
   if (process.env.ETHERSCAN_API_KEY) {
     const explorer = await getExplorerTransfers(args, warnings);
@@ -155,23 +156,31 @@ async function getRpcTransfers(args: {
   client: AnyClient;
   fromBlock: bigint;
   toBlock: bigint;
+  minHolders: number;
 }, warnings: string[]): Promise<{ transfers: TransferEvent[]; check: ExternalCheck }> {
   const transfers: TransferEvent[] = [];
-  let chunk = 200n;
+  let chunk = 10n;
   let queries = 0;
+  const targetCandidates = Math.min(Math.max(args.minHolders * 10, 80), 800);
   try {
-    for (let start = args.fromBlock; start <= args.toBlock && queries < 40; ) {
-      const end = start + chunk > args.toBlock ? args.toBlock : start + chunk;
+    for (let cursorEnd = args.toBlock; cursorEnd >= args.fromBlock && queries < 40; ) {
+      const start = cursorEnd - chunk + 1n > args.fromBlock ? cursorEnd - chunk + 1n : args.fromBlock;
+      const chunkEnd = cursorEnd;
       try {
         const logs = await args.client.getLogs({
           address: args.token,
           fromBlock: start,
-          toBlock: end,
+          toBlock: chunkEnd,
           event: parseAbi(['event Transfer(address indexed from, address indexed to, uint256 value)'])[0]
         } as any);
         transfers.push(...logs.map(decodeTransfer).filter((item): item is TransferEvent => Boolean(item)));
-        start = end + 1n;
         queries += 1;
+        if (countUniqueCandidates(transfers) >= targetCandidates) {
+          warnings.push(`RPC log scan stopped after ${queries} reverse chunk(s) once ${targetCandidates}+ holder candidates were observed; increase min_holders or configure explorer access for a broader sampled window.`);
+          break;
+        }
+        if (start === args.fromBlock) break;
+        cursorEnd = start - 1n;
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         if (chunk > 25n && /max results|too many|exceed/i.test(message)) {
@@ -187,6 +196,15 @@ async function getRpcTransfers(args: {
   } catch (error) {
     return { transfers: [], check: { provider: 'rpc', status: 'error', error: error instanceof Error ? error.message : String(error) } };
   }
+}
+
+function countUniqueCandidates(transfers: TransferEvent[]): number {
+  const addresses = new Set<string>();
+  for (const transfer of transfers) {
+    if (transfer.from.toLowerCase() !== zeroAddress) addresses.add(transfer.from.toLowerCase());
+    if (transfer.to.toLowerCase() !== zeroAddress) addresses.add(transfer.to.toLowerCase());
+  }
+  return addresses.size;
 }
 
 function decodeTransfer(log: Log): TransferEvent | null {
