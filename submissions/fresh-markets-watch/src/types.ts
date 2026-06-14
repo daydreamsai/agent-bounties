@@ -50,6 +50,28 @@ export interface WatchOutput {
   markets: FreshMarket[];
   warnings: string[];
   scanned: { chain: string; from_block: number; to_block: number; factories: string[] };
+  scan_evidence: {
+    requested_window_minutes: number;
+    requested_blocks: number;
+    scanned_blocks: number;
+    capped_to_provider_limit: boolean;
+    latest_block: number;
+    factory_count: number;
+    raw_log_count: number;
+    decoded_market_count: number;
+    decode_failure_count: number;
+    observed_false_positive_rate_pct: number;
+    false_positive_control: string;
+    factories: Array<{
+      factory: string;
+      protocol: string;
+      event_type: 'PairCreated' | 'PoolCreated';
+      topic: string;
+      logs_returned: number;
+      decoded_markets: number;
+      decode_failures: number;
+    }>;
+  };
   data_sources: string[];
   fetched_at: string;
 }
