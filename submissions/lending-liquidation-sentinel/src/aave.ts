@@ -79,12 +79,25 @@ export type LiquidationPriceFixture = {
   pass: boolean;
 };
 
+export type PreLiquidationAlertFixture = {
+  name: string;
+  alert_threshold: number;
+  liquidation_price: number;
+  first_alert_price: number | null;
+  first_alert_health_factor: number | null;
+  crosses_before_liquidation: boolean;
+  pass: boolean;
+};
+
 export type LiquidationCalculationEvidence = {
   case_count: number;
   pass_count: number;
   pass_rate_pct: number;
   max_absolute_error_usd: number;
   cases: LiquidationPriceFixture[];
+  pre_liquidation_alert_case_count: number;
+  pre_liquidation_alert_pass_count: number;
+  pre_liquidation_alert_cases: PreLiquidationAlertFixture[];
 };
 
 const LIQUIDATION_PRICE_FIXTURES = [
@@ -115,6 +128,21 @@ const LIQUIDATION_PRICE_FIXTURES = [
   }
 ] as const;
 
+const PRE_LIQUIDATION_ALERT_FIXTURES = [
+  {
+    name: 'ETH collateral alert fires at HF 1.2 before liquidation',
+    position: { collateral_symbol: 'ETH', debt_symbol: 'USDC', collateral_amount: 1, debt_amount: 1000, debt_price_usd: 1, liquidation_threshold: 0.8 },
+    alert_threshold: 1.2,
+    observed_prices: [1800, 1600, 1500, 1400, 1250]
+  },
+  {
+    name: 'WBTC collateral alert fires at HF 1.1 before liquidation',
+    position: { collateral_symbol: 'WBTC', debt_symbol: 'USDC', collateral_amount: 0.1, debt_amount: 4000, debt_price_usd: 1, liquidation_threshold: 0.8 },
+    alert_threshold: 1.1,
+    observed_prices: [70000, 60000, 55000, 50000]
+  }
+] as const;
+
 export function buildLiquidationCalculationEvidence(): LiquidationCalculationEvidence {
   const cases = LIQUIDATION_PRICE_FIXTURES.map((fixture) => {
     const actual = calculateLiquidationPrice(fixture.position);
@@ -133,13 +161,62 @@ export function buildLiquidationCalculationEvidence(): LiquidationCalculationEvi
     .map((testCase) => testCase.absolute_error_usd)
     .filter((error): error is number => error !== null);
   const passCount = cases.filter((testCase) => testCase.pass).length;
+  const preLiquidationAlertCases = PRE_LIQUIDATION_ALERT_FIXTURES.map((fixture) => buildPreLiquidationAlertFixture(fixture));
+  const alertPassCount = preLiquidationAlertCases.filter((testCase) => testCase.pass).length;
   return {
     case_count: cases.length,
     pass_count: passCount,
     pass_rate_pct: Math.round((passCount / cases.length) * 10000) / 100,
     max_absolute_error_usd: Math.max(0, ...numericErrors),
-    cases
+    cases,
+    pre_liquidation_alert_case_count: preLiquidationAlertCases.length,
+    pre_liquidation_alert_pass_count: alertPassCount,
+    pre_liquidation_alert_cases: preLiquidationAlertCases
   };
+}
+
+function buildPreLiquidationAlertFixture(fixture: {
+  name: string;
+  position: PositionInput;
+  alert_threshold: number;
+  observed_prices: readonly number[];
+}): PreLiquidationAlertFixture {
+  const liquidationPrice = calculateLiquidationPrice(fixture.position);
+  if (liquidationPrice === null) {
+    return {
+      name: fixture.name,
+      alert_threshold: fixture.alert_threshold,
+      liquidation_price: 0,
+      first_alert_price: null,
+      first_alert_health_factor: null,
+      crosses_before_liquidation: false,
+      pass: false
+    };
+  }
+  const firstAlert = fixture.observed_prices
+    .map((price) => ({ price, healthFactor: healthFactorAtCollateralPrice(fixture.position, price) }))
+    .find((point) => point.healthFactor !== null && point.healthFactor <= fixture.alert_threshold && point.healthFactor > 1);
+  const firstAlertHealthFactor = firstAlert?.healthFactor ?? null;
+  const crossesBeforeLiquidation = firstAlert !== undefined && firstAlert.price > liquidationPrice && firstAlertHealthFactor !== null && firstAlertHealthFactor > 1;
+  return {
+    name: fixture.name,
+    alert_threshold: fixture.alert_threshold,
+    liquidation_price: liquidationPrice,
+    first_alert_price: firstAlert?.price ?? null,
+    first_alert_health_factor: firstAlertHealthFactor === null ? null : Math.round(firstAlertHealthFactor * 10000) / 10000,
+    crosses_before_liquidation: crossesBeforeLiquidation,
+    pass: crossesBeforeLiquidation
+  };
+}
+
+export function healthFactorAtCollateralPrice(position: PositionInput, collateralPriceUsd: number): number | null {
+  const required = [position.collateral_amount, position.debt_amount, position.debt_price_usd, position.liquidation_threshold];
+  if (required.some((value) => value === undefined)) return null;
+  const collateralAmount = position.collateral_amount as number;
+  const debtAmount = position.debt_amount as number;
+  const debtPrice = position.debt_price_usd as number;
+  const liquidationThreshold = position.liquidation_threshold as number;
+  return (collateralAmount * collateralPriceUsd * liquidationThreshold) / (debtAmount * debtPrice);
 }
 
 async function rpcCall<T>(url: string, method: string, params: unknown[]): Promise<T> {
@@ -194,6 +271,7 @@ export const testInternals = {
   healthFactorToNumber,
   bufferPercent,
   baseToUsd,
+  healthFactorAtCollateralPrice,
   calculateLiquidationPrice,
   buildLiquidationCalculationEvidence
 };
