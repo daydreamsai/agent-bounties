@@ -31,6 +31,20 @@ export type IlBacktestCase = {
   pass: boolean;
 };
 
+export type RealizedPoolBacktestCase = {
+  name: string;
+  source: string;
+  token_weights: number[];
+  price_ratio_start: number;
+  price_ratio_end: number;
+  price_relative: number;
+  expected_IL_percent: number;
+  actual_IL_percent: number;
+  absolute_error_pct_points: number;
+  relative_error_pct: number | null;
+  pass: boolean;
+};
+
 export type IlBacktestSummary = {
   case_count: number;
   pass_count: number;
@@ -39,6 +53,10 @@ export type IlBacktestSummary = {
   max_relative_error_pct: number;
   relative_error_threshold_pct: number;
   cases: IlBacktestCase[];
+  realized_pool_case_count: number;
+  realized_pool_pass_count: number;
+  realized_pool_max_relative_error_pct: number | null;
+  realized_pool_cases: RealizedPoolBacktestCase[];
 };
 
 const IL_BACKTEST_FIXTURES = [
@@ -80,7 +98,7 @@ const IL_BACKTEST_FIXTURES = [
   }
 ] as const;
 
-export function buildIlBacktestSummary(relativeErrorThresholdPct = 10): IlBacktestSummary {
+export function buildIlBacktestSummary(realizedPoolCases: RealizedPoolBacktestCase[] = [], relativeErrorThresholdPct = 10): IlBacktestSummary {
   const cases = IL_BACKTEST_FIXTURES.map((fixture) => {
     const actual = weightedImpermanentLossPercent([...fixture.price_relatives], [...fixture.token_weights]);
     const absoluteError = Math.abs(actual - fixture.expected_IL_percent);
@@ -111,7 +129,46 @@ export function buildIlBacktestSummary(relativeErrorThresholdPct = 10): IlBackte
     max_absolute_error_pct_points: round(Math.max(...cases.map((testCase) => testCase.absolute_error_pct_points)), 12) ?? 0,
     max_relative_error_pct: round(Math.max(...relativeErrors), 12) ?? 0,
     relative_error_threshold_pct: relativeErrorThresholdPct,
-    cases
+    cases,
+    realized_pool_case_count: realizedPoolCases.length,
+    realized_pool_pass_count: realizedPoolCases.filter((testCase) => testCase.pass).length,
+    realized_pool_max_relative_error_pct: realizedPoolCases.length > 0
+      ? round(Math.max(...realizedPoolCases.map((testCase) => testCase.relative_error_pct ?? 0)), 12)
+      : null,
+    realized_pool_cases: realizedPoolCases
+  };
+}
+
+export function buildRealizedPoolBacktestCase(args: {
+  name: string;
+  source: string;
+  tokenWeights: number[];
+  priceRatioStart: number;
+  priceRatioEnd: number;
+  relativeErrorThresholdPct?: number;
+}): RealizedPoolBacktestCase | null {
+  if (!Number.isFinite(args.priceRatioStart) || !Number.isFinite(args.priceRatioEnd) || args.priceRatioStart <= 0 || args.priceRatioEnd <= 0) return null;
+  const priceRelative = args.priceRatioEnd / args.priceRatioStart;
+  const weights = normalizeWeights(args.tokenWeights);
+  const actual = weightedImpermanentLossPercent([priceRelative, ...weights.slice(1).map(() => 1)], weights);
+  const poolValueRelative = Math.pow(priceRelative, weights[0]);
+  const holdValueRelative = weights[0] * priceRelative + weights.slice(1).reduce((sum, weight) => sum + weight, 0);
+  const expected = (poolValueRelative / holdValueRelative - 1) * 100;
+  const absoluteError = Math.abs(actual - expected);
+  const relativeError = Math.abs(expected) > 0 ? (absoluteError / Math.abs(expected)) * 100 : null;
+  const threshold = args.relativeErrorThresholdPct ?? 10;
+  return {
+    name: args.name,
+    source: args.source,
+    token_weights: weights,
+    price_ratio_start: round(args.priceRatioStart, 12) ?? args.priceRatioStart,
+    price_ratio_end: round(args.priceRatioEnd, 12) ?? args.priceRatioEnd,
+    price_relative: round(priceRelative, 12) ?? priceRelative,
+    expected_IL_percent: round(expected, 12) ?? expected,
+    actual_IL_percent: round(actual, 12) ?? actual,
+    absolute_error_pct_points: round(absoluteError, 12) ?? absoluteError,
+    relative_error_pct: round(relativeError, 12),
+    pass: relativeError === null ? absoluteError <= 1e-9 : relativeError <= threshold
   };
 }
 
