@@ -47,5 +47,26 @@ export type MevOutput = {
   };
   notes: string[];
   data_sources: string[];
+  calculation_evidence: MevCalculationEvidence;
   confidence: number;
+};
+
+export type MevRiskClassification = Omit<MevOutput, 'calculation_evidence'>;
+
+export type MevCalculationEvidenceCase = {
+  name: string;
+  expected_attack_type: 'sandwich' | 'front-run' | 'back-run' | 'none';
+  actual_attack_type: 'sandwich' | 'front-run' | 'back-run' | 'none';
+  risk_score: number;
+  expected_min_risk_score: number;
+  gas_price_percentile: number | null;
+  estimated_loss_usd: number;
+  pass: boolean;
+};
+
+export type MevCalculationEvidence = {
+  case_count: number;
+  pass_count: number;
+  pass_rate_pct: number;
+  cases: MevCalculationEvidenceCase[];
 };

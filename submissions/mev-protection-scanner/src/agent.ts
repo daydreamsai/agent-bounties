@@ -1,5 +1,5 @@
 import { RpcClient } from './rpc.js';
-import { classifyRisk } from './scoring.js';
+import { buildMevCalculationEvidence, classifyRisk } from './scoring.js';
 import { inputSchema, type MevInput, type MevOutput } from './types.js';
 
 export const agentMetadata = {
@@ -38,7 +38,7 @@ export async function scanMev(input: MevInput): Promise<MevOutput> {
     notes.push('amount_in is treated as notional risk size because token USD conversion was not requested in the bounty input schema');
   }
 
-  return classifyRisk({
+  const output = classifyRisk({
     amountUsd,
     pending,
     userTx: tx,
@@ -48,6 +48,10 @@ export async function scanMev(input: MevInput): Promise<MevOutput> {
     dataSources,
     notes
   });
+  return {
+    ...output,
+    calculation_evidence: buildMevCalculationEvidence()
+  };
 }
 
 

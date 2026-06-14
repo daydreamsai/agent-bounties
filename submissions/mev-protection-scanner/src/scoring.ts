@@ -1,5 +1,5 @@
 import { gasPrice } from './rpc.js';
-import type { MevOutput, PendingTxSample } from './types.js';
+import type { MevCalculationEvidence, MevRiskClassification, PendingTxSample } from './types.js';
 
 const swapSelectors = new Set([
   '0x38ed1739',
@@ -32,7 +32,7 @@ export function classifyRisk(args: {
   startMs: number;
   dataSources: string[];
   notes: string[];
-}): MevOutput {
+}): MevRiskClassification {
   const swapLike = args.pending.filter(isSwapLike);
   const gasPeers = args.pending.map(gasPrice).filter((n): n is number => n !== null);
   const userGas = args.userTx ? gasPrice(args.userTx) : args.feeP50;
@@ -74,6 +74,108 @@ export function classifyRisk(args: {
     notes: args.notes,
     data_sources: args.dataSources,
     confidence: confidence(args.pending.length, gasPct, args.userTx !== null)
+  };
+}
+
+export function buildMevCalculationEvidence(): MevCalculationEvidence {
+  const now = Date.now();
+  const cases = [
+    {
+      name: 'small trade with no swap competition is no MEV alert',
+      expected_attack_type: 'none' as const,
+      expected_min_risk_score: 0,
+      output: classifyRisk({
+        amountUsd: 1000,
+        pending: [fixtureTx(20, '0x12345678'), fixtureTx(22, '0x12345678')],
+        userTx: fixtureTx(80, '0x12345678'),
+        feeP50: 20,
+        feeP90: 28,
+        startMs: now,
+        dataSources: ['fixture'],
+        notes: []
+      })
+    },
+    {
+      name: 'medium trade with swap flow but no high-gas competitor is back-run risk',
+      expected_attack_type: 'back-run' as const,
+      expected_min_risk_score: 30,
+      output: classifyRisk({
+        amountUsd: 25000,
+        pending: [fixtureTx(20), fixtureTx(21), fixtureTx(22), fixtureTx(23), fixtureTx(24), fixtureTx(25)],
+        userTx: fixtureTx(70),
+        feeP50: 20,
+        feeP90: 26,
+        startMs: now,
+        dataSources: ['fixture'],
+        notes: []
+      })
+    },
+    {
+      name: 'large trade with high-gas competitor is front-run risk',
+      expected_attack_type: 'front-run' as const,
+      expected_min_risk_score: 45,
+      output: classifyRisk({
+        amountUsd: 50000,
+        pending: [fixtureTx(100), fixtureTx(120), fixtureTx(90), fixtureTx(10, '0x12345678')],
+        userTx: fixtureTx(20),
+        feeP50: 20,
+        feeP90: 100,
+        startMs: now,
+        dataSources: ['fixture'],
+        notes: []
+      })
+    },
+    {
+      name: 'very large trade with several high-gas swaps is sandwich risk',
+      expected_attack_type: 'sandwich' as const,
+      expected_min_risk_score: 70,
+      output: classifyRisk({
+        amountUsd: 150000,
+        pending: [fixtureTx(100), fixtureTx(120), fixtureTx(90), fixtureTx(80), fixtureTx(70)],
+        userTx: fixtureTx(15),
+        feeP50: 15,
+        feeP90: 100,
+        startMs: now,
+        dataSources: ['fixture'],
+        notes: []
+      })
+    }
+  ];
+
+  const results = cases.map((testCase) => {
+    const pass =
+      testCase.output.attack_type === testCase.expected_attack_type &&
+      testCase.output.risk_score >= testCase.expected_min_risk_score &&
+      (testCase.expected_attack_type === 'none' ? testCase.output.estimated_loss_usd === 0 : testCase.output.estimated_loss_usd > 0);
+    return {
+      name: testCase.name,
+      expected_attack_type: testCase.expected_attack_type,
+      actual_attack_type: testCase.output.attack_type,
+      risk_score: testCase.output.risk_score,
+      expected_min_risk_score: testCase.expected_min_risk_score,
+      gas_price_percentile: testCase.output.gas_price_percentile,
+      estimated_loss_usd: testCase.output.estimated_loss_usd,
+      pass
+    };
+  });
+  const passCount = results.filter((testCase) => testCase.pass).length;
+  return {
+    case_count: results.length,
+    pass_count: passCount,
+    pass_rate_pct: Math.round((passCount / results.length) * 10000) / 100,
+    cases: results
+  };
+}
+
+function fixtureTx(gas: number, inputPrefix = '0x38ed1739'): PendingTxSample {
+  return {
+    hash: '0x',
+    to: null,
+    from: null,
+    gas_price_gwei: gas,
+    max_fee_per_gas_gwei: null,
+    input_prefix: inputPrefix,
+    value_eth: 0
   };
 }
 

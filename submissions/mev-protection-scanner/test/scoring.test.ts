@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { classifyRisk, isSwapLike, percentile } from '../src/scoring.js';
+import { buildMevCalculationEvidence, classifyRisk, isSwapLike, percentile } from '../src/scoring.js';
 import type { PendingTxSample } from '../src/types.js';
 
 function tx(gas: number, inputPrefix = '0x38ed1739'): PendingTxSample {
@@ -45,4 +45,26 @@ test('classifies severe swap competition as sandwich risk', () => {
   });
   assert.ok(output.risk_score >= 70);
   assert.equal(output.attack_type, 'sandwich');
+});
+
+test('calculation evidence covers no-risk through sandwich-risk scenarios', () => {
+  const evidence = buildMevCalculationEvidence();
+
+  assert.equal(evidence.case_count, 4);
+  assert.equal(evidence.pass_count, 4);
+  assert.equal(evidence.pass_rate_pct, 100);
+  assert.deepEqual(
+    evidence.cases.map((testCase) => testCase.actual_attack_type),
+    ['none', 'back-run', 'front-run', 'sandwich']
+  );
+  assert.ok(evidence.cases.every((testCase) => testCase.pass));
+});
+
+test('calculation evidence keeps estimated losses aligned with attack type', () => {
+  const evidence = buildMevCalculationEvidence();
+  const noRisk = evidence.cases.find((testCase) => testCase.actual_attack_type === 'none');
+  const sandwich = evidence.cases.find((testCase) => testCase.actual_attack_type === 'sandwich');
+
+  assert.equal(noRisk?.estimated_loss_usd, 0);
+  assert.ok((sandwich?.estimated_loss_usd ?? 0) > 0);
 });

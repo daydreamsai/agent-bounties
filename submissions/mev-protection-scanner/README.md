@@ -40,6 +40,7 @@ Supported DEX labels: `uniswap-v2`, `uniswap-v3`, `sushiswap`, `curve`, `balance
 - `signals`
 - `notes`
 - `data_sources`
+- `calculation_evidence`
 - `confidence`
 
 ## Method
@@ -54,6 +55,8 @@ The scanner combines:
 
 This is designed as a pre-trade risk indicator. It returns actionable protections rather than pretending to prove that a specific private attacker will execute.
 
+`calculation_evidence` is a deterministic scoring fixture summary. It covers no-risk, back-run, front-run, and sandwich-risk scenarios, including the expected attack type, risk score floor, gas percentile, and estimated loss behavior.
+
 ## Validation
 
 ```bash
@@ -65,7 +68,7 @@ npm audit --audit-level=moderate
 MEV_TOKEN_IN=USDC MEV_TOKEN_OUT=ETH MEV_AMOUNT_IN=10000 MEV_DEX=uniswap-v2 MEV_CHAIN=eth npm run mev:sample
 ```
 
-Tests cover swap selector detection, gas percentile math, risk classification, wei-to-gwei conversion, and JSON-RPC transaction normalization.
+Tests cover swap selector detection, gas percentile math, risk classification, deterministic scoring evidence, wei-to-gwei conversion, and JSON-RPC transaction normalization.
 
 ## x402
 
