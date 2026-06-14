@@ -22,8 +22,8 @@ const invokePaths = ['/entrypoints/ping_bridge_routes/invoke', '/entrypoints/bri
 const inputSchema = {
   type: 'object',
   properties: {
-    token: { type: 'string', default: 'ETH' },
-    amount: { oneOf: [{ type: 'string' }, { type: 'number' }], default: '0.001' },
+    token: { type: 'string', default: 'USDC' },
+    amount: { oneOf: [{ type: 'string' }, { type: 'number' }], default: '1' },
     from_chain: { type: 'string', default: 'base' },
     to_chain: { type: 'string', default: 'optimism' },
     from_address: { type: 'string', default: '0x0000000000000000000000000000000000000001' },
@@ -31,7 +31,7 @@ const inputSchema = {
   }
 };
 const entrypoints = [
-  { key: 'ping_bridge_routes', method: 'POST', path: '/entrypoints/ping_bridge_routes/invoke', description: 'Return live bridge route, ETA, fee, and requirements from LI.FI.', input_schema: inputSchema },
+  { key: 'ping_bridge_routes', method: 'POST', path: '/entrypoints/ping_bridge_routes/invoke', description: 'Return live bridge route, ETA, fee, and requirements from LI.FI and Across.', input_schema: inputSchema },
   { key: 'bridge-routes', method: 'POST', path: '/entrypoints/bridge-routes/invoke', description: 'Hyphenated alias for bridge route pinger.', input_schema: inputSchema },
   { key: 'bridge', method: 'POST', path: '/entrypoints/bridge/invoke', description: 'Short alias for bridge route pinger.', input_schema: inputSchema },
   { key: 'legacy_invoke', method: 'POST', path: '/invoke', description: 'Legacy invoke alias for simple x402 clients.', input_schema: inputSchema }
