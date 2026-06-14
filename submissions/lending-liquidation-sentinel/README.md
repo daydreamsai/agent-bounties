@@ -28,7 +28,9 @@ Supported protocol IDs: `aave-v3-base`, `aave-v3-arbitrum`.
     "case_count": 5,
     "pass_count": 5,
     "pass_rate_pct": 100,
-    "max_absolute_error_usd": 0
+    "max_absolute_error_usd": 0,
+    "pre_liquidation_alert_case_count": 2,
+    "pre_liquidation_alert_pass_count": 2
   },
   "fetched_at": "2026-06-14T00:00:00.000Z"
 }
@@ -38,7 +40,7 @@ Each position includes `health_factor`, `buffer_percent`, `alert_threshold_hit`,
 
 `liq_price` is returned only when the caller supplies single-position collateral/debt details. Aave's aggregate account health factor alone is not enough to produce a reliable single liquidation price for multi-asset positions, so the service does not fabricate one.
 
-`calculation_evidence` is a deterministic fixture summary for the liquidation-price formula. It covers ETH, WBTC, and stable-collateral examples plus a missing-parameter case that must return `null`.
+`calculation_evidence` is a deterministic fixture summary for the liquidation-price formula and early-alert behavior. It covers ETH, WBTC, and stable-collateral examples plus a missing-parameter case that must return `null`. It also simulates collateral price paths and verifies the first alert fires while `health_factor > 1.0` and before the collateral price reaches the liquidation price.
 
 ## Data Sources
 
@@ -59,6 +61,7 @@ Tests cover:
 - Aave `getUserAccountData(address)` calldata encoding
 - account data word decoding, health factor conversion, and buffer percentage
 - liquidation price calculation for multiple supplied single-position fixtures
+- price-path simulation proving alerts fire before health factor crosses 1.0
 - null `liq_price` when a single-position liquidation threshold is missing
 - `calculation_evidence` 100% pass rate and max absolute error at or below `$0.0001`
 
