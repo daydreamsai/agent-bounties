@@ -51,6 +51,9 @@ export interface GasRouteCalculationEvidence {
   pass_count: number;
   pass_rate_pct: number;
   max_gas_error_pct: number;
+  within_5pct_case_count: number;
+  within_5pct_pass_count: number;
+  within_5pct_threshold_pct: number;
   cases: GasRouteCalculationEvidenceCase[];
 }
 
