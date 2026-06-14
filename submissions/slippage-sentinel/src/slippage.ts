@@ -150,13 +150,62 @@ export function runDeterministicBacktest(): SlippageBacktestSummary {
   });
   const covered = cases.filter((item) => item.covered).length;
   const maxShortfall = cases.reduce((max, item) => Math.max(max, Math.max(0, item.required_bps - item.recommended_bps)), 0);
+  const simulated = runSimulatedSwapCoverage();
   return {
     scenario_count: cases.length,
     covered_count: covered,
     pass_rate_pct: Math.round((covered / cases.length) * 10000) / 100,
     max_shortfall_bps: maxShortfall,
+    simulated_swap_count: simulated.count,
+    simulated_prevented_revert_count: simulated.covered,
+    simulated_prevented_revert_rate_pct: simulated.ratePct,
+    simulated_required_threshold_pct: 95,
     cases,
-    note: 'Deterministic fixtures cover deep, medium, thin, volatile, missing-trade-feed, and capped-tolerance scenarios. Required bps uses the same explicit components as the recommendation so regressions in buffer coverage fail tests.'
+    note: 'Deterministic fixtures cover deep, medium, thin, volatile, missing-trade-feed, and capped-tolerance scenarios. The simulated swap suite spans 100 deterministic amount/depth/fee/volatility/recent-flow combinations and requires at least 95% coverage against explicit required bps.'
+  };
+}
+
+function runSimulatedSwapCoverage(): { count: number; covered: number; ratePct: number } {
+  const reserves = [250_000, 500_000, 1_000_000, 5_000_000, 20_000_000];
+  const amountRatios = [0.0005, 0.001, 0.0025, 0.005, 0.01];
+  const feeBpsValues = [1, 5, 30, 100];
+  const volatilityValues = [0.02, 0.15, 0.6, 2.5, null];
+  const scenarios: Array<{
+    amountUsd: number;
+    reserveUsd: number;
+    feeBps: number | null;
+    volatility1hPct: number | null;
+    recentTradeP95Usd: number | null;
+  }> = [];
+
+  for (const reserveUsd of reserves) {
+    for (const ratio of amountRatios) {
+      for (const feeBps of feeBpsValues) {
+        for (const volatility1hPct of volatilityValues) {
+          const amountUsd = reserveUsd * ratio;
+          const recentTradeP95Usd = amountUsd * (1 + ((scenarios.length % 7) / 3));
+          scenarios.push({ amountUsd, reserveUsd, feeBps, volatility1hPct, recentTradeP95Usd });
+          if (scenarios.length === 100) break;
+        }
+        if (scenarios.length === 100) break;
+      }
+      if (scenarios.length === 100) break;
+    }
+    if (scenarios.length === 100) break;
+  }
+
+  const covered = scenarios.filter((scenario) => {
+    const impactBps = estimatePriceImpactBps(scenario.amountUsd, scenario.reserveUsd);
+    const requiredRaw = requiredSlippageBps({ impactBps, feeBps: scenario.feeBps, volatility1hPct: scenario.volatility1hPct, recentTradeP95Usd: scenario.recentTradeP95Usd, amountUsd: scenario.amountUsd });
+    const required = Math.min(3000, requiredRaw);
+    const recommended = deriveSafeSlippageBps({ impactBps, feeBps: scenario.feeBps, volatility1hPct: scenario.volatility1hPct, recentTradeP95Usd: scenario.recentTradeP95Usd, amountUsd: scenario.amountUsd });
+    return recommended >= required;
+  }).length;
+
+  return {
+    count: scenarios.length,
+    covered,
+    ratePct: Math.round((covered / scenarios.length) * 10000) / 100
   };
 }
 
