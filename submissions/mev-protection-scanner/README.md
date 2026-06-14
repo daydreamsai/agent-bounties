@@ -4,11 +4,12 @@
 
 It uses:
 
+- Infura WebSocket `eth_subscribe` on `newPendingTransactions` when `INFURA_WSS_URL`, `INFURA_ETHEREUM_WSS_URL`, or `INFURA_BASE_WSS_URL` is configured
 - `eth_getBlockByNumber("pending", true)` for a bounded pending transaction sample
 - `eth_feeHistory` priority-fee percentiles
 - optional `eth_getTransactionByHash` for a specific pending transaction
 
-It does not require private keys, does not sign transactions, and does not broadcast transactions. It does not claim a private Infura or Blocknative stream unless such a provider is configured externally.
+It does not require private keys, does not sign transactions, and does not broadcast transactions. If no Infura WebSocket URL is configured, it falls back to public pending-block sampling.
 
 ## Input
 
@@ -50,6 +51,7 @@ The scanner combines:
 - swap-like pending calldata selectors
 - high-gas competitor count
 - fee-history p50/p90 spread
+- Infura WebSocket pending-transaction sampling when configured
 - user's gas percentile when a transaction hash is provided, otherwise p50 fee-history
 - notional trade size from `amount_in`
 
