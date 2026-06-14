@@ -1,5 +1,6 @@
 import { getChainConfig } from './chains.js';
 import { decodeFactoryLog, PAIR_CREATED_TOPIC, POOL_CREATED_TOPIC } from './decoder.js';
+import { enrichMarket } from './enrichment.js';
 import { RpcClient } from './rpc.js';
 import { watchInputSchema, type FreshMarket, type WatchOutput } from './types.js';
 
@@ -29,7 +30,7 @@ export async function runFreshMarketsWatch(rawInput: unknown): Promise<WatchOutp
         const blockNumber = Number.parseInt(log.blockNumber, 16);
         if (!blockTimes.has(blockNumber)) blockTimes.set(blockNumber, await rpc.getBlockTimestamp(blockNumber));
         const decoded = decodeFactoryLog(log, factory, chain.name, blockTimes.get(blockNumber) ?? null);
-        if (decoded) markets.push(decoded);
+        if (decoded) markets.push(await enrichMarket(rpc, decoded));
       }
     } catch (error) {
       warnings.push(`${factory.protocol} ${factory.address}: ${error instanceof Error ? error.message : String(error)}`);
@@ -40,7 +41,7 @@ export async function runFreshMarketsWatch(rawInput: unknown): Promise<WatchOutp
     markets,
     warnings,
     scanned: { chain: chain.name, from_block: fromBlock, to_block: latest, factories: selectedFactories.map((factory) => factory.address) },
-    data_sources: [`${chain.name}:rpc:eth_getLogs`, `${chain.name}:rpc:eth_getBlockByNumber`],
+    data_sources: [`${chain.name}:rpc:eth_getLogs`, `${chain.name}:rpc:eth_getBlockByNumber`, `${chain.name}:rpc:eth_call`, `${chain.name}:rpc:eth_getTransactionReceipt`],
     fetched_at: new Date().toISOString()
   };
 }

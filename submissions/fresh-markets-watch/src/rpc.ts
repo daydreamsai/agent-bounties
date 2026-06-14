@@ -7,6 +7,11 @@ export interface RpcLog {
   logIndex: string;
 }
 
+export interface RpcReceipt {
+  transactionHash: string;
+  logs: RpcLog[];
+}
+
 export class RpcClient {
   constructor(private readonly url: string) {}
 
@@ -38,5 +43,13 @@ export class RpcClient {
     const block = await this.call<{ timestamp?: string } | null>('eth_getBlockByNumber', [`0x${blockNumber.toString(16)}`, false]);
     if (!block?.timestamp) return null;
     return new Date(Number.parseInt(block.timestamp, 16) * 1000).toISOString();
+  }
+
+  async ethCall(to: string, data: string, blockNumber: number): Promise<string> {
+    return this.call<string>('eth_call', [{ to, data }, `0x${blockNumber.toString(16)}`]);
+  }
+
+  async getTransactionReceipt(transactionHash: string): Promise<RpcReceipt | null> {
+    return this.call<RpcReceipt | null>('eth_getTransactionReceipt', [transactionHash]);
   }
 }

@@ -33,13 +33,20 @@ If `factories` is empty, the service scans configured V2/V3 factories for the ch
 
 Each market includes `pair_address`, `tokens`, `factory`, `protocol`, `event_type`, `fee`, `created_at`, `block_number`, `transaction_hash`, and `log_index`.
 
-`init_liquidity` and `top_holders` are returned as `null` and `[]` unless a reliable token-specific enrichment source is added. The service does not fabricate liquidity or holder data from creation events alone.
+`init_liquidity` is enriched with read-only on-chain evidence when possible:
+
+- V2 pairs: `eth_call getReserves()` at the creation block.
+- V3 pools: `eth_call slot0()` and `liquidity()` at the creation block.
+
+`top_holders` is populated for V2 pairs from LP token `Transfer` mint logs in the creation transaction receipt. V3 pools do not issue ERC20 LP tokens from the pool contract, so the response includes `top_holders_unavailable_reason` instead of fabricating holders.
 
 ## Data Sources
 
 - EVM RPC `eth_blockNumber`
 - EVM RPC `eth_getLogs`
 - EVM RPC `eth_getBlockByNumber`
+- EVM RPC `eth_call`
+- EVM RPC `eth_getTransactionReceipt`
 
 Decoded events:
 
@@ -63,6 +70,17 @@ FRESH_CHAIN=base \
 FRESH_WINDOW_MINUTES=10 \
 npm run fresh:sample
 ```
+
+Historical Base validation sample:
+
+```bash
+FRESH_CHAIN=base \
+FRESH_FROM_BLOCK=47264078 \
+FRESH_TO_BLOCK=47264078 \
+npm run fresh:sample
+```
+
+The sample decodes a real SushiSwap V2 `PairCreated` event and returns non-null `init_liquidity` from `getReserves()` plus an LP mint holder from the creation transaction receipt.
 
 ## x402
 

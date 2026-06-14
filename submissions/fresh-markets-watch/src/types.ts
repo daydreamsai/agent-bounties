@@ -10,6 +10,25 @@ export const watchInputSchema = z.object({
 
 export type WatchInput = z.infer<typeof watchInputSchema>;
 
+export interface InitLiquidityEvidence {
+  source: string;
+  block_number: number;
+  token0: string;
+  token1: string;
+  reserve0_raw?: string;
+  reserve1_raw?: string;
+  sqrt_price_x96?: string;
+  liquidity_raw?: string;
+  initialized: boolean;
+  note?: string;
+}
+
+export interface TopHolderEvidence {
+  address: string;
+  amount_raw: string;
+  source: string;
+}
+
 export interface FreshMarket {
   pair_address: string;
   factory: string;
@@ -18,8 +37,9 @@ export interface FreshMarket {
   chain: string;
   tokens: string[];
   fee: number | null;
-  init_liquidity: null;
-  top_holders: string[];
+  init_liquidity: InitLiquidityEvidence | null;
+  top_holders: TopHolderEvidence[];
+  top_holders_unavailable_reason?: string;
   created_at: string | null;
   block_number: number;
   transaction_hash: string;
