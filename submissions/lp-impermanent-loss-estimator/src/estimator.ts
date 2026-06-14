@@ -1,5 +1,12 @@
 import { fetchPoolOhlcv, fetchPoolSnapshot, priceRelativeFromOhlcv, volumeFromOhlcv, volumeFromSnapshot } from './gecko.js';
-import { annualizedIlDrag, feeAprFromWindow, normalizeWeights, round, weightedImpermanentLossPercent } from './math.js';
+import {
+  annualizedIlDrag,
+  buildIlBacktestSummary,
+  feeAprFromWindow,
+  normalizeWeights,
+  round,
+  weightedImpermanentLossPercent
+} from './math.js';
 import { fetchOnchainFallback } from './onchain.js';
 import { inputSchema, type LpIlInput, type LpIlOutput } from './types.js';
 
@@ -115,6 +122,7 @@ export async function estimateLpIl(input: LpIlInput): Promise<LpIlOutput> {
     fee_bps_used: feeBpsUsed,
     notes,
     data_sources: [...dataSources].sort(),
+    backtest_summary: buildIlBacktestSummary(),
     confidence
   };
 }

@@ -30,6 +30,13 @@ Supported GeckoTerminal networks: `eth`, `base`, `polygon_pos`, `arbitrum`, `opt
   "net_apr_after_il_est": 13.9,
   "notes": [],
   "data_sources": ["geckoterminal:ohlcv:eth", "geckoterminal:pool:eth"],
+  "backtest_summary": {
+    "case_count": 6,
+    "pass_count": 6,
+    "pass_rate_pct": 100,
+    "max_relative_error_pct": 0,
+    "relative_error_threshold_pct": 10
+  },
   "confidence": 0.95
 }
 ```
@@ -44,6 +51,7 @@ Supported GeckoTerminal networks: `eth`, `base`, `polygon_pos`, `arbitrum`, `opt
 - Fee APR uses observed volume and TVL:
   - `fee_apr_est = (volume_window * fee_bps / 10000 / tvl_usd) * (24 / window_hours) * 365 * 100`
 - `net_apr_after_il_est` annualizes the observed window IL drag and adds the observed-window fee APR estimate.
+- `backtest_summary` is a deterministic analytical fixture check for the IL formula. It compares the runtime estimator math against known 50/50 constant-product and weighted-pool results, including 4x, 0.25x, 1.21x, equal-move, and small-move cases. Current fixtures require all nonzero cases to stay below 10% relative error.
 
 ## Data Sources
 
@@ -77,6 +85,9 @@ npm run il:sample
 Tests cover:
 
 - equal-weight constant product IL against a known 4x price-move result
+- equal-weight constant product IL against known 0.25x and 1.21x price-move results
+- weighted 80/20 IL against an independent expected fixture
+- deterministic backtest summary with 100% pass rate and max relative error below 10%
 - weighted pool normalization and zero-IL equal-price movement
 - fee APR annualization from observed volume/TVL
 - input validation

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { IlBacktestSummary } from './math.js';
 
 export const supportedNetworks = [
   'eth',
@@ -41,6 +42,7 @@ export type LpIlOutput = {
   fee_bps_used: number;
   notes: string[];
   data_sources: string[];
+  backtest_summary: IlBacktestSummary;
   confidence: number;
 };
 
