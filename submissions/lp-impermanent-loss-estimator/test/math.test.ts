@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   annualizedIlDrag,
   buildIlBacktestSummary,
+  buildRealizedPoolBacktestCase,
   feeAprFromWindow,
   normalizeWeights,
   weightedImpermanentLossPercent
@@ -44,9 +45,29 @@ test('backtest summary stays below 10 percent relative error threshold', () => {
   assert.equal(summary.case_count, 6);
   assert.equal(summary.pass_count, 6);
   assert.equal(summary.pass_rate_pct, 100);
+  assert.equal(summary.realized_pool_case_count, 0);
   assert.ok(summary.max_absolute_error_pct_points < 1e-9);
   assert.ok(summary.max_relative_error_pct < 10);
   assert.ok(summary.cases.every((testCase) => testCase.pass));
+});
+
+test('realized pool backtest case compares OHLCV price movement under 10 percent error', () => {
+  const realized = buildRealizedPoolBacktestCase({
+    name: 'USDC/WETH OHLCV sample',
+    source: 'geckoterminal:ohlcv:eth',
+    tokenWeights: [0.5, 0.5],
+    priceRatioStart: 2500,
+    priceRatioEnd: 2750
+  });
+  assert.ok(realized);
+  assert.equal(realized.pass, true);
+  assert.equal(realized.price_relative, 1.1);
+  assert.ok((realized.relative_error_pct ?? 0) < 10);
+
+  const summary = buildIlBacktestSummary([realized]);
+  assert.equal(summary.realized_pool_case_count, 1);
+  assert.equal(summary.realized_pool_pass_count, 1);
+  assert.ok((summary.realized_pool_max_relative_error_pct ?? 0) < 10);
 });
 
 test('fee APR annualizes observed window fees', () => {
