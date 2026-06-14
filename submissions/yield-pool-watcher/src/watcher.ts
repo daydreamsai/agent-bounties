@@ -1,4 +1,5 @@
 import { defaultRules, absDelta, evaluateAlerts, percentDelta } from './alerts.js';
+import { fetchAaveV3BaseSignals } from './aave.js';
 import { fetchAllPools, fetchPoolChart } from './defillama.js';
 import { watchInputSchema, type PoolDelta, type PoolMetric, type WatchOutput } from './types.js';
 
@@ -91,6 +92,9 @@ export async function runYieldPoolWatcher(rawInput: unknown): Promise<WatchOutpu
   }
 
   const alerts = evaluateAlerts(poolMetrics, deltas, rules);
+  const blockLevel = await fetchAaveV3BaseSignals({ protocolIds: input.protocol_ids, windowMinutes: 1, rules });
+  warnings.push(...blockLevel.warnings);
+  alerts.push(...blockLevel.alerts);
   const fetchedAt = new Date().toISOString();
   const chartObservedTimes = deltas.map((delta) => delta.current_observed_at).filter((value): value is string => Boolean(value));
   const chartLatestAt = chartObservedTimes.length > 0 ? chartObservedTimes.sort().at(-1) ?? null : null;
@@ -106,10 +110,14 @@ export async function runYieldPoolWatcher(rawInput: unknown): Promise<WatchOutpu
       chart_points_checked: deltas.filter((delta) => delta.source === 'defillama_chart').length,
       chart_latest_at: chartLatestAt,
       chart_lag_seconds: secondsBetween(fetchedAt, chartLatestAt),
-      block_level_precision: false,
-      note: 'DefiLlama yield data is not block-level. Deltas report chart timestamps or service-memory sample times so callers can evaluate source lag explicitly.'
+      block_level_precision: blockLevel.evidence.enabled,
+      note: blockLevel.evidence.enabled
+        ? 'DefiLlama yield data is not block-level, but Aave V3 Base ReserveDataUpdated logs provide block-level APY signals for that protocol/chain.'
+        : 'DefiLlama yield data is not block-level. Deltas report chart timestamps or service-memory sample times so callers can evaluate source lag explicitly.'
     },
-    data_sources: ['defillama:yields_pools', 'defillama:yields_chart', 'service_memory_snapshot_fallback'],
+    block_level_signals: blockLevel.signals,
+    block_level_evidence: blockLevel.evidence,
+    data_sources: ['defillama:yields_pools', 'defillama:yields_chart', 'service_memory_snapshot_fallback', 'aave-v3-base:rpc:ReserveDataUpdated'],
     fetched_at: fetchedAt
   };
 }
