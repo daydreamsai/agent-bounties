@@ -2,6 +2,7 @@ import { fetchPoolOhlcv, fetchPoolSnapshot, priceRelativeFromOhlcv, volumeFromOh
 import {
   annualizedIlDrag,
   buildIlBacktestSummary,
+  buildRealizedPoolBacktestCase,
   feeAprFromWindow,
   normalizeWeights,
   round,
@@ -92,6 +93,15 @@ export async function estimateLpIl(input: LpIlInput): Promise<LpIlOutput> {
 
   const ilAnnualized = annualizedIlDrag(ilPercent, windowHours);
   const netApr = feeApr === null ? null : feeApr + ilAnnualized;
+  const realizedPoolCase = priceRatioStart !== null && priceRatioEnd !== null
+    ? buildRealizedPoolBacktestCase({
+      name: `${network}:${input.pool_address}:ohlcv-${windowHours}h`,
+      source: `geckoterminal:ohlcv:${network}`,
+      tokenWeights: weights,
+      priceRatioStart,
+      priceRatioEnd
+    })
+    : null;
   const confidence = confidenceScore({
     hasPrice: priceRelative !== null,
     hasVolume: volumeWindow !== null,
@@ -122,7 +132,7 @@ export async function estimateLpIl(input: LpIlInput): Promise<LpIlOutput> {
     fee_bps_used: feeBpsUsed,
     notes,
     data_sources: [...dataSources].sort(),
-    backtest_summary: buildIlBacktestSummary(),
+    backtest_summary: buildIlBacktestSummary(realizedPoolCase ? [realizedPoolCase] : []),
     confidence
   };
 }
