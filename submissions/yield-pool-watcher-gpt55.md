@@ -21,9 +21,10 @@ The agent monitors DeFi yield pool APY and TVL from DefiLlama, computes deltas f
 ## Outputs
 
 - `pool_metrics`: current APY, TVL, chain, project, symbol, IL risk, exposure, token metadata, predictions
-- `deltas`: TVL/APY deltas with source labels
+- `deltas`: TVL/APY deltas with source labels, observation timestamps, and sample interval seconds
 - `alerts[]`: threshold-triggered alerts
 - `warnings[]`
+- `freshness`: requested/fetched timestamps, DefiLlama latency, chart lag, chart points checked, and `block_level_precision: false`
 - `data_sources[]`
 
 ## Accuracy Notes
@@ -35,6 +36,8 @@ This implementation uses real DefiLlama yield data. It does not fabricate per-bl
 - `none`: first observation and no chart baseline available
 
 That makes the freshness boundary visible while still supporting rapid alerting when the data provider updates or repeat polling observes a change.
+
+The response also includes a top-level `freshness` object. It reports `pools_endpoint_latency_ms`, `chart_latest_at`, `chart_lag_seconds`, `chart_points_checked`, and `block_level_precision: false`, so callers can make their own freshness decision instead of trusting an unsupported "within 1 block" claim.
 
 ## Validation
 
@@ -53,7 +56,7 @@ Current local validation:
 - npm test passes 5 tests
 - npm run lint passes
 - npm audit --audit-level=moderate reports 0 vulnerabilities
-- live sample against Aave v3 returned real DefiLlama pool metrics, TVL/APY values, chart deltas, and no warnings
+- live sample against Aave v3 returned real DefiLlama pool metrics, TVL/APY values, chart deltas, `sample_interval_seconds`, and `freshness.chart_lag_seconds`
 
 Tests cover:
 

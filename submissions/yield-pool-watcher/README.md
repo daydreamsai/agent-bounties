@@ -31,6 +31,15 @@ It does not request private keys, sign transactions, or broadcast transactions.
   "deltas": [],
   "alerts": [],
   "warnings": [],
+  "freshness": {
+    "requested_at": "2026-06-14T00:00:00.000Z",
+    "fetched_at": "2026-06-14T00:00:04.000Z",
+    "pools_endpoint_latency_ms": 1200,
+    "chart_points_checked": 5,
+    "chart_latest_at": "2026-06-13T23:00:00.000Z",
+    "chart_lag_seconds": 3600,
+    "block_level_precision": false
+  },
   "data_sources": [],
   "fetched_at": "2026-06-14T00:00:00.000Z"
 }
@@ -43,6 +52,8 @@ It does not request private keys, sign transactions, or broadcast transactions.
 - In-process memory snapshots as a fallback for immediate repeat-call deltas.
 
 The service does not fabricate per-block updates. It reports the actual data source used for each delta: `defillama_chart`, `service_memory`, or `none`.
+
+Each delta includes `previous_observed_at`, `current_observed_at`, and `sample_interval_seconds` when the source provides enough timing evidence. The top-level `freshness` object reports provider latency and source lag explicitly, including `block_level_precision: false`.
 
 ## Alerts
 
@@ -72,6 +83,8 @@ YIELD_PROTOCOL_IDS=aave-v3 \
 YIELD_LIMIT=5 \
 npm run watch:sample
 ```
+
+The live sample should include `freshness.chart_lag_seconds`, `freshness.pools_endpoint_latency_ms`, `freshness.block_level_precision`, and delta-level `sample_interval_seconds`.
 
 ## x402
 

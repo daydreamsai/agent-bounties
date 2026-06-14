@@ -45,6 +45,9 @@ export interface PoolDelta {
   apy_delta_abs: number | null;
   previous_tvl_usd: number | null;
   previous_apy: number | null;
+  previous_observed_at: string | null;
+  current_observed_at: string | null;
+  sample_interval_seconds: number | null;
   source: 'defillama_chart' | 'service_memory' | 'none';
 }
 
@@ -64,6 +67,16 @@ export interface WatchOutput {
   deltas: PoolDelta[];
   alerts: YieldAlert[];
   warnings: string[];
+  freshness: {
+    requested_at: string;
+    fetched_at: string;
+    pools_endpoint_latency_ms: number;
+    chart_points_checked: number;
+    chart_latest_at: string | null;
+    chart_lag_seconds: number | null;
+    block_level_precision: false;
+    note: string;
+  };
   data_sources: string[];
   fetched_at: string;
 }
