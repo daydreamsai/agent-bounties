@@ -32,6 +32,13 @@ test('liquidation price calculation uses supplied single-position data', () => {
   assert.equal(liq, 1250);
 });
 
+test('health factor simulation decreases toward liquidation price', () => {
+  const position = { collateral_amount: 1, debt_amount: 1000, debt_price_usd: 1, liquidation_threshold: 0.8 };
+
+  assert.equal(testInternals.healthFactorAtCollateralPrice(position, 1500), 1.2);
+  assert.equal(testInternals.healthFactorAtCollateralPrice(position, 1250), 1);
+});
+
 test('liquidation price calculation handles multiple deterministic fixtures', () => {
   assert.equal(testInternals.calculateLiquidationPrice({ collateral_amount: 2, debt_amount: 1500, debt_price_usd: 1, liquidation_threshold: 0.75 }), 1000);
   assert.equal(testInternals.calculateLiquidationPrice({ collateral_amount: 0.1, debt_amount: 4000, debt_price_usd: 1, liquidation_threshold: 0.8 }), 50000);
@@ -50,4 +57,14 @@ test('calculation evidence summarizes liquidation price fixture accuracy', () =>
   assert.equal(evidence.pass_rate_pct, 100);
   assert.ok(evidence.max_absolute_error_usd <= 0.0001);
   assert.ok(evidence.cases.every((testCase) => testCase.pass));
+});
+
+test('calculation evidence proves alerts fire before health factor crosses 1', () => {
+  const evidence = testInternals.buildLiquidationCalculationEvidence();
+
+  assert.equal(evidence.pre_liquidation_alert_case_count, 2);
+  assert.equal(evidence.pre_liquidation_alert_pass_count, 2);
+  assert.ok(evidence.pre_liquidation_alert_cases.every((testCase) => testCase.pass));
+  assert.ok(evidence.pre_liquidation_alert_cases.every((testCase) => (testCase.first_alert_health_factor ?? 0) > 1));
+  assert.ok(evidence.pre_liquidation_alert_cases.every((testCase) => (testCase.first_alert_price ?? 0) > testCase.liquidation_price));
 });
