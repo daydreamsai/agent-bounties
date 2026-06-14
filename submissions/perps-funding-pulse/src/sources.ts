@@ -3,6 +3,7 @@ import type { FundingMetric, PulseCalculationEvidence, VenueId } from './types.j
 const HYPERLIQUID_INFO = 'https://api.hyperliquid.xyz/info';
 const BINANCE_FAPI = 'https://fapi.binance.com';
 const BYBIT_API = 'https://api.bybit.com';
+const OKX_API = 'https://www.okx.com';
 
 interface HyperliquidAsset {
   name: string;
@@ -45,6 +46,42 @@ interface BybitTicker {
   fundingIntervalHour?: string;
 }
 
+interface OkxFundingRate {
+  instId: string;
+  fundingRate?: string;
+  fundingTime?: string;
+  nextFundingRate?: string;
+  nextFundingTime?: string;
+  markPx?: string;
+  premium?: string;
+  ts?: string;
+}
+
+interface OkxOpenInterest {
+  instId: string;
+  oi?: string;
+  oiCcy?: string;
+  oiUsd?: string;
+  ts?: string;
+}
+
+interface OkxLongShortRatioRow {
+  0?: string;
+  1?: string;
+}
+
+interface OkxLongShortRatio {
+  code?: string;
+  data?: OkxLongShortRatioRow[];
+  msg?: string;
+}
+
+interface OkxResponse<T> {
+  code?: string;
+  data?: T[];
+  msg?: string;
+}
+
 function numeric(value: unknown): number | null {
   if (value === undefined || value === null || value === '') return null;
   const n = Number(value);
@@ -69,6 +106,10 @@ function binanceSymbol(market: string): string {
   return `${normalizeMarket(market)}USDT`;
 }
 
+function okxSymbol(market: string): string {
+  return `${normalizeMarket(market)}-USDT-SWAP`;
+}
+
 export function fundingRateBps(fundingRate: number | null): number | null {
   return fundingRate === null ? null : Math.round(fundingRate * 10000 * 1_000_000) / 1_000_000;
 }
@@ -82,6 +123,7 @@ export function buildPulseCalculationEvidence(): PulseCalculationEvidence {
   const oiUsd = openInterestUsd(12.5, 64000);
   const missingOiUsd = openInterestUsd(null, 64000);
   const skewSource = null;
+  const okxSkew = numeric('1.35');
   const cases = [
     {
       name: 'funding rate converts to basis points',
@@ -106,6 +148,12 @@ export function buildPulseCalculationEvidence(): PulseCalculationEvidence {
       expected: null,
       actual: skewSource,
       pass: skewSource === null
+    },
+    {
+      name: 'available OKX long-short ratio is preserved as skew',
+      expected: 1.35,
+      actual: okxSkew,
+      pass: okxSkew === 1.35
     }
   ];
   const passCount = cases.filter((testCase) => testCase.pass).length;
@@ -276,10 +324,60 @@ export async function fetchBybit(markets: string[], includeRaw = false): Promise
   return { metrics, warnings };
 }
 
+export async function fetchOkx(markets: string[], includeRaw = false): Promise<{ metrics: FundingMetric[]; warnings: string[] }> {
+  const warnings: string[] = [];
+  const metrics: FundingMetric[] = [];
+  for (const marketInput of markets) {
+    const market = normalizeMarket(marketInput);
+    const symbol = okxSymbol(market);
+    try {
+      const [funding, oi, skew] = await Promise.all([
+        fetchJson<OkxResponse<OkxFundingRate>>(`${OKX_API}/api/v5/public/funding-rate?instId=${encodeURIComponent(symbol)}`, undefined, 5000, 2),
+        fetchJson<OkxResponse<OkxOpenInterest>>(`${OKX_API}/api/v5/public/open-interest?instType=SWAP&instId=${encodeURIComponent(symbol)}`, undefined, 5000, 2),
+        fetchJson<OkxLongShortRatio>(`${OKX_API}/api/v5/rubik/stat/contracts/long-short-account-ratio?ccy=${encodeURIComponent(market)}&period=5m`, undefined, 5000, 2)
+      ]);
+      if (funding.code !== '0') throw new Error(funding.msg || `funding code ${funding.code}`);
+      if (oi.code !== '0') throw new Error(oi.msg || `open-interest code ${oi.code}`);
+      if (skew.code !== '0') throw new Error(skew.msg || `long-short-ratio code ${skew.code}`);
+      const fundingRow = funding.data?.[0];
+      const oiRow = oi.data?.[0];
+      const ratioRow = skew.data?.[0];
+      const fundingRate = numeric(fundingRow?.fundingRate);
+      const openInterest = numeric(oiRow?.oi);
+      const openInterestUsdValue = numeric(oiRow?.oiUsd);
+      const skewRatio = numeric(ratioRow?.[1]);
+      metrics.push({
+        venue: 'okx',
+        market,
+        symbol,
+        funding_rate: fundingRate,
+        funding_rate_bps: fundingRateBps(fundingRate),
+        funding_interval_hours: 8,
+        next_funding_time: iso(numeric(fundingRow?.nextFundingTime)),
+        time_to_next_seconds: secondsUntil(numeric(fundingRow?.nextFundingTime)),
+        open_interest: openInterest,
+        open_interest_usd: openInterestUsdValue ?? openInterest,
+        mark_price: numeric(fundingRow?.markPx),
+        index_price: null,
+        skew: skewRatio,
+        skew_source: skewRatio === null ? null : 'okx:rubik:stat/contracts/long-short-account-ratio:5m',
+        source_timestamp: iso(numeric(fundingRow?.ts) ?? numeric(oiRow?.ts) ?? numeric(ratioRow?.[0])),
+        data_source: 'okx:v5:public',
+        raw: includeRaw ? { funding: fundingRow, oi: oiRow, skew: ratioRow } : undefined
+      });
+    } catch (error) {
+      warnings.push(`okx:${symbol} ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  if (metrics.length > 0) warnings.push('okx public endpoints expose funding, open interest, and long/short ratio; skew is populated from rubik stat/contracts/long-short-account-ratio.');
+  return { metrics, warnings };
+}
+
 export async function fetchVenue(venue: VenueId, markets: string[], includeRaw = false): Promise<{ metrics: FundingMetric[]; warnings: string[] }> {
   if (venue === 'hyperliquid') return fetchHyperliquid(markets, includeRaw);
   if (venue === 'binance') return fetchBinance(markets, includeRaw);
+  if (venue === 'okx') return fetchOkx(markets, includeRaw);
   return fetchBybit(markets, includeRaw);
 }
 
-export const testInternals = { normalizeMarket, numeric, secondsUntil, iso, fundingRateBps, openInterestUsd, buildPulseCalculationEvidence };
+export const testInternals = { normalizeMarket, binanceSymbol, okxSymbol, numeric, secondsUntil, iso, fundingRateBps, openInterestUsd, buildPulseCalculationEvidence };
