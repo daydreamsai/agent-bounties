@@ -63,11 +63,13 @@ Tests cover:
 - Etherscan log topic array normalization
 - stale approval risk flags
 - invalid wallet and unsupported chain rejection
+- manifest x402 metadata
+- entrypoint alias publication
 
 Current local validation:
 
 - `npm run build` passes
-- `npm test` passes 10 tests
+- `npm test` passes 12 tests
 - `npm run lint` passes
 - local unpaid x402 invoke returns HTTP 402 with a decodable `PAYMENT-REQUIRED` header for Base USDC, amount `10000` atomic units, and payout wallet `0x1f0130669ca6fd02e025a984cc038f139df19a2f`
 - public unpaid x402 invoke against the deployment URL returns HTTP 402 with a decodable `PAYMENT-REQUIRED` header whose resource URL is `https://gpt55.558686.xyz/approval-risk-auditor/entrypoints/audit_approvals/invoke`
