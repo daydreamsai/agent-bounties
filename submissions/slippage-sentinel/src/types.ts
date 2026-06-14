@@ -76,6 +76,10 @@ export interface SlippageBacktestSummary {
   covered_count: number;
   pass_rate_pct: number;
   max_shortfall_bps: number;
+  simulated_swap_count: number;
+  simulated_prevented_revert_count: number;
+  simulated_prevented_revert_rate_pct: number;
+  simulated_required_threshold_pct: number;
   cases: SlippageBacktestCase[];
   note: string;
 }
