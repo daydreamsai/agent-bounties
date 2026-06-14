@@ -65,7 +65,7 @@ Supported GeckoTerminal networks: `eth`, `base`, `polygon_pos`, `arbitrum`, `opt
 - Fee APR uses observed volume and TVL:
   - `fee_apr_est = (volume_window * fee_bps / 10000 / tvl_usd) * (24 / window_hours) * 365 * 100`
 - `net_apr_after_il_est` annualizes the observed window IL drag and adds the observed-window fee APR estimate.
-- `backtest_summary` includes deterministic analytical fixture checks for the IL formula and, when GeckoTerminal OHLCV is available, a realized-pool case built from the observed pool start/end close prices for the requested window. Both deterministic and realized-pool nonzero cases use a 10% relative-error threshold.
+- `backtest_summary` includes deterministic analytical fixture checks for the IL formula and, when live price-window data is available, a realized-pool case built from the observed start/end pool ratio for the requested window. The case source is reported as GeckoTerminal OHLCV or DefiLlama fallback, matching the data actually used. Both deterministic and realized-pool nonzero cases use a 10% relative-error threshold.
 
 ## Data Sources
 
