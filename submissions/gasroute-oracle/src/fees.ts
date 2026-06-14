@@ -93,11 +93,16 @@ export function buildGasRouteCalculationEvidence(): GasRouteCalculationEvidence 
   const gasErrors = cases
     .map((testCase) => testCase.gas_error_pct)
     .filter((error): error is number => error !== null);
+  const within5PctCases = cases.filter((testCase) => testCase.gas_error_pct !== null);
+  const within5PctPassCount = within5PctCases.filter((testCase) => (testCase.gas_error_pct ?? Number.POSITIVE_INFINITY) <= 5).length;
   return {
     case_count: cases.length,
     pass_count: passCount,
     pass_rate_pct: Math.round((passCount / cases.length) * 10000) / 100,
     max_gas_error_pct: Math.max(0, ...gasErrors),
+    within_5pct_case_count: within5PctCases.length,
+    within_5pct_pass_count: within5PctPassCount,
+    within_5pct_threshold_pct: 5,
     cases
   };
 }
