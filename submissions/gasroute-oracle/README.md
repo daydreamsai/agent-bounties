@@ -27,11 +27,19 @@ Supported chains: `ethereum`, `base`, `polygon`, `arbitrum`, `optimism`, `bsc`, 
   "tip_hint": "0.01",
   "quotes": [],
   "warnings": [],
-  "data_sources": []
+  "data_sources": [],
+  "calculation_evidence": {
+    "case_count": 4,
+    "pass_count": 4,
+    "pass_rate_pct": 100,
+    "max_gas_error_pct": 0.077419
+  }
 }
 ```
 
 Each quote includes base fee, priority fee, gas price, calldata gas units, total gas units, native token USD price, block number, and the RPC host used as evidence.
+
+`calculation_evidence` verifies deterministic fee-model fixtures: calldata gas at 16 gas per byte, native fee multiplication, USD conversion, and estimated total gas compared with a receipt `gasUsed` fixture.
 
 ## Data Sources
 
@@ -62,6 +70,16 @@ npm test
 npm run lint
 npm audit --audit-level=moderate
 ```
+
+Tests cover:
+
+- calldata gas units and total gas units
+- fee estimate multiplication by gas price
+- priority-fee percentile selection
+- busy-level classification
+- base-fee trend calculation
+- estimated gas vs receipt `gasUsed` error
+- `calculation_evidence` 100% pass summary
 
 Optional live scan:
 

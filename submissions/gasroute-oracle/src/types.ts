@@ -38,6 +38,22 @@ export interface ChainGasQuote {
   };
 }
 
+export interface GasRouteCalculationEvidenceCase {
+  name: string;
+  expected: number | string;
+  actual: number | string;
+  gas_error_pct: number | null;
+  pass: boolean;
+}
+
+export interface GasRouteCalculationEvidence {
+  case_count: number;
+  pass_count: number;
+  pass_rate_pct: number;
+  max_gas_error_pct: number;
+  cases: GasRouteCalculationEvidenceCase[];
+}
+
 export interface GasRouteOutput {
   chain: SupportedChain;
   fee_native: string;
@@ -47,4 +63,5 @@ export interface GasRouteOutput {
   quotes: ChainGasQuote[];
   warnings: string[];
   data_sources: string[];
+  calculation_evidence: GasRouteCalculationEvidence;
 }

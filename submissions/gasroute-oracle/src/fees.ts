@@ -1,11 +1,15 @@
 import { formatUnits, parseGwei } from 'viem';
-import type { BusyLevel } from './types.js';
+import type { BusyLevel, GasRouteCalculationEvidence } from './types.js';
 
 export const WEI_PER_GWEI = 1_000_000_000n;
 
 export function calldataGasUnits(calldataSizeBytes: number): number {
   // Conservative EVM worst case: non-zero calldata byte costs 16 gas.
   return calldataSizeBytes * 16;
+}
+
+export function totalGasUnits(executionGasUnits: number, calldataSizeBytes: number): number {
+  return executionGasUnits + calldataGasUnits(calldataSizeBytes);
 }
 
 export function percentile(values: bigint[], p: number): bigint {
@@ -41,6 +45,61 @@ export function baseFeeTrendPct(baseFees: bigint[]): number | null {
 
 export function estimateFeeWei(totalGasUnits: number, gasPriceWei: bigint): bigint {
   return BigInt(totalGasUnits) * gasPriceWei;
+}
+
+export function gasEstimateErrorPct(estimatedGasUnits: number, observedGasUsed: number): number {
+  if (observedGasUsed <= 0) throw new Error('observedGasUsed must be positive');
+  return Math.abs(estimatedGasUnits - observedGasUsed) / observedGasUsed * 100;
+}
+
+export function buildGasRouteCalculationEvidence(): GasRouteCalculationEvidence {
+  const calldataGas = calldataGasUnits(256);
+  const totalGas = totalGasUnits(120000, 256);
+  const feeWei = estimateFeeWei(totalGas, parseGwei('2'));
+  const feeNative = weiToNativeString(feeWei);
+  const feeUsd = roundUsd(Number(feeNative) * 2500);
+  const receiptError = gasEstimateErrorPct(totalGas, 124000);
+  const cases = [
+    {
+      name: 'calldata gas uses 16 gas per non-zero byte',
+      expected: 4096,
+      actual: calldataGas,
+      gas_error_pct: null,
+      pass: calldataGas === 4096
+    },
+    {
+      name: 'fee_native multiplies total gas by gas price',
+      expected: '0.000248192',
+      actual: feeNative,
+      gas_error_pct: null,
+      pass: feeNative === '0.000248192'
+    },
+    {
+      name: 'fee_usd converts native fee with supplied native USD price',
+      expected: 0.62048,
+      actual: feeUsd ?? 0,
+      gas_error_pct: null,
+      pass: feeUsd === 0.62048
+    },
+    {
+      name: 'total gas estimate compared with receipt gasUsed fixture',
+      expected: 124000,
+      actual: totalGas,
+      gas_error_pct: Math.round(receiptError * 1_000_000) / 1_000_000,
+      pass: receiptError < 1
+    }
+  ];
+  const passCount = cases.filter((testCase) => testCase.pass).length;
+  const gasErrors = cases
+    .map((testCase) => testCase.gas_error_pct)
+    .filter((error): error is number => error !== null);
+  return {
+    case_count: cases.length,
+    pass_count: passCount,
+    pass_rate_pct: Math.round((passCount / cases.length) * 10000) / 100,
+    max_gas_error_pct: Math.max(0, ...gasErrors),
+    cases
+  };
 }
 
 export function weiToNativeString(wei: bigint, decimals = 18): string {

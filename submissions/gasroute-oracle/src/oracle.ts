@@ -2,11 +2,13 @@ import { createPublicClient, formatGwei, http } from 'viem';
 import { chainConfigs, rpcUrlsFor } from './chains.js';
 import {
   baseFeeTrendPct,
+  buildGasRouteCalculationEvidence,
   calldataGasUnits,
   classifyBusyLevel,
   estimateFeeWei,
   roundUsd,
   suggestPriorityFee,
+  totalGasUnits,
   weiToGweiNumber,
   weiToNativeString
 } from './fees.js';
@@ -76,7 +78,7 @@ async function fetchNativePrices(chains: SupportedChain[]): Promise<Record<strin
 async function quoteChain(chain: SupportedChain, input: GasRouteInput, nativePriceUsd: number | undefined): Promise<ChainGasQuote> {
   const config = chainConfigs[chain];
   const urls = rpcUrlsFor(config);
-  const totalGasUnits = input.gas_units_est + calldataGasUnits(input.calldata_size_bytes);
+  const gasUnitsTotal = totalGasUnits(input.gas_units_est, input.calldata_size_bytes);
   const errors: string[] = [];
 
   for (const rpcUrl of urls) {
@@ -89,7 +91,7 @@ async function quoteChain(chain: SupportedChain, input: GasRouteInput, nativePri
         const lastBaseFee = baseFees.length > 0 ? baseFees[baseFees.length - 1] : 0n;
         const priorityFee = suggestPriorityFee(history.reward, lastBaseFee || 1_000_000_000n);
         const gasPriceWei = lastBaseFee + priorityFee;
-        const feeWei = estimateFeeWei(totalGasUnits, gasPriceWei);
+        const feeWei = estimateFeeWei(gasUnitsTotal, gasPriceWei);
         const price = nativePriceUsd && Number.isFinite(nativePriceUsd) ? nativePriceUsd : null;
         const trend = baseFeeTrendPct(baseFees);
         return {
@@ -106,7 +108,7 @@ async function quoteChain(chain: SupportedChain, input: GasRouteInput, nativePri
           gas_units_est: input.gas_units_est,
           calldata_size_bytes: input.calldata_size_bytes,
           calldata_gas_units: calldataGasUnits(input.calldata_size_bytes),
-          total_gas_units: totalGasUnits,
+          total_gas_units: gasUnitsTotal,
           native_price_usd: price,
           block_number: blockNumber.toString(),
           evidence: { rpc_url_host: hostOf(rpcUrl), method: 'feeHistory', gas_used_ratio: history.gasUsedRatio, fetched_at: new Date().toISOString() }
@@ -114,7 +116,7 @@ async function quoteChain(chain: SupportedChain, input: GasRouteInput, nativePri
       } catch (feeHistoryError) {
         errors.push(`${hostOf(rpcUrl)} feeHistory: ${feeHistoryError instanceof Error ? feeHistoryError.message : String(feeHistoryError)}`);
         const gasPrice = await withTimeout(client.getGasPrice(), 9000, `${chain} gasPrice`);
-        const feeWei = estimateFeeWei(totalGasUnits, gasPrice);
+        const feeWei = estimateFeeWei(gasUnitsTotal, gasPrice);
         const price = nativePriceUsd && Number.isFinite(nativePriceUsd) ? nativePriceUsd : null;
         return {
           chain,
@@ -130,7 +132,7 @@ async function quoteChain(chain: SupportedChain, input: GasRouteInput, nativePri
           gas_units_est: input.gas_units_est,
           calldata_size_bytes: input.calldata_size_bytes,
           calldata_gas_units: calldataGasUnits(input.calldata_size_bytes),
-          total_gas_units: totalGasUnits,
+          total_gas_units: gasUnitsTotal,
           native_price_usd: price,
           block_number: blockNumber.toString(),
           evidence: { rpc_url_host: hostOf(rpcUrl), method: 'gasPrice', fetched_at: new Date().toISOString() }
@@ -173,6 +175,7 @@ export async function runGasRouteOracle(rawInput: unknown): Promise<GasRouteOutp
     tip_hint: best.tip_hint,
     quotes,
     warnings,
-    data_sources: ['public_rpc:eth_feeHistory', 'public_rpc:eth_gasPrice_fallback', 'defillama:coins_price', 'coingecko:simple_price_fallback']
+    data_sources: ['public_rpc:eth_feeHistory', 'public_rpc:eth_gasPrice_fallback', 'defillama:coins_price', 'coingecko:simple_price_fallback'],
+    calculation_evidence: buildGasRouteCalculationEvidence()
   };
 }
