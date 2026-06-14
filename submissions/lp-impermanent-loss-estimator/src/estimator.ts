@@ -33,6 +33,7 @@ export async function estimateLpIl(input: LpIlInput): Promise<LpIlOutput> {
   let priceRatioStart: number | null = null;
   let priceRatioEnd: number | null = null;
   let priceRelative: number | null = null;
+  let priceRatioSource: string | null = null;
 
   try {
     const snapshot = await fetchPoolSnapshot(network, input.pool_address);
@@ -54,6 +55,7 @@ export async function estimateLpIl(input: LpIlInput): Promise<LpIlOutput> {
         priceRatioStart = price.start;
         priceRatioEnd = price.end;
         priceRelative = price.relative;
+        priceRatioSource = `geckoterminal:ohlcv:${network}`;
       }
     }
   } catch (error) {
@@ -66,9 +68,12 @@ export async function estimateLpIl(input: LpIlInput): Promise<LpIlOutput> {
       for (const source of fallback.dataSources) dataSources.add(source);
       tvlUsd = tvlUsd ?? fallback.tvlUsd;
       feeBps = feeBps ?? fallback.feeBps ?? undefined;
-      priceRatioStart = priceRatioStart ?? fallback.priceRatioStart;
-      priceRatioEnd = priceRatioEnd ?? fallback.priceRatioEnd;
-      priceRelative = priceRelative ?? fallback.priceRelative;
+      if (priceRelative === null && fallback.priceRatioStart !== null && fallback.priceRatioEnd !== null && fallback.priceRelative !== null) {
+        priceRatioStart = fallback.priceRatioStart;
+        priceRatioEnd = fallback.priceRatioEnd;
+        priceRelative = fallback.priceRelative;
+        priceRatioSource = fallback.dataSources.find((source) => source.startsWith('defillama:coins:')) ?? fallback.dataSources[0] ?? `rpc:${network}`;
+      }
       notes.push(`on-chain fallback resolved pool tokens ${fallback.token0}/${fallback.token1} and DefiLlama token prices`);
     } catch (error) {
       notes.push(`on-chain fallback unavailable: ${error instanceof Error ? error.message : String(error)}`);
@@ -95,8 +100,8 @@ export async function estimateLpIl(input: LpIlInput): Promise<LpIlOutput> {
   const netApr = feeApr === null ? null : feeApr + ilAnnualized;
   const realizedPoolCase = priceRatioStart !== null && priceRatioEnd !== null
     ? buildRealizedPoolBacktestCase({
-      name: `${network}:${input.pool_address}:ohlcv-${windowHours}h`,
-      source: `geckoterminal:ohlcv:${network}`,
+      name: `${network}:${input.pool_address}:${priceRatioSource?.includes('ohlcv') ? 'ohlcv' : 'price-window'}-${windowHours}h`,
+      source: priceRatioSource ?? 'unknown:price-ratio',
       tokenWeights: weights,
       priceRatioStart,
       priceRatioEnd
