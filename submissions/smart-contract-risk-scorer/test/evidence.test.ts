@@ -28,6 +28,11 @@ test('calculation evidence reports deterministic validation suite', () => {
   assert.equal(evidence.live_calculation.raw_severity_score, 20);
   assert.equal(evidence.live_calculation.confidence_penalty, 4);
   assert.equal(evidence.live_calculation.final_score, 24);
+  assert.ok(evidence.source_pattern_coverage.pattern_count >= 50);
+  assert.equal(evidence.source_pattern_coverage.passes_minimum_50_patterns, true);
+  assert.ok(evidence.source_pattern_coverage.fixture_detected_count >= 10);
+  assert.ok(evidence.source_pattern_coverage.fixture_detected_ids.includes('source_blacklist'));
+  assert.ok(evidence.source_pattern_coverage.fixture_detected_ids.includes('source_selfdestruct'));
   assert.equal(evidence.validation_cases.some((item) => item.name === 'critical_floor' && item.passed), true);
   assert.equal(evidence.validation_cases.some((item) => item.name === 'duplicate_findings_are_deduped' && item.passed), true);
   assert.equal(evidence.validation_cases.some((item) => item.name === 'recommendation_mapping' && item.passed), true);
