@@ -1,3 +1,4 @@
+import { fetchAcrossQuote, normalizeAcrossQuote } from './across.js';
 import { fetchLifiQuote } from './lifi.js';
 import type { BridgeCalculationEvidence, BridgeRoute } from './types.js';
 import { bridgeInputSchema, type BridgeOutput } from './types.js';
@@ -6,16 +7,16 @@ export async function runBridgeRoutePinger(rawInput: unknown): Promise<BridgeOut
   const input = bridgeInputSchema.parse(rawInput ?? {});
   const warnings: string[] = [];
   let routes: BridgeRoute[] = [];
-  try {
-    routes = [await fetchLifiQuote(input)];
-  } catch (error) {
-    warnings.push(error instanceof Error ? error.message : String(error));
+  const attempts = await Promise.allSettled([fetchLifiQuote(input), fetchAcrossQuote(input)]);
+  for (const result of attempts) {
+    if (result.status === 'fulfilled') routes.push(result.value);
+    else warnings.push(result.reason instanceof Error ? result.reason.message : String(result.reason));
   }
   return {
     routes,
     best_route: selectBestRoute(routes),
     warnings,
-    data_sources: ['lifi:v1:quote'],
+    data_sources: ['lifi:v1:quote', 'across:suggested-fees'],
     calculation_evidence: buildBridgeCalculationEvidence(),
     fetched_at: new Date().toISOString()
   };
@@ -67,6 +68,23 @@ export function buildBridgeCalculationEvidence(): BridgeCalculationEvidence {
     bridge_fee_usd: 0.6,
     eta_minutes: 1
   });
+  const acrossNormalized = normalizeAcrossQuote({
+    estimatedFillTimeSec: 122,
+    totalRelayFee: { total: '315' },
+    relayerGasFee: { total: '177' },
+    relayerCapitalFee: { total: '100' },
+    lpFee: { total: '38' },
+    outputAmount: '999685',
+    quoteBlock: '25318840',
+    id: 'fixture'
+  }, {
+    token: 'USDC',
+    amount: '1',
+    from_chain: 'base',
+    to_chain: 'optimism',
+    from_address: '0x0000000000000000000000000000000000000001',
+    slippage: 0.005
+  });
 
   const cases = [
     {
@@ -89,6 +107,13 @@ export function buildBridgeCalculationEvidence(): BridgeCalculationEvidence {
       expected_best_route_id: 'no-usd-cheaper-fee',
       expected_fee_usd: 0.2,
       expected_eta_minutes: 2
+    },
+    {
+      name: 'Across suggested-fees normalizes official relay fee and ETA',
+      routes: [acrossNormalized],
+      expected_best_route_id: 'across:25318840:fixture',
+      expected_fee_usd: 0.0003,
+      expected_eta_minutes: 3
     }
   ];
 
