@@ -32,14 +32,17 @@ Supported chains: `ethereum`, `base`, `polygon`, `arbitrum`, `optimism`, `bsc`, 
     "case_count": 4,
     "pass_count": 4,
     "pass_rate_pct": 100,
-    "max_gas_error_pct": 0.077419
+    "max_gas_error_pct": 0.077419,
+    "within_5pct_case_count": 1,
+    "within_5pct_pass_count": 1,
+    "within_5pct_threshold_pct": 5
   }
 }
 ```
 
 Each quote includes base fee, priority fee, gas price, calldata gas units, total gas units, native token USD price, block number, and the RPC host used as evidence.
 
-`calculation_evidence` verifies deterministic fee-model fixtures: calldata gas at 16 gas per byte, native fee multiplication, USD conversion, and estimated total gas compared with a receipt `gasUsed` fixture.
+`calculation_evidence` verifies deterministic fee-model fixtures: calldata gas at 16 gas per byte, native fee multiplication, USD conversion, and estimated total gas compared with a receipt `gasUsed` fixture. The receipt fixture also reports explicit 5% accuracy coverage through `within_5pct_*` fields.
 
 ## Data Sources
 
@@ -79,6 +82,7 @@ Tests cover:
 - busy-level classification
 - base-fee trend calculation
 - estimated gas vs receipt `gasUsed` error
+- explicit within-5%-of-receipt accuracy evidence
 - `calculation_evidence` 100% pass summary
 
 Optional live scan:
