@@ -43,7 +43,7 @@ https://github.com/idan57570idan-svg/perps-funding-pulse
 
 ## Solana Wallet
 
-**Wallet Address:** *(to be provided)*
+**Wallet Address:** BVf9eNCQFSamVQ2VwkQZ9UvkUX37j7Syk75DvZtutJef
 
 ## Technical Stack
 
