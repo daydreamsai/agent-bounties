@@ -14,18 +14,19 @@ Supported chains: Ethereum, Polygon, BNB Chain, Arbitrum One, Optimism, Base, Av
 
 ## Live Link
 
-**Deployment URL:** https://2955e995a5dccf4b-147-235-197-28.serveousercontent.com
+**Deployment URL:** https://gasroute-oracle.netlify.app
 
-- Entrypoints: https://2955e995a5dccf4b-147-235-197-28.serveousercontent.com/entrypoints
-- Invoke: `POST` https://2955e995a5dccf4b-147-235-197-28.serveousercontent.com/entrypoints/estimate/invoke
+- Entrypoints: https://gasroute-oracle.netlify.app/entrypoints
+- Invoke: `POST` https://gasroute-oracle.netlify.app/entrypoints/estimate/invoke
 
 ## x402 Proof
 
-Unauthenticated `POST /entrypoints/estimate/invoke` returns HTTP 402:
+```bash
+curl -X POST https://gasroute-oracle.netlify.app/entrypoints/estimate/invoke \
+  -H "Content-Type: application/json" -d '{}'
+```
 
-```
-HTTP/1.1 402 Payment Required
-```
+Returns HTTP **402**:
 
 ```json
 {
@@ -34,7 +35,7 @@ HTTP/1.1 402 Payment Required
     "scheme": "exact",
     "network": "base-sepolia",
     "maxAmountRequired": "1000000000",
-    "resource": "https://2955e995a5dccf4b-147-235-197-28.serveousercontent.com/entrypoints/estimate/invoke",
+    "resource": "https://gasroute-oracle.netlify.app/entrypoints/estimate/invoke",
     "payTo": "0xb308ed39d67D0d4BAe5BC2FAEF60c66BBb6AE429",
     "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
   }],
@@ -51,9 +52,9 @@ https://github.com/idan57570idan-svg/gasroute-oracle
 ## Acceptance Criteria
 
 - [x] Meets all technical specifications from issue #4
-- [x] Deployed on a domain (serveousercontent.com via Cloudflare SSH tunnel)
-- [x] Reachable via x402 (returns HTTP 402 with payment requirements)
-- [x] Fee estimate within 5% of actual transaction cost (uses live JSON-RPC gas data)
+- [x] Deployed on a permanent domain (gasroute-oracle.netlify.app)
+- [x] Reachable via x402 — returns HTTP 402 with payment requirements
+- [x] Fee estimate within 5% of actual transaction cost (live JSON-RPC gas data)
 - [x] Accounts for current network conditions (busy_level: LOW/MEDIUM/HIGH)
 - [x] Built with @lucid-dreams/agent-kit + paymentsFromEnv (base-sepolia)
 
@@ -68,4 +69,4 @@ https://github.com/idan57570idan-svg/gasroute-oracle
 - Gas Data: Public EVM JSON-RPC endpoints (no API key required)
 - Price Data: CoinGecko Simple Price API (free tier, no auth)
 - x402: paymentsFromEnv with base-sepolia facilitator
-- Deployment: Docker + serveousercontent.com (Cloudflare SSH tunnel)
+- Deployment: Netlify Functions (serverless, always-on)
