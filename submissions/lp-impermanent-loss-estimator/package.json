@@ -1,0 +1,28 @@
+{
+  "name": "lp-impermanent-loss-estimator",
+  "version": "1.0.0",
+  "description": "LP Impermanent Loss Estimator - Calculate IL and fee APR for any Uniswap V2 LP position",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.1.0",
+    "viem": "^2.21.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  },
+  "keywords": [
+    "daydreamsai",
+    "agent-kit",
+    "defi",
+    "impermanent-loss",
+    "uniswap",
+    "lp"
+  ]
+}
