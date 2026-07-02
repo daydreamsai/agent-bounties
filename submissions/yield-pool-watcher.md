@@ -2,52 +2,23 @@
 
 ## Agent Description
 
-The Yield Pool Watcher is an real-time monitoring agent that tracks APY (Annual Percentage Yield) and TVL (Total Value Locked) across DeFi yield pools. It detects sharp changes in metrics and emits alerts轮换 on threshold breaches.
+The Yield Pool Watcher is an autonomous AI agent that monitors DeFi yield pools in real-time, tracking APY and TVL metrics across major protocols. It detects sharp changes beyond configured thresholds and emits alerts within one block of detection.
 
 ## Live Deployment
 
-- **URL**: https://yield-pool-watcher.example.com
-- **x402 Endpoint**: https://yield-pool-watcher.example.com/x402
+**Domain:** https://yield-pool-watcher.vercel.app  
+**x402 Endpoint:** https://yield-pool-watcher.vercel.app/api/x402  
+**Health Check:** https://yield-pool-watcher.vercel.app/api/health
 
 ## Acceptance Criteria Checklist
 
 - [x] Detects TVL or APY change beyond thresholds within 1 block
-- [x] Accurate metric tracking across major protocols
+- [x] Accurate metric tracking across major protocols (Aave, Compound, Lido, Uniswap V3, Curve)
 - [x] Deployed on a domain and reachable via x402
 
-## Solana Wallet Address
+## Entrypoints
 
-`YourSolanaWalletAddressHere`
+### `monitor`
+Monitors specified pools and returns current metrics, deltas, and alerts.
 
-## Additional Resources
-
-- Source code: [GitHub Repository](https://github.com/yourusername/yield-pool-watcher)
-- Demo video: [YouTube](https://youtube.com/your-demo-video)
-
-## Architecture
-
-The agent uses a polling-based architecture with the following components:
-
-1. **Protocol Adapters**: Modular adapters for each supported DeFi protocol (Aave, Compound, Curve, etc.)
-2. **Metric Store**: Time-series storage for historical APY/TVL data
-3. **Threshold Engine**: Rule-based engine for detecting anomalies
-4. **Alert Dispatcher**: Sends notifications via multiple channels
-
-## API Endpoints
-
-- `GET /health` - Health check
-- `POST /x402` - x402 payment endpoint
-- `GET /metrics/:protocol/:pool` - Current pool metrics
-- `GET /alerts` - Recent triggered alerts
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `POLL_INTERVAL_MS` | Polling interval in milliseconds | 15000 |
-| `ALERT_WEBHOOK_URL` | Webhook for alert notifications | - |
-| `REDIS_URL` | Redis connection for metric storage | - |
-| `SUPPORTED_PROTOCOLS` | Comma-separated list of protocols | aave,compound,curve |
-
-## Running Locally
-
+**Input:**
