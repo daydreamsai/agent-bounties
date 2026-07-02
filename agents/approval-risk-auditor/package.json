@@ -1,0 +1,24 @@
+{
+  "name": "@agent-bounties/approval-risk-auditor",
+  "version": "0.1.0",
+  "description": "Flag unlimited or stale ERC-20 / NFT approvals and build revoke calls",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.12.0",
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "ethers": "^6.13.0",
+    "zod": "^3.22.0",
+    "hono": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "tsx": "^4.7.0",
+    "@types/node": "^20.0.0"
+  }
+}

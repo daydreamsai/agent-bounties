@@ -1,0 +1,22 @@
+{
+  "name": "@agent-bounties/approval-risk-auditor",
+  "version": "1.0.0",
+  "description": "Audit wallet approvals across chains: detect unlimited, stale, and high-value allowances with revocation transaction data",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "viem": "^2.21.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "tsx": "^4.19.0",
+    "@types/node": "^22.0.0"
+  }
+}
