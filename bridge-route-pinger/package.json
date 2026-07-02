@@ -1,0 +1,33 @@
+{
+  "name": "bridge-route-pinger",
+  "version": "1.0.0",
+  "description": "Bridge Route Pinger agent - provides bridge route quotes for cross-chain token transfers via Li.Finance API",
+  "main": "dist/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "tsc"
+  },
+  "keywords": ["bridge", "cross-chain", "lifi", "defi", "agent", "daydreams"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "zod": "^3.24.0",
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0"
+  }
+}
