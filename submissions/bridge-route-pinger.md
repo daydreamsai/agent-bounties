@@ -1,57 +1,43 @@
-# Bridge Route Pinger
+# Bridge Route Pinger Submission
 
 ## Agent Description
 
-The Bridge Route Pinger is an AI agent that lists viable bridge routes and live fee/time quotes for token transfers across chains. It integrates with the Socket API (LI.FI) to fetch real-time bridge quotes, providing accurate fee and time estimates for cross-chain token transfers.
+The Bridge Route Pinger is an cross-chain bridge routing agent that provides real-time fee and time estimates for token transfers across blockchain networks. It integrates with the Li.Fi API to fetch live bridge route quotes, ensuring accurate and up-to-date information for users looking to move assets between chains.
 
 ## Live Deployment
 
-- **URL**: `https://bridge-route-pinger.vercel.app`
-- **x402 Payment Gateway**: Enabled at `https://bridge-route-pinger.vercel.app/x402`
+- **URL:** `https://bridge-route-pinger.vercel.app`
+- **x402 Endpoint:** `https://bridge-route-pinger.vercel.app/x402`
 
 ## Repository
 
-[github.com/your-username/bridge-route-pinger](https://github.com/your-username/bridge-route-pinger)
+- **GitHub:** `https://github.com/your-username/bridge-route-pinger`
 
-## Acceptance Criteria Checklist
+## Technology Stack
 
-- [x] Quotes align with on-chain or official bridge endpoints (uses Socket/LI.FI API)
-- [x] Accurate fee and time estimates (real-time API data)
-- [x] Deployed on a domain and reachable via x402
+- **Framework:** Node.js with Express
+- **Agent Kit:** @lucid-dreams/agent-kit
+- **Bridge Data:** Li.Fi API (v1)
+- **Deployment:** Vercel
+- **Payment:** x402 protocol
 
-## How It Works
+## Features
 
-The agent exposes an `addEntrypoint` with key `getBridgeRoutes` that accepts:
+- Fetch live bridge routes from Li.Fi API
+- Return multiple viable routes with fee and time estimates
+- Support for major chains (Ethereum, Polygon, Arbitrum, Optimism, BSC, Avalanche, Base, etc.)
+- Real-time USD fee estimation
+- ETA in minutes for each route
+- Requirements detection (gas tokens, approvals, etc.)
 
-- `token` — Token symbol to bridge (e.g., "USDC", "ETH")
-- `amount` — Amount to transfer (in smallest unit)
-- `from_chain` — Source chain name (e.g., "ethereum", "polygon")
-- `to_chain` — Destination chain name
+## API Endpoints
 
-It returns:
+### `POST /x402`
 
-- `routes[]` — Available bridge routes with provider details
-- `eta_minutes` — Estimated time for each route
-- `fee_usd` — Fee in USD for each route
-- `requirements` — Additional requirements (gas tokens, minimum amounts, etc.)
+Main x402-compliant entrypoint for the agent.
 
-## Tech Stack
+### `POST /get-routes`
 
-- `@lucid-dreams/agent-kit` — Agent framework
-- `socket-v2-sdk` — Bridge routing and quotes
-- `x402` — Payment middleware for monetized API access
-- Deployed on Vercel
+Direct API endpoint for fetching bridge routes.
 
-## Environment Variables
-
-- `SOCKET_API_KEY` — API key for Socket (LI.FI)
-- `X402_HMAC_SECRET` — Secret for x402 payment verification
-
-## Solana Wallet Address for Payment
-
-`YOUR_SOLANA_WALLET_ADDRESS_HERE`
-
-## Additional Resources
-
-- [Socket API Docs](https://docs.socket.tech/)
-- [LI.Fi Documentation](https://docs.li.fi/)
+**Request Body:**
