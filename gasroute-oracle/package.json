@@ -1,0 +1,26 @@
+{
+  "name": "gasroute-oracle",
+  "version": "0.1.0",
+  "description": "GasRoute Oracle — Multi-chain gas cost estimation agent built with @lucid-dreams/agent-kit",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "start": "bun run src/index.ts",
+    "check": "bunx tsc --noEmit"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "0.2.24"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/node": "^22.0.0",
+    "bun-types": "^1.1.0"
+  }
+}
