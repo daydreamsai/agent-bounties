@@ -1,0 +1,28 @@
+{
+  "name": "slippage-sentinel",
+  "version": "1.0.0",
+  "description": "Slippage Sentinel — estimate safe slippage for any swap route using on-chain pool depth and volatility analysis",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts"
+  },
+  "keywords": [
+    "slippage",
+    "uniswap",
+    "defi",
+    "agent",
+    "daydreamsai"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.1.0",
+    "viem": "^2.9.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "tsx": "^4.7.0"
+  }
+}
