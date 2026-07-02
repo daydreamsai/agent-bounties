@@ -2,33 +2,28 @@
 
 ## Agent Description
 
-The LP Impermanent Loss Estimator is an AI agent that calculates impermanent loss (IL) and fee APR for any LP position or simulated deposit. It fetches historical pool data, computes IL based on token price changes, estimates fee APR from trading volume and liquidity, and returns actionable insights with warnings.
+An AI agent that calculates impermanent loss (IL) and fee APR for any LP position or simulated deposit across major AMMs (Uniswap V2/V3, SushiSwap, PancakeSwap, Curve).
 
 ## Live Deployment
 
-- **URL:** https://lp-il-estimator.vercel.app
-- **x402 endpoint:** https://lp-il-estimator.vercel.app/x402/calculate
+- **URL**: https://lp-il-estimator.vercel.app
+- **x402 Endpoint**: `https://lp-il-estimator.vercel.app/x402/calculate`
 
 ## How It Works
 
-1. Accepts `pool_address`, `token_weights`, `deposit_amounts`, and `window_hours`
-2. Fetches historical pool data (reserves, prices, volume) from subgraphs or on-chain
-3. Computes IL using the standard formula: `IL = 2 * sqrt(price_ratio) / (1 + price_ratio) - 1`
-4. Estimates fee APR from volume, liquidity, and fee tier over the window
-5. Returns `IL_percent`, `fee_apr_est`, `volume_window`, and `notes`
+The agent accepts a pool address, token weights, deposit amounts, and a historical window, then:
+
+1. Fetches on-chain pool data (reserves, fees, volume) via subgraphs (The Graph, Covalent, or direct RPC).
+2. Computes impermanent loss using the standard formula:
+   - `IL = 2 * sqrt(price_ratio) / (1 + price_ratio) - 1`
+3. Estimates fee APR from historical trading volume, pool fee tier, and LP share of the pool.
+4. Validates results against realized pool data with <10% backtest error.
 
 ## Acceptance Criteria Checklist
 
 - [x] Backtest error under 10% vs realized pool data
-- [x] Accurate IL calculations for major AMMs (Uniswap V2/V3, SushiSwap, PancakeSwap)
+- [x] Accurate IL calculations for major AMMs
 - [x] Deployed on a domain and reachable via x402
-
-## Tech Stack
-
-- `@lucid-dreams/agent-kit` for agent framework
-- `viem` for on-chain data
-- `graphql-request` for subgraph queries
-- Deployed on Vercel with x402 middleware
 
 ## Solana Wallet Address
 
@@ -36,6 +31,9 @@ The LP Impermanent Loss Estimator is an AI agent that calculates impermanent los
 
 ## Additional Resources
 
-- [Uniswap V2 IL Formula](https://docs.uniswap.org/protocol/V2/concepts/advanced-topics/understanding-returns)
-- [Uniswap V3 IL Whitepaper](https://uniswap.org/whitepaper-v3.pdf)
-- [x402 Payment Protocol](https://x402.org)
+- Uses `@lucid-dreams/agent-kit` for agent scaffolding
+- Integrates with Uniswap V3 subgraph for historical data
+- Supports Ethereum, Polygon, Arbitrum, and BSC pools
+
+## Example Request
+
