@@ -1,0 +1,22 @@
+{
+  "name": "@agent-bounties/yield-pool-watcher",
+  "version": "1.0.0",
+  "description": "Yield Pool Watcher — monitor DeFi pool APY and TVL, alert on sharp changes",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.4.0",
+    "viem": "^2.21.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
+  },
+  "keywords": ["agent-kit", "defi", "yield", "pool-watcher", "viem"]
+}
