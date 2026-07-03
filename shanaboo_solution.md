@@ -2,206 +2,99 @@ Based on the issue description, I need to create a Bridge Route Pinger agent. Si
 
 ```diff
 --- /dev/null
-+++ b/bridge-route-pinger/index.ts
-@@ -0,0 +1,287 @@
++++ b/bridge-route-pinger/src/index.ts
+@@ -0,0 +1,156 @@
 +import { z } from "zod";
 +import { createAgentApp } from "@lucid-dreams/agent-kit";
 +
-+// Bridge route definitions with known bridge protocols
-+interface BridgeInfo {
-+  name: string;
-+  supportedChains: string[];
-+  supportedTokens: string[];
-+  baseFeePercent: number; // base fee as percentage
-+  baseTimeMinutes: number; // base estimated time
-+  minFeeUsd: number;
-+  maxFeeUsd: number;
++// Bridge route interfaces
++interface BridgeRoute {
++  bridge: string;
++  from_chain: string;
++  to_chain: string;
++  token: string;
++  amount: string;
++  eta_minutes: number;
++  fee_usd: number;
 +  requirements: string[];
++  estimated_receive: string;
 +}
 +
-+const BRIDGES: BridgeInfo[] = [
-+  {
-+    name: "Stargate",
-+    supportedChains: [
-+      "ethereum",
-+      "arbitrum",
-+      "optimism",
-+      "polygon",
-+      "avalanche",
-+      "bsc",
-+      "base",
-+      "linea",
-+      "scroll",
-+      "mantle",
-+    ],
-+    supportedTokens: [
-+      "USDC",
-+      "USDT",
-+      "ETH",
-+      "DAI",
-+      "FRAX",
-+      "LUSD",
-+      "MAI",
-+    ],
-+    baseFeePercent: 0.06,
-+    baseTimeMinutes: 2,
-+    minFeeUsd: 0.5,
-+    maxFeeUsd: 15,
-+    requirements: ["Gas token on source chain", "Gas token on destination chain"],
-+  },
-+  {
-+    name: "Across Protocol",
-+    supportedChains: [
-+      "ethereum",
-+      "arbitrum",
-+      "optimism",
-+      "polygon",
-+      "base",
-+      "zksync",
-+      "linea",
-+      "scroll",
-+    ],
-+    supportedTokens: [
-+      "USDC",
-+      "USDT",
-+      "ETH",
-+      "WETH",
-+      "DAI",
-+      "WBTC",
-+      "BAL",
-+      "UMA",
-+      "ACX",
-+    ],
-+    baseFeePercent: 0.04,
-+    baseTimeMinutes: 1.5,
-+    minFeeUsd: 0.3,
-+    maxFeeUsd: 10,
-+    requirements: ["Gas token on source chain"],
-+  },
-+  {
-+    name: "Hop Protocol",
-+    supportedChains: [
-+      "ethereum",
-+      "arbitrum",
-+      "optimism",
-+      "polygon",
-+      "gnosis",
-+      "base",
-+    ],
-+    supportedTokens: [
-+      "USDC",
-+      "USDT",
-+      "ETH",
-+      "DAI",
-+      "MATIC",
-+      "SNX",
-+    ],
-+    baseFeePercent: 0.05,
-+    baseTimeMinutes: 3,
-+    minFeeUsd: 0.4,
-+    maxFeeUsd: 12,
-+    requirements: ["Gas token on source chain", "Gas token on destination chain"],
-+  },
-+  {
-+    name: "Wormhole",
-+    supportedChains: [
-+      "ethereum",
-+      "arbitrum",
-+      "optimism",
-+      "polygon",
-+      "avalanche",
-+      "bsc",
-+      "base",
-+      "solana",
-+      "sui",
-+      "aptos",
-+    ],
-+    supportedTokens: [
-+      "USDC",
-+      "USDT",
-+      "ETH",
-+      "WETH",
-+      "SOL",
-+      "SUI",
-+      "APT",
-+    ],
-+    baseFeePercent: 0.03,
-+    baseTimeMinutes: 5,
-+    minFeeUsd: 0.2,
-+    maxFeeUsd: 8,
-+    requirements: ["Gas token on source chain", "Gas token on destination chain"],
-+  },
-+  {
-+    name: "Celer cBridge",
-+    supportedChains: [
-+      "ethereum",
-+      "arbitrum",
-+      "optimism",
-+      "polygon",
-+      "avalanche",
-+      "bsc",
-+      "base",
-+      "linea",
-+      "scroll",
-+      "gnosis",
-+      "fantom",
-+    ],
-+    supportedTokens: [
-+      "USDC",
-+      "USDT",
-+      "ETH",
-+      "DAI",
-+      "WBTC",
-+      "BUSD",
-+      "CELR",
-+    ],
-+    baseFeePercent: 0.08,
-+    baseTimeMinutes: 4,
-+    minFeeUsd: 0.6,
-+    maxFeeUsd: 20,
-+    requirements: ["Gas token on source chain", "Gas token on destination chain", "CELR staking for fee discount"],
-+  },
-+  {
-+    name: "Synapse Protocol",
-+    supportedChains: [
-+      "ethereum",
-+      "arbitrum",
-+      "optimism",
-+      "polygon",
-+      "avalanche",
-+      "bsc",
-+      "base",
-+      "fantom",
-+      "harmony",
-+    ],
-+    supportedTokens: [
-+      "USDC",
-+      "USDT",
-+      "ETH",
-+      "DAI",
-+      "FRAX",
-+      "SYN",
-+      "nUSD",
-+    ],
-+    baseFeePercent: 0.07,
-+    baseTimeMinutes: 3.5,
-+    minFeeUsd: 0.5,
-+    maxFeeUsd: 18,
-+    requirements: ["Gas token on source chain", "Gas token on destination chain"],
-+  },
-+];
++// Known bridge configurations with realistic estimates
++const BRIDGE_CONFIGS: Record<string, { fee_percent: number; base_fee_usd: number; eta_minutes: number; requirements: string[] }> = {
++  "stargate": { fee_percent: 0.0006, base_fee_usd: 0.50, eta_minutes: 2, requirements: ["Gas token on source chain"] },
++  "across": { fee_percent: 0.0008, base_fee_usd: 0.30, eta_minutes: 3, requirements: ["Gas token on source chain"] },
++  "hop-protocol": { fee_percent: 0.0010, base_fee_usd: 0.40, eta_minutes: 5, requirements: ["Gas token on source chain", "Gas token on destination chain"] },
++  "synapse": { fee_percent: 0.0007, base_fee_usd: 0.60, eta_minutes: 4, requirements: ["Gas token on source chain"] },
++  "wormhole": { fee_percent: 0.0005, base_fee_usd: 0.80, eta_minutes: 8, requirements: ["Gas token on source chain", "Wormhole relayer fee"] },
++  "celer": { fee_percent: 0.0009, base_fee_usd: 0.45, eta_minutes: 3, requirements: ["Gas token on source chain"] },
++  "connext": { fee_percent: 0.0012, base_fee_usd: 0.35, eta_minutes: 6, requirements: ["Gas token on source chain", "Gas token on destination chain"] },
++  "layerzero": { fee_percent: 0.0006, base_fee_usd: 0.55, eta_minutes: 2, requirements: ["Gas token on source chain", "LayerZero execution fee"] },
++};
 +
-+// Token price feed (simplified USD values for fee calculation)
-+const TOKEN_PRICES_USD: Record<string, number> = {
-+  USDC: 1.0,
-+  USDT: 1.0,
-+  DAI: 1.0,
-+  FRAX: 1.0,
-+  LUSD: 1.0,
-+  MAI: 1.0,
-+  BUSD: 1.0,
-+  nUSD: 1.0,
-+  ETH: 3500,
-+  WETH: 3500,
-+  WBTC: 65000,
++// Supported chain pairs for each bridge
++const BRIDGE_CHAIN_SUPPORT: Record<string, string[]> = {
++  "stargate": ["ethereum", "arbitrum", "optimism", "polygon", "avalanche", "bsc", "base", "linea"],
++  "across": ["ethereum", "arbitrum", "optimism", "polygon", "base", "zksync"],
++  "hop-protocol": ["ethereum", "arbitrum", "optimism", "polygon", "gnosis"],
++  "synapse": ["ethereum", "arbitrum", "optimism", "polygon", "avalanche", "bsc", "base", "fantom"],
++  "wormhole": ["ethereum", "arbitrum", "optimism", "polygon", "avalanche", "bsc", "base", "solana", "sui", "aptos"],
++  "celer": ["ethereum", "arbitrum", "optimism", "polygon", "avalanche", "bsc", "base"],
++  "connext": ["ethereum", "arbitrum", "optimism", "polygon", "gnosis", "base"],
++  "layerzero": ["ethereum", "arbitrum", "optimism", "polygon", "avalanche", "bsc", "base", "linea", "zksync"],
++};
 +
++// Token price feed (simplified USD prices for common tokens)
++const TOKEN_USD_PRICES: Record<string, number> = {
++  "eth": 3500,
++  "weth": 3500,
++  "usdc": 1,
++  "usdt": 1,
++  "dai": 1,
++  "wbtc": 68000,
++  "matic": 0.70,
++  "pol": 0.70,
++  "avax": 35,
++  "arb": 1.20,
++  "op": 2.50,
++  "link": 18,
++  "uni": 8,
++};
++
++function getTokenPrice(token: string): number {
++  const key = token.toLowerCase();
++  return TOKEN_USD_PRICES[key] ?? 1; // Default to $1 for stablecoins/unknown
++}
++
++function calculateFee(amount: string, tokenPrice: number, bridgeConfig: { fee_percent: number; base_fee_usd: number }): number {
++  const amountNum = parseFloat(amount);
++  if (isNaN(amountNum) || amountNum <= 0) return 0;
++  
++  const amountUSD = amountNum * tokenPrice;
++  const percentFee = amountUSD * bridgeConfig.fee_percent;
++  return Math.round((percentFee + bridgeConfig.base_fee_usd) * 100) / 100;
++}
++
++function findRoutes(token: string, amount: string, fromChain: string, toChain: string): BridgeRoute[] {
++  const tokenPrice = getTokenPrice(token);
++  const routes: BridgeRoute[] = [];
++  
++  const fromChainLower = fromChain.toLowerCase();
++  const toChainLower = toChain.toLowerCase();
++  
++  if (fromChainLower === toChainLower) {
++    return [{
++      bridge: "same-chain",
++      from_chain: fromChain,
++      to_chain: toChain,
++      token,
++      amount,
++      eta_minutes: 0,
++      fee_usd: 0,
++      requirements: ["No bridge needed - same chain transfer"],
++      estimated_receive: amount,
++    }];
++  }
++  
++  for (const [bridgeName, supportedChains] of Object.entries(BRIDGE_CHAIN_SUPPORT)) {
++    if (supportedChains.includes(fromChainLower) && supportedChains.includes(to
