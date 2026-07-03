@@ -1,16 +1,32 @@
-# Slippage Sentinel - Submission
+# Slippage Sentinel
+
+**Bounty:** [Slippage Sentinel](https://github.com/daydreamsai/agent-bounties/issues/3)
 
 ## Agent Description
 
-Slippage Sentinel is an AI agent that estimates safe slippage tolerance for any swap route to prevent swap reverts. It analyzes pool depth, recent trade sizes, and volatility to recommend a minimum safe slippage in basis points that will prevent reverts for 95% of swaps.
+Slippage Sentinel is an AI agent that estimates safe slippage tolerance for any DeFi swap route to prevent transaction reverts. It analyzes pool depth, recent trade sizes, and volatility to recommend optimal slippage settings.
 
 ## Live Deployment
 
-**Domain:** https://slippage-sentinel.vercel.app
+- **URL:** https://slippage-sentinel.vercel.app
+- **x402 Endpoint:** https://slippage-sentinel.vercel.app/x402
 
-**x402 Endpoint:** https://slippage-sentinel.vercel.app/api/x402
+## How It Works
 
-## Acceptance Criteria
+The agent accepts swap parameters (token_in, token_out, amount_in, route_hint) and returns:
+
+- `min_safe_slip_bps`: Minimum safe slippage in basis points
+- `pool_depths`: Liquidity depth data for the route
+- `recent_trade_size_p95`: 95th percentile of recent trade sizes
+
+### Algorithm
+
+1. **Pool Depth Analysis**: Fetches liquidity depth from the specified DEX/route
+2. **Trade Size Analysis**: Analyzes recent trades to compute the 95th percentile
+3. **Volatility Adjustment**: Adjusts slippage based on recent price volatility
+4. **Safety Buffer**: Adds a conservative buffer to ensure 95% success rate
+
+## Acceptance Criteria Checklist
 
 - [x] Slippage suggestion prevents revert for 95% of test swaps
 - [x] Accounts for pool depth and recent volatility
@@ -18,43 +34,18 @@ Slippage Sentinel is an AI agent that estimates safe slippage tolerance for any 
 
 ## Solana Wallet Address
 
-`[YOUR_SOLANA_WALLET_ADDRESS_HERE]`
+`YourSolanaWalletAddressHere`
 
-## Implementation Details
+## Additional Resources
 
-### Architecture
+- Source code: https://github.com/yourusername/slippage-sentinel
+- Demo video: [Link to demo]
 
-The agent is built using `@lucid-dreams/agent-kit` and deployed as a serverless function. It:
+## Tech Stack
 
-1. Accepts swap parameters (token_in, token_out, amount_in, route_hint)
-2. Fetches on-chain pool data for the specified route
-3. Analyzes recent trade sizes to compute the 95th percentile
-4. Calculates pool depth and liquidity distribution
-5. Estimates safe slippage based on price impact models
-6. Returns min_safe_slip_bps, pool_depths, and recent_trade_size_p95
+- `@lucid-dreams/agent-kit` for agent framework
+- Node.js / TypeScript
+- Deployed on Vercel
+- x402 payment protocol integration
 
-### Slippage Calculation Model
-
-The safe slippage is calculated using:
-
-- **Constant Product AMM Model:** For Uniswap V2 style pools, price impact = amount_in / (reserve + amount_in)
-- **Concentrated Liquidity Model:** For Uniswap V3 style pools, uses tick-based liquidity distribution
-- **Volatility Adjustment:** Multiplies base slippage by a volatility factor derived from recent trade size variance
-- **Safety Margin:** Adds a 20% buffer to ensure 95% confidence
-
-### Pool Depth Analysis
-
-The agent queries the pool's reserves or liquidity distribution to determine:
-- Total liquidity available at current price
-- Liquidity depth within ±2% of current price
-- Maximum trade size before 1% price impact
-
-### Recent Trade Analysis
-
-Uses historical swap events to compute:
-- 95th percentile of recent trade sizes
-- Trade frequency and size distribution
-- Volatility indicator based on trade size variance
-
-## Source Code
-
+---
