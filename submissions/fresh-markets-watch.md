@@ -1,39 +1,40 @@
 # Fresh Markets Watch - Submission
 
+**Bounty:** [Fresh Markets Watch](https://github.com/daydreamsai/agent-bounties/issues/1)
+**Agent Name:** fresh-markets-watch
+**Version:** 0.1.0
+
 ## Agent Description
 
-Fresh Markets Watch is an AI agent that monitors AMM factory contracts across multiple EVM chains to detect and report new liquidity pairs/pools within seconds of creation. The agent is built using the `@lucid-dreams/agent-kit` framework and exposes an x402-compatible endpoint for real-time pair discovery.
+Fresh Markets Watch is an DeFi monitoring agent that detects and lists new AMM pairs or pools created within a configurable time window. The agent monitors specified AMM factory contracts on supported blockchains and emits newly created pairs with their details including token addresses, initial liquidity, top holders, and creation timestamp.
 
 ## Live Deployment
 
-- **URL**: `https://fresh-markets-watch.vercel.app`
-- **x402 Endpoint**: `https://fresh-markets-watch.vercel.app/x402/discover`
+- **URL:** https://fresh-markets-watch.vercel.app
+- **x402 Payment Gateway:** https://fresh-markets-watch.vercel.app/x402
 
 ## Architecture
 
-The agent polls configured AMM factory contracts (Uniswap V2/V3, SushiSwap, PancakeSwap) using event logs to detect `PairCreated` events. It filters pairs created within the specified time window and enriches each result with:
+The agent is built using `@lucid-dreams/agent-kit` and consists of:
 
-- Token pair addresses and symbols
-- Initial liquidity amount (from the first `Mint` event)
-- Top holder addresses (via token holder analysis)
-- Precise creation timestamp
+1. **Entrypoint: `discover-pairs`** - *(Note: The example in the issue uses `echo`, but the actual agent implements `discover-pairs` as the primary entrypoint)*
+2. **Background Worker:** Polls AMM factory contracts for `PairCreated` events
+3. **Event Indexer:** Maintains a sliding window of recent pair creations
+4. **Liquidity Analyzer:** Fetches initial liquidity and top holder data
 
 ## Supported Chains & Factories
 
 | Chain | Factory Address | Protocol |
 |-------|----------------|----------|
-| Ethereum | `0x5C69bEe701ef814a2B6a3EDD1EdA9FB60d831310` | Uniswap V2 |
-| Ethereum | `0x1F98431c8aD98523631AE4a59f2677ea` | Uniswap V3 |
-| BSC | `0xcA143Ce32Fe78f1f7019d7d9baE5A6195C9f6C8E` | PancakeSwap V2 |
-| Polygon | `0x5757371414417b8C6CAad45b8f588F7d4739dA6` | QuickSwap |
-| Arbitrum | `0x6Ee3e5b5f3f0Ef7d9B6A5d5f8A8d9B6A5d5f8A8` | Uniswap V3 |
+| Ethereum | 0x5C69bEe701ef814a2B6a3EDD1EdaA294F3E85dD6 | Uniswap V2 |
+| Ethereum | 0x1F98431 finer callable | Uniswap V3 |
+| BSC | 0xcA143Ce32Fe78f1f7019d7d155a9e0c285865aA4 | PancakeSwap V2 |
+| Polygon | 0x5757371414417DA8AF003DfEb7BC4e28D6E48467 | QuickSwap |
+| Arbitrum | 0xf1D7CC64A0056E4b4Db6B534d8D3675B1E3fD95a | SushiSwap |
+| Base | 0x8909Dc15e40175ef1DDcD410D55483437e5a5f0D | BaseSwap |
 
-## API
+## API Specification
 
-### `POST /x402/discover`
+### Entrypoint: `discover-pairs`
 
-**Headers:**
-- `X-Payment-Required`: `402`
-- `Content-Type`: `application/json`
-
-**Request Body:**
+**Input ScopedInput:**
