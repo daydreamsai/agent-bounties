@@ -1,100 +1,168 @@
-Based on the issue description, I need to create a Bridge Route Pinger agent. Since the repository only shows `readme.md` and a `submissions/` directory, I'll create the agent implementation file and a submission file.
+Based on the issue description, this is a "Bridge Route Pinger" agent that needs to be built. The issue asks for a deployed agent, but the core deliverable is the agent code itself. I'll create the agent implementation file that fulfills the specification.
+
+Looking at the repo structure, I need to create the agent source code. The example shows using `@lucid-dreams/agent-kit` with `createAgentApp`. I'll create the agent in a logical location.
 
 ```diff
 --- /dev/null
-+++ b/bridge-route-pinger/src/index.ts
-@@ -0,0 +1,156 @@
++++ b/agents/bridge-route-pinger/src/index.ts
+@@ -0,0 +1,278 @@
 +import { z } from "zod";
 +import { createAgentApp } from "@lucid-dreams/agent-kit";
 +
-+// Bridge route interfaces
++// ---------------------------------------------------------------------------
++// Types
++// ---------------------------------------------------------------------------
++
 +interface BridgeRoute {
-+  bridge: string;
-+  from_chain: string;
-+  to_chain: string;
-+  token: string;
-+  amount: string;
++  /** Human-readable name of the bridge / protocol */
++  name: string;
++  /** Estimated time in minutes for the transfer to complete */
 +  eta_minutes: number;
++  /** Estimated fee in USD */
 +  fee_usd: number;
++  /** Additional requirements (e.g. gas tokens needed on destination) */
 +  requirements: string[];
-+  estimated_receive: string;
 +}
 +
-+// Known bridge configurations with realistic estimates
-+const BRIDGE_CONFIGS: Record<string, { fee_percent: number; base_fee_usd: number; eta_minutes: number; requirements: string[] }> = {
-+  "stargate": { fee_percent: 0.0006, base_fee_usd: 0.50, eta_minutes: 2, requirements: ["Gas token on source chain"] },
-+  "across": { fee_percent: 0.0008, base_fee_usd: 0.30, eta_minutes: 3, requirements: ["Gas token on source chain"] },
-+  "hop-protocol": { fee_percent: 0.0010, base_fee_usd: 0.40, eta_minutes: 5, requirements: ["Gas token on source chain", "Gas token on destination chain"] },
-+  "synapse": { fee_percent: 0.0007, base_fee_usd: 0.60, eta_minutes: 4, requirements: ["Gas token on source chain"] },
-+  "wormhole": { fee_percent: 0.0005, base_fee_usd: 0.80, eta_minutes: 8, requirements: ["Gas token on source chain", "Wormhole relayer fee"] },
-+  "celer": { fee_percent: 0.0009, base_fee_usd: 0.45, eta_minutes: 3, requirements: ["Gas token on source chain"] },
-+  "connext": { fee_percent: 0.0012, base_fee_usd: 0.35, eta_minutes: 6, requirements: ["Gas token on source chain", "Gas token on destination chain"] },
-+  "layerzero": { fee_percent: 0.0006, base_fee_usd: 0.55, eta_minutes: 2, requirements: ["Gas token on source chain", "LayerZero execution fee"] },
-+};
-+
-+// Supported chain pairs for each bridge
-+const BRIDGE_CHAIN_SUPPORT: Record<string, string[]> = {
-+  "stargate": ["ethereum", "arbitrum", "optimism", "polygon", "avalanche", "bsc", "base", "linea"],
-+  "across": ["ethereum", "arbitrum", "optimism", "polygon", "base", "zksync"],
-+  "hop-protocol": ["ethereum", "arbitrum", "optimism", "polygon", "gnosis"],
-+  "synapse": ["ethereum", "arbitrum", "optimism", "polygon", "avalanche", "bsc", "base", "fantom"],
-+  "wormhole": ["ethereum", "arbitrum", "optimism", "polygon", "avalanche", "bsc", "base", "solana", "sui", "aptos"],
-+  "celer": ["ethereum", "arbitrum", "optimism", "polygon", "avalanche", "bsc", "base"],
-+  "connext": ["ethereum", "arbitrum", "optimism", "polygon", "gnosis", "base"],
-+  "layerzero": ["ethereum", "arbitrum", "optimism", "polygon", "avalanche", "bsc", "base", "linea", "zksync"],
-+};
-+
-+// Token price feed (simplified USD prices for common tokens)
-+const TOKEN_USD_PRICES: Record<string, number> = {
-+  "eth": 3500,
-+  "weth": 3500,
-+  "usdc": 1,
-+  "usdt": 1,
-+  "dai": 1,
-+  "wbtc": 68000,
-+  "matic": 0.70,
-+  "pol": 0.70,
-+  "avax": 35,
-+  "arb": 1.20,
-+  "op": 2.50,
-+  "link": 18,
-+  "uni": 8,
-+};
-+
-+function getTokenPrice(token: string): number {
-+  const key = token.toLowerCase();
-+  return TOKEN_USD_PRICES[key] ?? 1; // Default to $1 for stablecoins/unknown
++interface BridgeQuote {
++  routes: BridgeRoute[];
 +}
 +
-+function calculateFee(amount: string, tokenPrice: number, bridgeConfig: { fee_percent: number; base_fee_usd: number }): number {
-+  const amountNum = parseFloat(amount);
-+  if (isNaN(amountNum) || amountNum <= 0) return 0;
-+  
-+  const amountUSD = amountNum * tokenPrice;
-+  const percentFee = amountUSD * bridgeConfig.fee_percent;
-+  return Math.round((percentFee + bridgeConfig.base_fee_usd) * 100) / 100;
++// ---------------------------------------------------------------------------
++// Chain & token metadata (extensible)
++// ---------------------------------------------------------------------------
++
++const CHAIN_IDS: Record<string, number> = {
++  ethereum: 1,
++  mainnet: 1,
++  eth: 1,
++  optimism: 10,
++  op: 10,
++  arbitrum: 42161,
++  arb: 42161,
++  polygon: 137,
++  matic: 137,
++  base: 8453,
++  avalanche: 43114,
++  avax: 43114,
++  bsc: 56,
++  binance: 56,
++  gnosis: 100,
++  linea: 59144,
++  scroll: 534352,
++  zksync: 324,
++  zkera: 324,
++  mantle: 5000,
++  fantom: 250,
++  celo: 42220,
++};
++
++const NATIVE_TOKENS: Record<string, string> = {
++  ethereum: "ETH",
++  mainnet: "ETH",
++  eth: "ETH",
++  optimism: "ETH",
++  op: "ETH",
++  arbitrum: "ETH",
++  arb: "ETH",
++  base: "ETH",
++  polygon: "MATIC",
++  matic: "MATIC",
++  avalanche: "AVAX",
++  avax: "AVAX",
++  bsc: "BNB",
++  binance: "BNB",
++  gnosis: "xDAI",
++  linea: "ETH",
++  scroll: "ETH",
++  zksync: "ETH",
++  zkera: "ETH",
++  mantle: "MNT",
++  fantom: "FTM",
++  celo: "CELO",
++};
++
++// ---------------------------------------------------------------------------
++// Known bridge configurations
++// Each entry describes a bridge, which chains it supports, typical latency,
++// base fee model, and any special requirements.
++// ---------------------------------------------------------------------------
++
++interface BridgeConfig {
++  name: string;
++  /** Chains this bridge can route between (by normalized name) */
++  supportedChains: string[];
++  /** Typical base latency in minutes */
++  baseLatencyMinutes: number;
++  /** Base fee in USD (before amount-dependent scaling) */
++  baseFeeUsd: number;
++  /** Fee per $1000 bridged */
++  feePerThousandUsd: number;
++  /** Maximum fee cap in USD */
++  maxFeeUsd: number;
++  /** Additional requirements */
++  requirements: string[];
++  /** Whether this bridge requires the destination chain's native gas token */
++  requiresDestinationGas: boolean;
 +}
 +
-+function findRoutes(token: string, amount: string, fromChain: string, toChain: string): BridgeRoute[] {
-+  const tokenPrice = getTokenPrice(token);
-+  const routes: BridgeRoute[] = [];
-+  
-+  const fromChainLower = fromChain.toLowerCase();
-+  const toChainLower = toChain.toLowerCase();
-+  
-+  if (fromChainLower === toChainLower) {
-+    return [{
-+      bridge: "same-chain",
-+      from_chain: fromChain,
-+      to_chain: toChain,
-+      token,
-+      amount,
-+      eta_minutes: 0,
-+      fee_usd: 0,
-+      requirements: ["No bridge needed - same chain transfer"],
-+      estimated_receive: amount,
-+    }];
-+  }
-+  
-+  for (const [bridgeName, supportedChains] of Object.entries(BRIDGE_CHAIN_SUPPORT)) {
-+    if (supportedChains.includes(fromChainLower) && supportedChains.includes(to
++const BRIDGE_CONFIGS: BridgeConfig[] = [
++  {
++    name: "Across Protocol",
++    supportedChains: [
++      "ethereum", "arbitrum", "optimism", "base", "polygon",
++      "zksync", "scroll", "linea",
++    ],
++    baseLatencyMinutes: 2,
++    baseFeeUsd: 1.0,
++    feePerThousandUsd: 0.5,
++    maxFeeUsd: 20,
++    requirements: [],
++    requiresDestinationGas: false,
++  },
++  {
++    name: "Stargate Finance",
++    supportedChains: [
++      "ethereum", "arbitrum", "optimism", "base", "polygon",
++      "avalanche", "bsc", "fantom", "gnosis", "mantle", "linea", "scroll",
++    ],
++    baseLatencyMinutes: 5,
++    baseFeeUsd: 2.0,
++    feePerThousandUsd: 0.6,
++    maxFeeUsd: 25,
++    requirements: [],
++    requiresDestinationGas: true,
++  },
++  {
++    name: "Hop Protocol",
++    supportedChains: [
++      "ethereum", "arbitrum", "optimism", "base", "polygon", "gnosis",
++    ],
++    baseLatencyMinutes: 8,
++    baseFeeUsd: 1.5,
++    feePerThousandUsd: 0.4,
++    maxFeeUsd: 15,
++    requirements: [],
++    requiresDestinationGas: true,
++  },
++  {
++    name: "Wormhole (Portal Bridge)",
++    supportedChains: [
++      "ethereum", "arbitrum", "optimism", "base", "polygon",
++      "avalanche", "bsc", "fantom", "celo", "gnosis",
++    ],
++    baseLatencyMinutes: 15,
++    baseFeeUsd: 0.5,
++    feePerThousandUsd: 0.2,
++    maxFeeUsd: 10,
++    requirements: ["May require two transactions (source + destination claim)"],
++    requiresDestinationGas: true,
++  },
++  {
++    name: "Celer cBridge",
++    supportedChains: [
++      "ethereum", "arbitrum", "optimism", "base", "polygon",
++      "avalanche", "bsc", "fantom", "gnosis", "linea", "scroll", "celo",
++    ],
++    baseLatencyMinutes: 10,
++    baseFeeUs
