@@ -1,9 +1,14 @@
-Based on the issue, I need to create a GasRoute Oracle agent. Since the repo only shows `readme.md` and a `submissions/` directory, I'll create the agent implementation file and a submission markdown file as required by the submission process.
+Based on the issue description, I need to create a GasRoute Oracle agent that:
+1. Takes chain_set, calldata_size_bytes, and gas_units_est as inputs
+2. Returns the cheapest chain with fee estimates, busy level, and tip hint
+3. Must be deployed and reachable via x402
+
+Since the repo only shows `readme.md` and a `submissions/` directory, I'll create the agent implementation file and a submission file. The agent will use the `@lucid-dreams/agent-kit` pattern shown in the example.
 
 ```diff
 --- /dev/null
 +++ b/gasroute-oracle/src/index.ts
-@@ -0,0 +1,287 @@
+@@ -0,0 +1,207 @@
 +import { z } from "zod";
 +import { createAgentApp } from "@lucid-dreams/agent-kit";
 +
@@ -11,123 +16,102 @@ Based on the issue, I need to create a GasRoute Oracle agent. Since the repo onl
 +// Types
 +// ---------------------------------------------------------------------------
 +
-+interface ChainConfig {
-+  name: string;
++interface ChainGasInfo {
 +  chainId: number;
++  name: string;
 +  nativeToken: string;
-+  nativeTokenUsdPrice: number;
-+  // Base fee parameters (gwei)
-+  baseFeePerGas: number;
-+  // Priority fee ranges (gwei)
-+  minPriorityFee: number;
-+  maxPriorityFee: number;
-+  // Block time in seconds
-+  blockTimeSeconds: number;
-+  // Gas limit overhead multiplier
-+  gasOverheadMultiplier: number;
++  nativeTokenUsd: number;
++  baseFeeGwei: number;
++  priorityFeeGwei: number;
++  busyLevel: "low" | "medium" | "high" | "congested";
++  blockTimeSec: number;
 +}
 +
-+interface GasEstimate {
++interface GasEstimateResult {
 +  chain: string;
-+  feeNative: number;
-+  feeUsd: number;
-+  busyLevel: "low" | "moderate" | "high" | "congested";
-+  tipHint: number;
-+  confidence: number;
++  fee_native: string;
++  fee_usd: string;
++  busy_level: string;
++  tip_hint: string;
 +}
 +
 +// ---------------------------------------------------------------------------
-+// Chain configurations (realistic defaults, updated periodically)
++// Chain configuration – real-time data should be fetched from RPCs / oracles
++// in production.  The values below are reasonable defaults for demonstration
++// and can be replaced with live feeds (e.g. Etherscan Gas Tracker, Owlracle,
++// Blocknative, Infura, QuickNode, etc.).
 +// ---------------------------------------------------------------------------
 +
-+const CHAIN_CONFIGS: Record<string, ChainConfig> = {
++const CHAIN_REGISTRY: Record<string, ChainGasInfo> = {
 +  ethereum: {
-+    name: "Ethereum",
 +    chainId: 1,
++    name: "Ethereum",
 +    nativeToken: "ETH",
-+    nativeTokenUsdPrice: 3500,
-+    baseFeePerGas: 25,
-+    minPriorityFee: 1,
-+    maxPriorityFee: 3,
-+    blockTimeSeconds: 12,
-+    gasOverheadMultiplier: 1.0,
-+  },
-+  arbitrum: {
-+    name: "Arbitrum",
-+    chainId: 42161,
-+    nativeToken: "ETH",
-+    nativeTokenUsdPrice: 3500,
-+    baseFeePerGas: 0.1,
-+    minPriorityFee: 0.01,
-+    maxPriorityFee: 0.05,
-+    blockTimeSeconds: 0.25,
-+    gasOverheadMultiplier: 1.1,
++    nativeTokenUsd: 3500,
++    baseFeeGwei: 25,
++    priorityFeeGwei: 2,
++    busyLevel: "medium",
++    blockTimeSec: 12,
 +  },
 +  optimism: {
-+    name: "Optimism",
 +    chainId: 10,
++    name: "Optimism",
 +    nativeToken: "ETH",
-+    nativeTokenUsdPrice: 3500,
-+    baseFeePerGas: 0.05,
-+    minPriorityFee: 0.001,
-+    maxPriorityFee: 0.02,
-+    blockTimeSeconds: 2,
-+    gasOverheadMultiplier: 1.05,
++    nativeTokenUsd: 3500,
++    baseFeeGwei: 0.01,
++    priorityFeeGwei: 0.005,
++    busyLevel: "low",
++    blockTimeSec: 2,
++  },
++  arbitrum: {
++    chainId: 42161,
++    name: "Arbitrum One",
++    nativeToken: "ETH",
++    nativeTokenUsd: 3500,
++    baseFeeGwei: 0.1,
++    priorityFeeGwei: 0.02,
++    busyLevel: "low",
++    blockTimeSec: 0.25,
 +  },
 +  polygon: {
-+    name: "Polygon",
 +    chainId: 137,
++    name: "Polygon PoS",
 +    nativeToken: "MATIC",
-+    nativeTokenUsdPrice: 0.75,
-+    baseFeePerGas: 30,
-+    minPriorityFee: 30,
-+    maxPriorityFee: 50,
-+    blockTimeSeconds: 2,
-+    gasOverheadMultiplier: 1.0,
++    nativeTokenUsd: 0.75,
++    baseFeeGwei: 40,
++    priorityFeeGwei: 30,
++    busyLevel: "medium",
++    blockTimeSec: 2,
 +  },
 +  base: {
-+    name: "Base",
 +    chainId: 8453,
++    name: "Base",
 +    nativeToken: "ETH",
-+    nativeTokenUsdPrice: 3500,
-+    baseFeePerGas: 0.01,
-+    minPriorityFee: 0.001,
-+    maxPriorityFee: 0.01,
-+    blockTimeSeconds: 2,
-+    gasOverheadMultiplier: 1.0,
++    nativeTokenUsd: 3500,
++    baseFeeGwei: 0.02,
++    priorityFeeGwei: 0.01,
++    busyLevel: "low",
++    blockTimeSec: 2,
 +  },
 +  avalanche: {
-+    name: "Avalanche C-Chain",
 +    chainId: 43114,
++    name: "Avalanche C-Chain",
 +    nativeToken: "AVAX",
-+    nativeTokenUsdPrice: 35,
-+    baseFeePerGas: 25,
-+    minPriorityFee: 1,
-+    maxPriorityFee: 2,
-+    blockTimeSeconds: 2,
-+    gasOverheadMultiplier: 1.0,
++    nativeTokenUsd: 35,
++    baseFeeGwei: 25,
++    priorityFeeGwei: 2,
++    busyLevel: "low",
++    blockTimeSec: 2,
 +  },
 +  bsc: {
-+    name: "BNB Smart Chain",
 +    chainId: 56,
++    name: "BNB Smart Chain",
 +    nativeToken: "BNB",
-+    nativeTokenUsdPrice: 600,
-+    baseFeePerGas: 3,
-+    minPriorityFee: 1,
-+    maxPriorityFee: 2,
-+    blockTimeSeconds: 3,
-+    gasOverheadMultiplier: 1.0,
-+  },
-+  celo: {
-+    name: "Celo",
-+    chainId: 42220,
-+    nativeToken: "CELO",
-+    nativeTokenUsdPrice: 0.65,
-+    baseFeePerGas: 5,
-+    minPriorityFee: 1,
-+    maxPriorityFee: 3,
-+    blockTimeSeconds: 5,
-+    gasOverheadMultiplier: 1.0,
++    nativeTokenUsd: 600,
++    baseFeeGwei: 3,
++    priorityFeeGwei: 1,
++    busyLevel: "medium",
++    blockTimeSec: 3,
 +  },
 +};
 +
@@ -136,38 +120,39 @@ Based on the issue, I need to create a GasRoute Oracle agent. Since the repo onl
 +// ---------------------------------------------------------------------------
 +
 +/**
-+ * Calculate total gas cost in native token units.
-+ * Formula: gasUnits * (baseFee + priorityFee) * overhead / 1e9
-+ * (gwei -> native token conversion)
++ * Convert gwei to the native token unit (ETH, MATIC, etc.).
++ * 1 gwei = 1e-9 of the native unit.
 + */
-+function calculateFeeNative(
++function gweiToNative(gwei: number): number {
++  return gwei * 1e-9;
++}
++
++/**
++ * Estimate total gas fee in native token.
++ *
++ * Formula:
++ *   totalGas = gasUnits * (baseFee + priorityFee) [in gwei]
++ *   nativeCost = totalGas * 1e-9
++ *
++ * For L2s that post calldata to L1, a simplified calldata surcharge is
++ * included: calldataBytes * 16 gas per byte (EIP-2028) * L1 baseFee
++ * scaled by the L2's posting ratio (approximated as 1/100 for rollups).
++ */
++function estimateFeeNative(
++  chain: ChainGasInfo,
 +  gasUnits: number,
-+  baseFeeGwei: number,
-+  priorityFeeGwei: number,
-+  overheadMultiplier: number,
++  calldataBytes: number,
 +): number {
-+  const effectiveGasPriceGwei = baseFeeGwei + priorityFeeGwei;
-+  const totalGasUnits = gasUnits * overheadMultiplier;
-+  // Convert gwei to native token (1 gwei = 1e-9 of native token)
-+  return (totalGasUnits * effectiveGasPriceGwei) / 1e9;
-+}
++  const executionGasGwei = gasUnits * (chain.baseFeeGwei + chain.priorityFeeGwei);
 +
-+/**
-+ * Determine busy level based on base fee relative to historical norms.
-+ */
-+function determineBusyLevel(
-+  baseFeeGwei: number,
-+  typicalBaseFeeGwei: number,
-+): "low" | "moderate" | "high" | "congested" {
-+  const ratio = baseFeeGwei / typicalBaseFeeGwei;
-+  if (ratio <= 0.8) return "low";
-+  if (ratio <= 1.2) return "moderate";
-+  if (ratio <= 2.0) return "high";
-+  return "congested";
-+}
++  // L1 calldata cost approximation for L2s (rollups post compressed data to L1)
++  let l1CalldataGwei = 0;
++  if (["optimism", "arbitrum", "base"].includes(chain.name.toLowerCase()) || chain.chainId === 10 || chain.chainId === 42161 || chain.chainId === 8453) {
++    // Assume L1 base fee ~25 gwei, 16 gas per byte, and ~1/100 compression ratio
++    const l1BaseFeeGwei = 25;
++    const calldataGasL1 = calldataBytes * 16;
++    l1CalldataGwei = (calldataGasL1 * l1BaseFeeGwei) / 100;
++  }
 +
-+/**
-+ * Calculate suggested priority fee based on busy level.
-+ */
-+function calculateTipHint(
-+  busyLevel: "low" | "moderate" |
++  const totalGasGwei = executionGasGwei + l1CalldataGwei;
++  return g
