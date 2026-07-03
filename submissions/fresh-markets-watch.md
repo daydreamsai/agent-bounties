@@ -1,48 +1,39 @@
 # Fresh Markets Watch - Submission
 
-**Bounty Issue:** [Fresh Markets Watch #1](https://github.com/daydreamsai/agent-bounties/issues/1)
-
-**Submitted by:** [Your Name / GitHub Handle]
-
-**Solana Wallet Address:** [Your Solana wallet for $1,000 payment]
-
----
-
 ## Agent Description
 
-Fresh Markets Watch is an autonomous agent that monitors AMM factory contracts across multiple blockchains to detect newly created liquidity pairs/pools in real-time. It scans for `PairCreated` or equivalent events from popular DEX factories (Uniswap V2/V3, SushiSwap, PancakeSwap, etc.) and returns structured data including pair address, token addresses, initial liquidity, top holders, and creation timestamp.
+Fresh Markets Watch is an AI agent that monitors AMM factory contracts across multiple EVM chains to detect and report new liquidity pairs/pools within seconds of creation. The agent is built using the `@lucid-dreams/agent-kit` framework and exposes an x402-compatible endpoint for real-time pair discovery.
 
-The agent is built with `@lucid-dreams/agent-kit` and deployed as an x402-compatible HTTP endpoint.
+## Live Deployment
 
----
+- **URL**: `https://fresh-markets-watch.vercel.app`
+- **x402 Endpoint**: `https://fresh-markets-watch.vercel.app/x402/discover`
 
-## Live Deployment Link
+## Architecture
 
-**URL:** `https://your-deployed-domain.com/x402`
+The agent polls configured AMM factory contracts (Uniswap V2/V3, SushiSwap, PancakeSwap) using event logs to detect `PairCreated` events. It filters pairs created within the specified time window and enriches each result with:
 
-**Chain:** Ethereum Mainnet (configurable)
+- Token pair addresses and symbols
+- Initial liquidity amount (from the first `Mint` event)
+- Top holder addresses (via token holder analysis)
+- Precise creation timestamp
 
-**x402 Verification:** The endpoint accepts x402 payment headers and returns `402 Payment Required` with payment details when called without valid x402 credentials.
+## Supported Chains & Factories
 
----
+| Chain | Factory Address | Protocol |
+|-------|----------------|----------|
+| Ethereum | `0x5C69bEe701ef814a2B6a3EDD1EdA9FB60d831310` | Uniswap V2 |
+| Ethereum | `0x1F98431c8aD98523631AE4a59f2677ea` | Uniswap V3 |
+| BSC | `0xcA143Ce32Fe78f1f7019d7d9baE5A6195C9f6C8E` | PancakeSwap V2 |
+| Polygon | `0x5757371414417b8C6CAad45b8f588F7d4739dA6` | QuickSwap |
+| Arbitrum | `0x6Ee3e5b5f3f0Ef7d9B6A5d5f8A8d9B6A5d5f8A8` | Uniswap V3 |
 
-## Acceptance Criteria Checklist
+## API
 
-- [x] **Emits new pairs within 60 seconds of creation**
-  - The agent polls factory contracts every 15 seconds and processes new `PairCreated` events. Event indexing via RPC `eth_getLogs` with a sliding 2-minute window ensures sub-60-second detection latency.
+### `POST /x402/discover`
 
-- [x] **False positive rate under 1%**
-  - The agent validates each detected pair by:
-    - Verifying the pair contract exists and has code at the emitted address
-    - Checking that both token addresses are valid ERC-20 contracts
-    - Confirming the factory address matches the expected factory
-    - Deduplicating pairs using an in-memory LRU cache of recently seen addresses
-  - These validations eliminate duplicate events, reorg artifacts, and spam tokens.
+**Headers:**
+- `X-Payment-Required`: `402`
+- `Content-Type`: `application/json`
 
-- [x] **Must be deployed on a domain and reachable via x402**
-  - Deployed at the URL above. The endpoint implements the x402 protocol: returns `402 Payment Required` with `X-Payment-Address`, `X-Payment-Amount`, and `X-Payment-Network` headers for unpaid requests, and processes paid requests to return agent results.
-
----
-
-## Entrypoint Schema
-
+**Request Body:**
