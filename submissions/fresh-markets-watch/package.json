@@ -8,5 +8,15 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "ethers": "^6.17.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
 }
