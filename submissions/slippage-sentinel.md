@@ -4,7 +4,7 @@
 
 ## Agent Description
 
-Slippage Sentinel is an AI agent that estimates safe slippage tolerance for any DeFi swap route to prevent transaction reverts. It analyzes pool depth, recent trade sizes, and volatility to recommend optimal slippage settings.
+Slippage Sentinel is an AI agent that estimates safe slippage tolerance for any swap route to prevent swap reverts. It analyzes pool depth, recent volatility, and trade size distribution to recommend slippage values that prevent 95% of swap failures.
 
 ## Live Deployment
 
@@ -21,31 +21,13 @@ The agent accepts swap parameters (token_in, token_out, amount_in, route_hint) a
 
 ### Algorithm
 
-1. **Pool Depth Analysis**: Fetches liquidity depth from the specified DEX/route
-2. **Trade Size Analysis**: Analyzes recent trades to compute the 95th percentile
-3. **Volatility Adjustment**: Adjusts slippage based on recent price volatility
-4. **Safety Buffer**: Adds a conservative buffer to ensure 95% success rate
+1. **Pool Depth Analysis**: Fetches liquidity depth for the specified route/DEX
+2. **Volatility Assessment**: Analyzes recent price movements and trade sizes
+3. **Slippage Calculation**: Computes safe slippage using:
+   - Base slippage from pool depth (deeper = lower slippage)
+   - Volatility multiplier from recent price swings
+   - Trade size impact (larger trades need more slippage)
+   - 95th percentile safety buffer
 
-## Acceptance Criteria Checklist
+### Formula
 
-- [x] Slippage suggestion prevents revert for 95% of test swaps
-- [x] Accounts for pool depth and recent volatility
-- [x] Deployed on a domain and reachable via x402
-
-## Solana Wallet Address
-
-`YourSolanaWalletAddressHere`
-
-## Additional Resources
-
-- Source code: https://github.com/yourusername/slippage-sentinel
-- Demo video: [Link to demo]
-
-## Tech Stack
-
-- `@lucid-dreams/agent-kit` for agent framework
-- Node.js / TypeScript
-- Deployed on Vercel
-- x402 payment protocol integration
-
----
