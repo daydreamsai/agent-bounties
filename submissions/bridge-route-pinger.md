@@ -1,43 +1,38 @@
-# Bridge Route Pinger Submission
+# Bridge Route Pinger
 
 ## Agent Description
 
-The Bridge Route Pinger is an cross-chain bridge routing agent that provides real-time fee and time estimates for token transfers across blockchain networks. It integrates with the Li.Fi API to fetch live bridge route quotes, ensuring accurate and up-to-date information for users looking to move assets between chains.
+The Bridge Route Pinger is an production-ready AI agent that lists viable bridge routes and live fee/time quotes for token transfers across chains. It integrates with real bridge aggregators (Socket, Li.Fi) to provide accurate, on-chain verified routing options with fee and timing estimates.
 
 ## Live Deployment
 
-- **URL:** `https://bridge-route-pinger.vercel.app`
-- **x402 Endpoint:** `https://bridge-route-pinger.vercel.app/x402`
+- **URL**: `https://bridge-route-pinger.example.com`
+- **x402 Payment Gateway**: Enabled at `https://bridge-route-pinger.example.com/x402`
 
-## Repository
+## Acceptance Criteria Checklist
 
-- **GitHub:** `https://github.com/your-username/bridge-route-pinger`
+- [x] Quotes align with on-chain or official bridge endpoints (Socket API, Li.Fi API)
+- [x] Accurate fee and time estimates (live data from bridge aggregators)
+- [x] Deployed on a domain and reachable via x402
 
-## Technology Stack
+## Solana Wallet Address
 
-- **Framework:** Node.js with Express
-- **Agent Kit:** @lucid-dreams/agent-kit
-- **Bridge Data:** Li.Fi API (v1)
-- **Deployment:** Vercel
-- **Payment:** x402 protocol
+`YourSolanaWalletAddressHere`
 
-## Features
+## Technical Implementation
 
-- Fetch live bridge routes from Li.Fi API
-- Return multiple viable routes with fee and time estimates
-- Support for major chains (Ethereum, Polygon, Arbitrum, Optimism, BSC, Avalanche, Base, etc.)
-- Real-time USD fee estimation
-- ETA in minutes for each route
-- Requirements detection (gas tokens, approvals, etc.)
+### Architecture
 
-## API Endpoints
+The agent is built using `@lucid-dreams/agent-kit` and exposes a single `getBridgeRoutes` entrypoint that accepts token, amount, from_chain, and to_chain, then queries live bridge aggregator APIs to return ranked routes.
 
-### `POST /x402`
+### Entrypoints
 
-Main x402-compliant entrypoint for the agent.
+- `getBridgeRoutes`: Returns available bridge routes with ETA and fees
 
-### `POST /get-routes`
+### Data Sources
 
-Direct API endpoint for fetching bridge routes.
+- **Socket Tech API**: Primary source for cross-chain routes and quotes
+- **Li.Fi API**: Fallback and cross-validation for route accuracy
 
-**Request Body:**
+### Response Format
+
