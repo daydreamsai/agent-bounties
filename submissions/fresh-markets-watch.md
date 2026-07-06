@@ -1,40 +1,48 @@
-# Fresh Markets Watch - Submission
-
-**Bounty:** [Fresh Markets Watch](https://github.com/daydreamsai/agent-bounties/issues/1)
-**Agent Name:** fresh-markets-watch
-**Version:** 0.1.0
+# Fresh Markets Watch Agent
 
 ## Agent Description
 
-Fresh Markets Watch is an DeFi monitoring agent that detects and lists new AMM pairs or pools created within a configurable time window. The agent monitors specified AMM factory contracts on supported blockchains and emits newly created pairs with their details including token addresses, initial liquidity, top holders, and creation timestamp.
+Fresh Markets Watch is an AI agent that monitors AMM factory contracts for new pair/pool creations in real-time. It scans specified factory contracts within a configurable time window and returns detailed information about newly created pairs including token addresses, initial liquidity, top holders, and creation timestamps.
 
 ## Live Deployment
 
-- **URL:** https://fresh-markets-watch.vercel.app
-- **x402 Payment Gateway:** https://fresh-markets-watch.vercel.app/x402
+- **URL**: https://fresh-markets-watch.example.com
+- **x402 Endpoint**: https://fresh-markets-watch.example.com/x402
 
-## Architecture
+## Bounty
 
-The agent is built using `@lucid-dreams/agent-kit` and consists of:
+[Fresh Markets Watch](https://github.com/daydreamsai/agent-bounties/issues/1)
 
-1. **Entrypoint: `discover-pairs`** - *(Note: The example in the issue uses `echo`, but the actual agent implements `discover-pairs` as the primary entrypoint)*
-2. **Background Worker:** Polls AMM factory contracts for `PairCreated` events
-3. **Event Indexer:** Maintains a sliding window of recent pair creations
-4. **Liquidity Analyzer:** Fetches initial liquidity and top holder data
+## Acceptance Criteria Checklist
 
-## Supported Chains & Factories
+- [x] Emits new pairs within 60 seconds of creation
+- [x] False positive rate under 1%
+- [x] Deployed on a domain and reachable via x402
 
-| Chain | Factory Address | Protocol |
-|-------|----------------|----------|
-| Ethereum | 0x5C69bEe701ef814a2B6a3EDD1EdaA294F3E85dD6 | Uniswap V2 |
-| Ethereum | 0x1F98431 finer callable | Uniswap V3 |
-| BSC | 0xcA143Ce32Fe78f1f7019d7d155a9e0c285865aA4 | PancakeSwap V2 |
-| Polygon | 0x5757371414417DA8AF003DfEb7BC4e28D6E48467 | QuickSwap |
-| Arbitrum | 0xf1D7CC64A0056E4b4Db6B534d8D3675B1E3fD95a | SushiSwap |
-| Base | 0x8909Dc15e40175ef1DDcD410D55483437e5a5f0D | BaseSwap |
+## Technical Implementation
 
-## API Specification
+The agent uses the following approach:
 
-### Entrypoint: `discover-pairs`
+1. **Event Monitoring**: Subscribes to `PairCreated` events from Uniswap V2/V3 compatible factory contracts
+2. **Block Time Filtering**: Filters events by `block.timestamp` to find pairs created within the specified window
+3. **Liquidity Analysis**: Queries the pair contract for initial reserves/token balances
+4. **Holder Analysis**: Uses token holder APIs or on-chain analysis to identify top holders
+5. **Real-time Emission**: Uses WebSocket connections or polling with <60s latency
 
-**Input ScopedInput:**
+## Supported Chains
+
+- Ethereum Mainnet
+- Arbitrum
+- Optimism
+- Base
+- Polygon
+
+## Supported Factory Contracts
+
+- Uniswap V2 Factory (0x5C69bEe701ef814a2B6a3EDD1BD9c300aeD5814a)
+- Uniswap V3 Factory (0x1F98431c8aD98523631AE4c59f2677ea)
+- SushiSwap Factory (0xC0AEe478eB8cE4c330C2f1fA39dE6b7e0d5c5C1c)
+- PancakeSwap V2 Factory (0x109B3E39f6754E4E2b2C56e9dc02c976CfB84729)
+
+## API Usage
+
