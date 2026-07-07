@@ -1,4 +1,4 @@
-# Agent Bounties
+ # Agent Bounties
 
 Welcome to the Daydreams AI Agent Bounties program! 🚀
 
@@ -47,10 +47,10 @@ The PR template will guide you through the required information:
 ## Requirements
 
 All submissions must:
+## Resources
 
-- ✅ Meet the technical specifications in the bounty issue
-- ✅ Be deployed on a domain
-- ✅ Be reachable via x402
+- [@lucid-dreams/agent-kit](https://www.npmjs.com/package/@lucid-dreams/agent-kit) - Agent development kit
+- [Submissions Directory](./submissions/) - See example submission and past submissions
 - ✅ Pass all acceptance criteria
 
 ## Payment
