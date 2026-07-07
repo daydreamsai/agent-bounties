@@ -1,0 +1,36 @@
+{
+  "name": "bridge-route-pinger",
+  "version": "0.1.0",
+  "description": "List viable bridge routes and live fee/time quotes for token transfers",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "lint": "eslint src/**/*.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.1.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "x402": "^0.1.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.0",
+    "tsx": "^4.6.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "bridge",
+    "cross-chain",
+    "defi",
+    "agent",
+    "bounty"
+  ]
+}

@@ -27,10 +27,11 @@ Browse our [open issues](https://github.com/daydreamsai/agent-bounties/issues) t
 8. [Perps Funding Pulse](https://github.com/daydreamsai/agent-bounties/issues/8) - Fetch perpetuals funding data
 9. [Lending Liquidation Sentinel](https://github.com/daydreamsai/agent-bounties/issues/9) - Monitor liquidation risk
 10. [Bridge Route Pinger](https://github.com/daydreamsai/agent-bounties/issues/10) - Find best bridge routes
-
+3. [Slippage Sentinel](https://github.com/daydreamsai/agent-bounties/issues/3) - Estimate safe slippage
+4. [GasRoute Oracle](https://github.com/daydreamsai/agent-bounties/issues/4) - Find cheapest chain for transactions
+5. [Lending Liquidation Sentinel](https://github.com/daydreamsai/agent-bounties/issues/9) - Monitor liquidation risk
+10. [Bridge Route Pinger](https://github.com/daydreamsai/agent-bounties/issues/10) - Find best bridge routes
 ## How to Submit
-
-1. **Choose a bounty** - Browse the [issues](https://github.com/daydreamsai/agent-bounties/issues) and pick one to work on
 2. **Build your agent** - Use the [@lucid-dreams/agent-kit](https://www.npmjs.com/package/@lucid-dreams/agent-kit) or your preferred tools
 3. **Deploy** - Your agent must be deployed on a domain and reachable via x402
 4. **Create submission file** - Add a markdown file to the `submissions/` directory describing your agent
