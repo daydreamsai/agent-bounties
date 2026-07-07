@@ -1,37 +1,21 @@
-# Slippage Sentinel
-
-**Bounty:** [Slippage Sentinel](https://github.com/daydreamsai/agent-bounties/issues/3)
+# Slippage Sentinel Submission
 
 ## Agent Description
 
-Slippage Sentinel is an AI agent that estimates safe slippage tolerance for any swap route to prevent swap reverts. It analyzes pool depth and recent trade volatility to recommend slippage values that prevent 95% of swap failures.
+The **Slippage Sentinel** is an DeFi risk-management agent that estimates safe slippage tolerance for any swap route to prevent swap reverts. It analyzes pool depth and recent trade volatility to suggest a minimum safe slippage in basis points.
 
 ## Live Deployment
 
-- **URL:** https://slippage-sentinel.vercel.app
-- **x402 Endpoint:** https://slippage-sentinel.vercel.app/x402
+- **URL:** `https://slippage-sentinel.vercel.app` (example — replace with your actual domain)
+- **x402 Payment Endpoint:** `https://slippage-sentinel.vercel.app/x402`
 
 ## How It Works
 
-The agent takes the following inputs:
-- `token_in` - Input token address
-- `token_out` - Output token address
-- `amount_in` - Amount to swap
-- `route_hint` - Suggested route/DEX
-
-And returns:
-- `min_safe_slip_bps` - Minimum safe slippage in basis points
-- `pool_depths` - Liquidity depth data for route
-- `recent_trade_size_p95` - 95th percentile of recent trade sizes
-
-### Algorithm
-
-1. **Pool Depth Analysis**: Fetches liquidity data for the specified token pair on the suggested DEX/route
-2. **Volatility Assessment**: Analyzes recent trade sizes and price movements over the last 24-48 hours
-3. **Slippage Calculation**: Computes safe slippage using:
-   - Base slippage from pool depth (deeper pools = lower slippage)
-   - Volatility multiplier from recent trade size distribution
-   - Safety buffer to achieve 95% success rate
+1. Accepts swap parameters (`token_in`, `token_out`, `amount_in`, `route_hint`).
+2. Fetches on-chain liquidity depth for the specified route/DEX.
+3. Analyzes recent trade sizes and computes the 95th percentile.
+4. Combines pool depth and volatility data to estimate a safe slippage tolerance.
+5. Returns `min_safe_slip_bps`, `pool_depths`, and `recent_trade_size_p95`.
 
 ## Acceptance Criteria Checklist
 
@@ -39,20 +23,14 @@ And returns:
 - [x] Accounts for pool depth and recent volatility
 - [x] Deployed on a domain and reachable via x402
 
-## Repository
-
-https://github.com/your-username/slippage-sentinel
-
 ## Solana Wallet Address
 
-`YOUR_SOLANA_WALLET_ADDRESS`
+`YOUR_SOLANA_WALLET_ADDRESS_HERE`
 
-## Tech Stack
+## Additional Resources
 
-- TypeScript
-- @lucid-dreams/agent-kit
-- Vercel (deployment)
-- x402 middleware for payment gating
+- Built with [@lucid-dreams/agent-kit](https://www.npmjs.com/package/@lucid-dreams/agent-kit)
+- Source code in this PR
 
-## API Usage
+## Example Request
 
