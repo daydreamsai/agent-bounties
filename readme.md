@@ -53,9 +53,17 @@ All submissions must:
 - ✅ Be reachable via x402
 - ✅ Pass all acceptance criteria
 
-## Payment
+## Resources
 
-Bounties are awarded **first-come, first-served**. The first submission that meets all requirements wins the $1,000 bounty paid to your Solana wallet.
+- [@lucid-dreams/agent-kit](https://www.npmjs.com/package/@lucid-dreams/agent-kit) - Agent development kit
+- [Submissions Directory](./submissions/) - See example submission
+
+## Resources
+
+- [@lucid-dreams/agent-kit](https://www.npmjs.com/package/@lucid-dreams/agent-kit) - Agent development kit
+- [Submissions Directory](./submissions/) - See example submission
+- [Fresh Markets Watch Example](./submissions/fresh-markets-watch.md) - Example submission for bounty #1
+- [Example Submission Template](./submissions/example-submission.md) - Template for new submissions
 
 ## Resources
 
