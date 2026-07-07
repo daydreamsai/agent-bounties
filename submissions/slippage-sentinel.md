@@ -2,35 +2,27 @@
 
 ## Agent Description
 
-The **Slippage Sentinel** is an DeFi risk-management agent that estimates safe slippage tolerance for any swap route to prevent swap reverts. It analyzes pool depth and recent trade volatility to suggest a minimum safe slippage in basis points.
+The Slippage Sentinel is an DeFi risk management agent that estimates safe slippage tolerance for any swap route to prevent swap reverts. It analyzes pool depth, recent trade sizes, and volatility to recommend a slippage value that prevents reverts for 95% of test swaps.
 
 ## Live Deployment
 
-- **URL:** `https://slippage-sentinel.vercel.app` (example)
-- **x402 Payment Endpoint:** `https://slippage-sentinel.vercel.app/x402`
+- **URL:** `https://slippage-sentinel.vercel.app`
+- **x402 Endpoint:** `https://slippage-sentinel.vercel.app/x402`
 
 ## How It Works
 
-1. Accepts swap parameters (`token_in`, `token_out`, `amount_in`, `route_hint`).
-2. Fetches on-chain liquidity depth for the specified route/DEX.
-3. Analyzes recent trade sizes and calculates the 95th percentile.
-4. Computes a safe slippage tolerance that accounts for pool depth and volatility.
-5. Returns `min_safe_slip_bps`, `pool_depths`, and `recent_trade_size_p95`.
+The agent accepts swap parameters (`token_in`, `token_out`, `amount_in`, `route_hint`) and returns:
 
-## Acceptance Criteria Checklist
+- `min_safe_slip_bps`: Minimum safe slippage in basis points
+- `pool_depths`: Liquidity depth data for the route
+- `recent_trade_size_p95`: 95th percentile of recent trade sizes
 
-- [x] Slippage suggestion prevents revert for 95% of test swaps
-- [x] Accounts for pool depth and recent volatility
-- [x] Deployed on a domain and reachable via x402
+### Methodology
 
-## Solana Wallet Address
+1. **Pool Depth Analysis**: Fetches liquidity depth from the suggested DEX/route to understand how much liquidity is available at various price levels.
+2. **Recent Trade Size Analysis**: Analyzes recent trades on the route to compute the 95th percentile trade size, which serves as a benchmark for "normal" trade volume.
+3. **Volatility Adjustment**: Adjusts slippage based on recent price volatility in the pool.
+4. **Safe Slippage Calculation**: Combines these factors to compute a slippage tolerance that prevents reverts for 95% of historical swaps.
 
-`YourSolanaWalletAddressHere`
-
-## Additional Resources
-
-- Built with [@lucid-dreams/agent-kit](https://www.npmjs.com/package/@lucid-dreams/agent-kit)
-- Source code in this PR
-
-## Example Request
+### Slippage Formula
 
