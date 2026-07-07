@@ -2,22 +2,20 @@
 
 ## Agent Description
 
-The **Slippage Sentinel** is an DeFi risk-management agent that estimates safe slippage tolerance for any swap route to prevent swap reverts. It analyzes pool depth, recent volatility, and historical trade sizes to recommend a slippage value that prevents reverts for 95% of test swaps.
+The **Slippage Sentinel** is an DeFi risk-management agent that estimates safe slippage tolerance for any swap route to prevent swap reverts. It analyzes pool depth and recent trade volatility to suggest a minimum safe slippage in basis points.
 
 ## Live Deployment
 
-- **URL:** `https://slippage-sentinel.vercel.app` (example — replace with actual domain)
+- **URL:** `https://slippage-sentinel.vercel.app` (example)
 - **x402 Payment Endpoint:** `https://slippage-sentinel.vercel.app/x402`
 
 ## How It Works
 
-1. **Pool Depth Analysis** — Fetches liquidity depth data for the requested token pair and route (DEX).
-2. **Volatility Assessment** — Analyzes recent price movements and trade sizes over the last 24-48 hours.
-3. **Slippage Calculation** — Computes a safe slippage tolerance using:
-   - Pool depth relative to `amount_in`
-   - Recent volatility (standard deviation of executed prices)
-   - 95th percentile of recent trade sizes
-4. **Output** — Returns `min_safe_slip_bps`, `pool_depths`, and `recent_trade_size_p95`.
+1. Accepts swap parameters (`token_in`, `token_out`, `amount_in`, `route_hint`).
+2. Fetches on-chain liquidity depth for the specified route/DEX.
+3. Analyzes recent trade sizes and calculates the 95th percentile.
+4. Computes a safe slippage tolerance that accounts for pool depth and volatility.
+5. Returns `min_safe_slip_bps`, `pool_depths`, and `recent_trade_size_p95`.
 
 ## Acceptance Criteria Checklist
 
@@ -27,12 +25,12 @@ The **Slippage Sentinel** is an DeFi risk-management agent that estimates safe s
 
 ## Solana Wallet Address
 
-`YOUR_SOLANA_WALLET_ADDRESS_HERE`
+`YourSolanaWalletAddressHere`
 
 ## Additional Resources
 
 - Built with [@lucid-dreams/agent-kit](https://www.npmjs.com/package/@lucid-dreams/agent-kit)
-- Uses on-chain data from major DEXs (Uniswap V2/V3, SushiSwap, Curve)
+- Source code in this PR
 
 ## Example Request
 
