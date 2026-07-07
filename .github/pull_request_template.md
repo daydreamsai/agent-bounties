@@ -1,33 +1,32 @@
-## Bounty Submission
+## Fresh Markets Watch Submission
 
-**Bounty Issue:** #1 (Fresh Markets Watch)
+Closes #1 
 
-## Agent Description
+### Agent Description
 
 <!-- Describe what your agent does -->
 
-## Live Deployment
+### Live Deployment
 
 - **URL**: 
-- **x402 Payment Gateway**: 
+- **x402 Endpoint**: 
 
-## Acceptance Criteria Checklist
+### Acceptance Criteria Checklist
 
 - [ ] Emits new pairs within 60 seconds of creation
 - [ ] False positive rate under 1%
 - [ ] Deployed on a domain and reachable via x402
 
-## Solana Wallet Address
+### Technical Details
 
-<!-- For bounty payment -->
+- Framework: `@lucid-dreams/agent-kit`
+- Blockchain interaction: `viem`
+- Real-time monitoring: WebSocket event streaming
 
-## Verification Steps
+### Solana Wallet Address
 
-1. Visit the live URL
-2. Make x402 payment
-3. Call the discovery endpoint
-4. Verify results match on-chain data
+`YourSolanaWalletAddressHere`
 
-## Additional Notes
+### Additional Notes
 
 <!-- Any other information -->
