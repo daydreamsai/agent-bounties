@@ -33,12 +33,27 @@ Browse our [open issues](https://github.com/daydreamsai/agent-bounties/issues) t
 1. **Choose a bounty** - Browse the [issues](https://github.com/daydreamsai/agent-bounties/issues) and pick one to work on
 2. **Build your agent** - Use the [@lucid-dreams/agent-kit](https://www.npmjs.com/package/@lucid-dreams/agent-kit) or your preferred tools
 3. **Deploy** - Your agent must be deployed on a domain and reachable via x402
-4. **Create submission file** - Add a markdown file to the `submissions/` directory describing your agent
-5. **Open a PR** - Create a pull request linking to the bounty issue
-
-The PR template will guide you through the required information:
-
-- Agent description
+3. [Slippage Sentinel](https://github.com/daydreamsai/agent-bounties/issues/3) - Estimate safe slippage
+4. [GasRoute Oracle](https://github.com/daydreamsai/agent-bounties/issues/4) - Find cheapest chain for transactions
+5. [Approval Risk Auditor](https://github.com/daydreamsai/agent-bounties/issues/5) - Flag risky token approvals
+    - **Inputs:**
+      - `token_in` - Input token address
+      - `token_out` - Output token address
+      - `amount_in` - Amount to swap
+      - `route_hint` - Suggested route/DEX
+    - **Returns:**
+      - `min_safe_slip_bps` - Minimum safe slippage in basis points
+      - `pool_depths` - Liquidity depth data for route
+      - `recent_trade_size_p95` - 95th percentile of recent trade sizes
+    - **Acceptance Criteria:**
+      - Slippage suggestion prevents revert for 95% of test swaps
+      - Accounts for pool depth and recent volatility
+      - Must be deployed on a domain and reachable via x402
+    - **Done When:**
+      Agent provides slippage recommendations that demonstrably reduce swap failures.
+6. [Yield Pool Watcher](https://github.com/daydreamsai/agent-bounties/issues/6) - Track APY and TVL changes
+7. [LP Impermanent Loss Estimator](https://github.com/daydreamsai/agent-bounties/issues/7) - Calculate IL and fees
+8. [Perps Funding Pulse](https://github.com/daydreamsai/agent-bounties/issues/8) - Fetch perpetuals funding data
 - Live deployment link
 - Acceptance criteria checklist
 - Solana wallet address for payment
