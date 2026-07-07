@@ -2,33 +2,23 @@
 
 ## Agent Description
 
-Fresh Markets Watch is an DeFi monitoring agent that detects and lists new AMM pairs/pools created within a configurable time window. The agent monitors specified factory contracts on supported blockchains and emits newly created pairs with their details including token addresses, initial liquidity, top holders, and creation timestamp.
+Fresh Markets Watch is an AI agent that monitors AMM factory contracts for new pair/pool creations in real-time. It scans specified factory contracts within a configurable time window and returns detailed information about newly created pairs including token addresses, initial liquidity, top holders, and creation timestamps.
 
 ## Live Deployment
 
-- **URL**: `https://fresh-markets-watch.example.com` (replace with actual deployed URL)
+- **URL**: `https://fresh-markets-watch.example.com` (replace with actual deployment URL)
 - **x402 Payment Gateway**: Enabled at `https://fresh-markets-watch.example.com/x402`
 
 ## Architecture
 
 The agent is built using `@lucid-dreams/agent-kit` and consists of:
 
-1. **Factory Monitor Service**: Polls AMM factory contracts for `PairCreated` events
-2. **Pair Analyzer**: Fetches pair details (tokens, liquidity, holders) from on-chain data
-3. **x402 Middleware**: Exposes the agent via x402 payment protocol
+1. **Entrypoint**: `discoverNewPairs` - Main entrypoint for discovering new AMM pairs
+2. **Polling Service**: Background service that polls factory contracts for `PairCreated` events
+3. **Data Enrichment**: Fetches token details, liquidity amounts, and top holder information
+4. **x402 Integration**: Payment middleware for agent access
 
-### Supported Chains & Factories
+## Implementation Details
 
-| Chain | Factory Address | Protocol |
-|-------|----------------|----------|
-| Ethereum | `0x5C69bEe701ef814a2B6a3EE8836063fb0f566b3e` | Uniswap V2 |
-| Ethereum | `0x1F98431c8aD98523631AE4a59f2677ea` | Uniswap V3 |
-| BSC | `0xcA143Ce11Fe3aD3b00f3fF703aFd40756266C8F2` | PancakeSwap V2 |
-| Polygon | `0x5757371414417b8C6CAad4b75f6f61c26fC5b2H6` | QuickSwap |
-| Arbitrum | `0xf1D7CC64A4456D154c24827B5E1A53cDDEb85a9e` | SushiSwap |
+### Core Logic
 
-## API
-
-### Entrypoint: `discover_new_pairs`
-
-**Input:**
