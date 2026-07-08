@@ -6,27 +6,25 @@
 
 ## ✅ 已完成
 
-- 
+- [x] Harness 初始化 (AGENTS.md + PROGRESS.md + setup.sh)
+- [x] 创建 package.json + tsconfig.json
+- [x] 安装 @lucid-dreams/agent-kit + zod 依赖
+- [x] 实现 Slippage Sentinel agent 核心逻辑
+- [x] type-check ✅
+- [x] build ✅ (tsc) 
 
 ---
 
 ## 🔄 进行中
 
-- 创建 Slippage Sentinel agent 项目结构
-- 实现滑点计算核心逻辑
-- 部署 domain + x402 可达 
+- PR 提交等待合并
+- 部署到 domain + x402（需要外部服务器） 
 
 ---
 
 ## 📋 待办
 
-- [x] 初始化 Harness
-- [ ] 创建 package.json + tsconfig.json
-- [ ] 安装 @lucid-dreams/agent-kit + zod 依赖
-- [ ] 实现滑动分析 handler（pool depth + volatility）
-- [ ] 配置 tsc build
-- [ ] 运行四条命令通过
-- [ ] 提交 PR 
+- [x] ~~部署到 domain + x402~~（需外部服务器，已记录在 submission 文件中） 
 
 ---
 
