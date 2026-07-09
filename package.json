@@ -1,0 +1,17 @@
+{
+  "name": "fresh-markets-watch",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "ethers": "^6.17.0",
+    "zod": "^4.4.3"
+  }
+}
