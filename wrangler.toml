@@ -1,0 +1,14 @@
+name = "fresh-markets-watch"
+main = "src/index.ts"
+compatibility_date = "2026-07-10"
+
+[triggers]
+crons = ["*/10 * * * *"]
+
+[[kv_namespaces]]
+binding = "PAIRS_KV"
+id = "YOUR_KV_NAMESPACE_ID"
+
+[vars]
+# Alchemy API key should be set as a secret:
+# wrangler secret put ALCHEMY_API_KEY
