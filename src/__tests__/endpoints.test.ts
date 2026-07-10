@@ -150,7 +150,7 @@ describe("x402 middleware", () => {
     expect(result).toEqual({ result: "ok" });
   });
 
-  test("rejects request without payment header", async () => {
+  test("rejects request without payment header and returns x402 requirements", async () => {
     const handler = async (req: any) => ({ result: "ok" });
     const wrapped = withX402(handler);
 
@@ -159,6 +159,15 @@ describe("x402 middleware", () => {
     });
 
     const result = await wrapped(req);
-    expect(result).toEqual({ error: "Payment required" });
+    expect(result).toHaveProperty("x402Version");
+    expect(result).toHaveProperty("error", "Payment required");
+    expect(result).toHaveProperty("method", "POST");
+    expect(result).toHaveProperty("path", "/scan");
+    expect(result).toHaveProperty("resource");
+    expect(result).toHaveProperty("network");
+    expect(result).toHaveProperty("asset");
+    expect(result).toHaveProperty("amount");
+    expect(result).toHaveProperty("payTo");
+    expect(result).toHaveProperty("facilitator");
   });
 });

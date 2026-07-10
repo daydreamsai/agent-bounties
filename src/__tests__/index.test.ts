@@ -69,8 +69,9 @@ describe("Worker routing", () => {
     });
 
     const response = await worker.fetch(req, env, ctx);
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(402);
     const body = await response.json();
+    expect(body.x402Version).toBe(2);
     expect(body.error).toBe("Payment required");
   });
 

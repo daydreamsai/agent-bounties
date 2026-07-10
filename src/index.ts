@@ -44,8 +44,10 @@ export default {
       });
 
       const result = await scanHandler(req);
+      
+      const status = result.x402Version ? 402 : 200;
       return new Response(JSON.stringify(result), {
-        status: 200,
+        status,
         headers: { "Content-Type": "application/json" },
       });
     }

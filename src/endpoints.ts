@@ -53,7 +53,19 @@ export function withX402(handler: (req: Request) => Promise<any>) {
   return async (req: Request) => {
     const payment = req.headers.get("x402-payment");
     if (!payment) {
-      return { error: "Payment required" };
+      const url = new URL(req.url);
+      return {
+        x402Version: 2,
+        error: "Payment required",
+        method: req.method,
+        path: url.pathname,
+        resource: req.url,
+        network: "eip155:8453",
+        asset: "USDC",
+        amount: "0.01",
+        payTo: "0x0000000000000000000000000000000000000000",
+        facilitator: "https://api.cdp.coinbase.com/platform/v2/x402",
+      };
     }
     return handler(req);
   };
