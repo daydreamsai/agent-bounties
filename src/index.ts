@@ -10,10 +10,11 @@ interface Env {
   ALCHEMY_API_KEY: string;
 }
 
-const state: WorkerState = {
-  lastWebhook: "",
-  lastCron: "",
-};
+async function loadState(kv: any): Promise<WorkerState> {
+  const lastWebhook = await kv.get("state:lastWebhook") || "";
+  const lastCron = await kv.get("state:lastCron") || "";
+  return { lastWebhook, lastCron };
+}
 
 function getProvider(chain: string, apiKey: string) {
   const config = getChainConfig(chain);
@@ -25,6 +26,7 @@ function getProvider(chain: string, apiKey: string) {
 
 export default {
   async fetch(req: Request, env: Env, ctx: any): Promise<Response> {
+    const state = await loadState(env.PAIRS_KV);
     const url = new URL(req.url);
     const path = url.pathname;
 
@@ -67,6 +69,7 @@ export default {
   },
 
   async scheduled(event: any, env: Env, ctx: any): Promise<void> {
+    const state = await loadState(env.PAIRS_KV);
     ctx.waitUntil(
       (async () => {
         for (const chain of ["ethereum", "bsc"]) {

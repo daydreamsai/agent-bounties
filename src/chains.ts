@@ -17,7 +17,7 @@ const CHAIN_CONFIGS: Record<string, ChainConfig> = {
   },
   bsc: {
     chain: "bsc",
-    rpcUrl: "https://bsc-dataseed.binance.org",
+    rpcUrl: "https://bnb-mainnet.g.alchemy.com/v2/demo",
     blocksPerMinute: 20,
     factories: [
       "0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73",

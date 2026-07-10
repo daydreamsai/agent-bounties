@@ -16,13 +16,26 @@ export async function handleWebhook(
   state: WorkerState
 ): Promise<{ success: boolean; error?: string; duplicate?: boolean }> {
   try {
-    const logs = payload?.event?.data?.logs || [];
-    const txHash = payload?.event?.transaction?.hash;
-    const chain = payload?.event?.blockchain?.network === "eth-mainnet" ? "ethereum" : "bsc";
+    console.log("Webhook received:", JSON.stringify(payload, null, 2));
+    
+    // Handle Alchemy GraphQL webhook format
+    const block = payload?.data?.block || payload?.event?.data?.block;
+    const logs = block?.logs || payload?.event?.data?.logs || [];
+    const network = payload?.network || payload?.event?.blockchain?.network;
+    const chain = network === "ETH_MAINNET" || network === "eth-mainnet" ? "ethereum" : "bsc";
+
+    console.log(`Chain: ${chain}, Logs count: ${logs.length}`);
 
     const pairCreatedLog = logs.find((log: any) => log.topics?.[0] === PAIR_CREATED_TOPIC);
     if (!pairCreatedLog) {
+      console.log("No PairCreated event found in logs");
       return { success: false, error: "No PairCreated event found" };
+    }
+
+    const txHash = pairCreatedLog.transaction?.hash || payload?.event?.transaction?.hash;
+    if (!txHash) {
+      console.log("No transaction hash found in log");
+      return { success: false, error: "No transaction hash found" };
     }
 
     const token0 = extractAddressFromTopic(pairCreatedLog.topics[1]);
@@ -58,6 +71,7 @@ export async function handleWebhook(
 
     await writePair(kv, chain, pair);
     state.lastWebhook = new Date().toISOString();
+    await kv.put("state:lastWebhook", state.lastWebhook);
 
     return { success: true };
   } catch (error) {

@@ -10,10 +10,13 @@ export interface WorkerState {
 export async function handleHealth(kv: any, state: WorkerState) {
   const { keys } = await kv.list();
   
+  const lastWebhook = await kv.get("state:lastWebhook") || state.lastWebhook;
+  const lastCron = await kv.get("state:lastCron") || state.lastCron;
+  
   return {
     status: "ok",
-    last_webhook: state.lastWebhook,
-    last_cron: state.lastCron,
+    last_webhook: lastWebhook,
+    last_cron: lastCron,
     pairs_cached: keys.length,
   };
 }

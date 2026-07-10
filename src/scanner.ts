@@ -19,11 +19,14 @@ export async function handleCron(
   state: WorkerState,
   chain: string
 ): Promise<number> {
+  console.log(`Cron scanner started for chain: ${chain}`);
   const startTime = Date.now();
   const config = getChainConfig(chain);
   const factories = getFactoryAddresses(chain);
   const currentBlock = await provider.getBlockNumber();
   const fromBlock = currentBlock - SCAN_WINDOW_MINUTES * config.blocksPerMinute;
+
+  console.log(`Scanning blocks ${fromBlock} to ${currentBlock} for ${factories.length} factories`);
 
   let totalProcessed = 0;
   const CHUNK_SIZE = 9; // Alchemy free tier: max 10-block range (toBlock - fromBlock <= 9)
@@ -92,5 +95,6 @@ export async function handleCron(
   }
 
   state.lastCron = new Date().toISOString();
+  await kv.put("state:lastCron", state.lastCron);
   return totalProcessed;
 }

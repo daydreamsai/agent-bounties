@@ -20,6 +20,10 @@ describe("handleCron", () => {
     const kvStore = new Map<string, string>();
     const mockKV = {
       put: async (key: string, value: string) => {
+        if (key.startsWith("state:")) {
+          kvStore.set(key, value);
+          return;
+        }
         kvStore.set(key, value);
         storedPairs.push({ key, value: JSON.parse(value) });
       },
@@ -61,6 +65,9 @@ describe("handleCron", () => {
     const storedPairs: any[] = [];
     const mockKV = {
       put: async (key: string, value: string) => {
+        if (key.startsWith("state:")) {
+          return;
+        }
         storedPairs.push({ key, value: JSON.parse(value) });
       },
       get: async (key: string) => {

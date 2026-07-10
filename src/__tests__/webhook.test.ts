@@ -45,6 +45,9 @@ describe("handleWebhook", () => {
     const storedPairs: any[] = [];
     const mockKV = {
       put: async (key: string, value: string) => {
+        if (key.startsWith("state:")) {
+          return;
+        }
         storedPairs.push({ key, value: JSON.parse(value) });
       },
       get: async (key: string) => null,

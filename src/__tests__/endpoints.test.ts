@@ -9,6 +9,7 @@ describe("GET /health", () => {
         list_complete: true,
         cursor: "",
       }),
+      get: async (key: string) => null,
     };
 
     const state = {
