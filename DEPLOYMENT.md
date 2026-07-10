@@ -117,3 +117,38 @@ Verify the KV namespace ID in `wrangler.toml` matches the one created in Step 1.
 
 1. Verify cron schedule in `wrangler.toml`: `*/10 * * * *`
 2. Check Worker logs with `wrangler tail`
+
+## Alchemy Free Tier Constraints
+
+The implementation is designed to work within Alchemy's free tier limitations:
+
+### Block Range Limit
+- Free tier allows `eth_getLogs` queries with a maximum 10-block range (toBlock - fromBlock ≤ 9)
+- Scanner chunks requests into 9-block segments
+- 15-minute scan on Ethereum (75 blocks) = 9 chunk requests per factory
+- 15-minute scan on BSC (300 blocks) = 34 chunk requests per factory
+
+### Rate Limits
+- Free tier has compute unit per second (CUPS) limits
+- Scanner includes 100ms delay between chunk requests
+- Prevents 429 "rate limit exceeded" errors
+- Total scan time: ~2-3 seconds per chain
+
+### Monthly Capacity
+- Free tier includes 300M compute units/month
+- Estimated usage: ~500K CU/month (well within limit)
+- Monitor usage at https://dashboard.alchemy.com
+
+### Pair Creation Frequency
+- **Ethereum**: New pairs created roughly every 75-88 minutes on average
+- **BSC**: New pairs created roughly every 30-45 minutes on average
+- **15-minute scan window**: May not catch pairs every run
+- **Webhook fallback**: Alchemy Notify provides real-time detection
+
+### Detection Strategy
+The system uses a two-tier approach:
+1. **Real-time (Alchemy Notify webhooks)**: Detects pairs within 5-10 seconds
+2. **Fallback (cron scanner)**: Runs every 10 minutes, scans last 15 minutes
+   - Catches pairs missed by webhooks
+   - Deduplicates via KV storage
+   - Handles rate limits gracefully
