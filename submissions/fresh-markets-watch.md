@@ -63,17 +63,36 @@
 
 ### ✅ Deploy on a domain reachable via x402
 
-**Implementation**: Deployed on Cloudflare Workers with x402 payment middleware on `/scan` endpoint.
+**Implementation**: Deployed on Cloudflare Workers with x402 payment protocol on `/scan` endpoint.
 
 **Validation**:
 ```bash
-# Health check (no payment)
+# Health check (no payment required)
 curl https://fresh-markets-watch.YOUR_SUBDOMAIN.workers.dev/health
 
-# Query pairs (with payment)
+# Query pairs without payment (returns HTTP 402 with x402 requirements)
+curl -i -X POST https://fresh-markets-watch.YOUR_SUBDOMAIN.workers.dev/scan \
+  -H "Content-Type: application/json" \
+  -d '{"chain": "ethereum", "window_minutes": 5}'
+
+# Response: HTTP 402 Payment Required
+# {
+#   "x402Version": 2,
+#   "error": "Payment required",
+#   "method": "POST",
+#   "path": "/scan",
+#   "resource": "https://.../scan",
+#   "network": "eip155:8453",
+#   "asset": "USDC",
+#   "amount": "0.01",
+#   "payTo": "0x...",
+#   "facilitator": "https://api.cdp.coinbase.com/platform/v2/x402"
+# }
+
+# Query pairs with payment
 curl -X POST https://fresh-markets-watch.YOUR_SUBDOMAIN.workers.dev/scan \
   -H "Content-Type: application/json" \
-  -H "x402-payment: valid-token" \
+  -H "x402-payment: valid-payment-proof" \
   -d '{"chain": "ethereum", "window_minutes": 5}'
 ```
 
@@ -163,7 +182,15 @@ wrangler.toml          # Cloudflare Workers config
 - Fallback to [deployer, pairAddress] for V3 pools
 
 **x402 Middleware** (`endpoints.ts`):
-- Verifies payment header on `/scan` endpoint
+- Returns HTTP 402 Payment Required when no payment header present
+- Includes x402 payment requirements in response body:
+  - `x402Version: 2`
+  - `method`, `path`, `resource`
+  - `network: eip155:8453` (Base mainnet)
+  - `asset: USDC`
+  - `amount: 0.01`
+  - `payTo: wallet address`
+  - `facilitator: Coinbase x402 API`
 - Allows free access to `/health` endpoint
 
 ### Testing
