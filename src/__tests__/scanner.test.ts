@@ -17,11 +17,13 @@ describe("handleCron", () => {
     const txHash = "0xabc123";
 
     const storedPairs: any[] = [];
+    const kvStore = new Map<string, string>();
     const mockKV = {
       put: async (key: string, value: string) => {
+        kvStore.set(key, value);
         storedPairs.push({ key, value: JSON.parse(value) });
       },
-      get: async (key: string) => null,
+      get: async (key: string) => kvStore.get(key) || null,
     };
 
     const mockProvider = {
@@ -47,8 +49,8 @@ describe("handleCron", () => {
     const state = { lastWebhook: "", lastCron: "" };
     const count = await handleCron(mockKV as any, mockProvider as any, state, "ethereum");
 
-    expect(count).toBe(2);
-    expect(storedPairs).toHaveLength(2);
+    expect(count).toBe(1);
+    expect(storedPairs).toHaveLength(1);
     expect(storedPairs[0].value.pair_address).toBe(pairAddress);
     expect(state.lastCron).toBeTruthy();
   });

@@ -26,14 +26,26 @@ export async function handleCron(
   const fromBlock = currentBlock - SCAN_WINDOW_MINUTES * config.blocksPerMinute;
 
   let totalProcessed = 0;
+  const CHUNK_SIZE = 9; // Alchemy free tier: max 10-block range (toBlock - fromBlock <= 9)
 
   for (const factory of factories) {
-    const logs = await provider.getLogs({
-      address: factory,
-      topics: [PAIR_CREATED_TOPIC],
-      fromBlock,
-      toBlock: currentBlock,
-    });
+      for (let chunkStart = fromBlock; chunkStart <= currentBlock; chunkStart += CHUNK_SIZE) {
+        if (Date.now() - startTime > CPU_LIMIT_MS) {
+          state.lastCron = new Date().toISOString();
+          return totalProcessed;
+        }
+
+        const chunkEnd = Math.min(chunkStart + CHUNK_SIZE - 1, currentBlock);
+
+        const logs = await provider.getLogs({
+          address: factory,
+          topics: [PAIR_CREATED_TOPIC],
+          fromBlock: chunkStart,
+          toBlock: chunkEnd,
+        });
+
+        // Add delay to avoid rate limits
+        await new Promise(resolve => setTimeout(resolve, 100));
 
       for (let i = 0; i < logs.length; i++) {
         if (Date.now() - startTime > CPU_LIMIT_MS) {
@@ -76,6 +88,7 @@ export async function handleCron(
         await writePair(kv, chain, pair);
         totalProcessed++;
       }
+    }
   }
 
   state.lastCron = new Date().toISOString();
