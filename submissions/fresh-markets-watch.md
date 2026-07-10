@@ -23,9 +23,7 @@
 
 ## Live Deployment
 
-**Worker URL**: `https://fresh-markets-watch.YOUR_SUBDOMAIN.workers.dev`
-
-> ⚠️ **TODO**: Replace with actual deployed URL after running `wrangler deploy`
+**Worker URL**: `https://fresh-markets-watch.poom-a1d.workers.dev`
 
 ### Endpoints
 
@@ -68,10 +66,10 @@
 **Validation**:
 ```bash
 # Health check (no payment required)
-curl https://fresh-markets-watch.YOUR_SUBDOMAIN.workers.dev/health
+curl https://fresh-markets-watch.poom-a1d.workers.dev/health
 
 # Query pairs without payment (returns HTTP 402 with x402 requirements)
-curl -i -X POST https://fresh-markets-watch.YOUR_SUBDOMAIN.workers.dev/scan \
+curl -i -X POST https://fresh-markets-watch.poom-a1d.workers.dev/scan \
   -H "Content-Type: application/json" \
   -d '{"chain": "ethereum", "window_minutes": 5}'
 
@@ -81,16 +79,16 @@ curl -i -X POST https://fresh-markets-watch.YOUR_SUBDOMAIN.workers.dev/scan \
 #   "error": "Payment required",
 #   "method": "POST",
 #   "path": "/scan",
-#   "resource": "https://.../scan",
+#   "resource": "https://fresh-markets-watch.poom-a1d.workers.dev/scan",
 #   "network": "eip155:8453",
 #   "asset": "USDC",
 #   "amount": "0.01",
-#   "payTo": "0x...",
+#   "payTo": "0x0000000000000000000000000000000000000000",
 #   "facilitator": "https://api.cdp.coinbase.com/platform/v2/x402"
 # }
 
 # Query pairs with payment
-curl -X POST https://fresh-markets-watch.YOUR_SUBDOMAIN.workers.dev/scan \
+curl -X POST https://fresh-markets-watch.poom-a1d.workers.dev/scan \
   -H "Content-Type: application/json" \
   -H "x402-payment: valid-payment-proof" \
   -d '{"chain": "ethereum", "window_minutes": 5}'
@@ -136,10 +134,8 @@ curl -X POST https://fresh-markets-watch.YOUR_SUBDOMAIN.workers.dev/scan \
 
 ## Solana Wallet Address
 
-> ⚠️ **TODO**: Add your Solana wallet address for bounty payment
-
 ```
-YOUR_SOLANA_WALLET_ADDRESS
+DkdPKPgD9rMsWpKbZrenXHzN9EEhjNnLDA2xo9J6kWdf
 ```
 
 ## Technical Implementation

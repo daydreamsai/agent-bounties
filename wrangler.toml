@@ -7,7 +7,7 @@ crons = ["*/10 * * * *"]
 
 [[kv_namespaces]]
 binding = "PAIRS_KV"
-id = "YOUR_KV_NAMESPACE_ID"
+id = "d88659e6a3a945b5837c390d19f997c2"
 
 [vars]
 # Alchemy API key should be set as a secret:
