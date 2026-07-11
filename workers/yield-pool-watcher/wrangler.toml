@@ -1,0 +1,24 @@
+name = "yield-pool-watcher"
+main = "src/index.js"
+compatibility_date = "2026-07-01"
+
+# Cron: poll subgraphs every 10 minutes
+[triggers]
+crons = ["*/10 * * * *"]
+
+# KV for state
+[[kv_namespaces]]
+binding = "YIELD_KV"
+id = "YOUR_KV_NAMESPACE_ID"
+
+# Environment variables
+[vars]
+AAVE_SUBGRAPH_URL = "https://gateway.thegraph.com/api/YOUR_API_KEY/subgraphs/id/Cv1TqW67PqG7GqLqnJmXcKjKQFxqGqBxqGqLqnJmXcK"
+UNISWAP_SUBGRAPH_URL = "https://gateway.thegraph.com/api/YOUR_API_KEY/subgraphs/id/5zvR82QoaXYFyDEKLZ9t6v9ad3hQTXWc"
+TOP_POOLS_COUNT = "100"
+POLL_INTERVAL_MINUTES = "10"
+SNAPSHOT_TTL_HOURS = "1"
+ALERT_TTL_HOURS = "24"
+ALERT_COOLDOWN_HOURS = "1"
+DEFAULT_APY_THRESHOLD = "5.0"
+DEFAULT_TVL_DROP_THRESHOLD = "10.0"
