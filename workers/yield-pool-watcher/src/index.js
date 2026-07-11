@@ -4,8 +4,8 @@
  * Triggers alerts on APY/TVL threshold breaches
  */
 
-// ── Helper: safe division ──────────────────────────────
-function safeDivide(a, b) {
+// ── Helper: percentage change calculation ───────────────
+function percentChange(a, b) {
   if (b === 0 || b === null || b === undefined) return 0;
   return (a - b) / Math.abs(b) * 100;
 }
@@ -117,7 +117,7 @@ async function handleCron(env) {
     const prev = previousSnapshot.pools?.[poolId];
     if (prev) {
       const apyDelta = apy - prev.apy;
-      const tvlDeltaPct = safeDivide(tvl, prev.tvl);
+      const tvlDeltaPct = percentChange(tvl, prev.tvl);
       const threshold = parseFloat(env.DEFAULT_APY_THRESHOLD || '5');
 
       if (Math.abs(apyDelta) >= threshold) {
@@ -158,7 +158,7 @@ async function handleCron(env) {
     const prev = previousSnapshot.pools?.[poolId];
     if (prev) {
       const apyDelta = apy - prev.apy;
-      const tvlDeltaPct = safeDivide(tvl, prev.tvl);
+      const tvlDeltaPct = percentChange(tvl, prev.tvl);
       const threshold = parseFloat(env.DEFAULT_APY_THRESHOLD || '5');
 
       if (Math.abs(apyDelta) >= threshold) {
