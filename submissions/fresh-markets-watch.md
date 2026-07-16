@@ -8,8 +8,8 @@ Scans Base UniswapV2-style factories for `PairCreated` logs in the last N minute
 `pair_address`, `tokens`, `init_liquidity`, `top_holders`, `created_at`.
 
 ## Live link
-- Health: https://yummy-cougars-train.loca.lt/health
-- Watch (x402 gated): `POST https://yummy-cougars-train.loca.lt/watch`
+- Health: https://soft-books-care.loca.lt/health
+- Watch (x402 gated): `POST https://soft-books-care.loca.lt/watch`
 - Without `X-PAYMENT` returns **HTTP 402** with USDC payment instructions (Base).
 
 ## Acceptance progress
