@@ -1,0 +1,23 @@
+{
+  "name": "slippage-sentinel",
+  "version": "0.1.0",
+  "description": "Estimate safe slippage tolerance for any swap route to prevent swap reverts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "pnpm build && node dist/server.js",
+    "type-check": "tsc --noEmit",
+    "test": "echo '无测试'",
+    "lint": "echo '无 lint'"
+  },
+  "dependencies": {
+    "@lucid-dreams/agent-kit": "^0.2.24",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^22.0.0"
+  }
+}

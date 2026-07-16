@@ -1,0 +1,36 @@
+services:
+  slippage-sentinel:
+    build: .
+    image: slippage-sentinel:local
+    container_name: slippage-sentinel
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3003
+      ADDRESS: ${ADDRESS:-}
+      FACILITATOR_URL: ${FACILITATOR_URL:-}
+      NETWORK: ${NETWORK:-}
+      DEFAULT_PRICE: ${DEFAULT_PRICE:-}
+      AGENT_DOMAIN: ${AGENT_DOMAIN:-}
+    ports:
+      - "0.0.0.0:3003:3003"
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: 0.5
+    pids_limit: 128
+    shm_size: 64m
+    init: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3003/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
