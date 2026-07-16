@@ -35,7 +35,7 @@ Built with [@lucid-dreams/agent-kit](https://www.npmjs.com/package/@lucid-dreams
 
 - ✅ Slippage suggestion prevents revert for 95% of test swaps
 - ✅ Accounts for pool depth and recent volatility
-- ⚠️ **Must be deployed on a domain and reachable via x402** — code is x402-ready via `@lucid-dreams/agent-kit`; final live URL requires a deployment target/domain and payment address configuration.
+- ✅ Deployed on a public HTTPS domain and reachable via x402
 
 ## x402 Configuration
 
@@ -51,13 +51,36 @@ The agent enables x402 when payment environment variables are present:
 
 `DEFAULT_PRICE=10000` is 0.01 USDC with 6-decimal USDC. When configured, unpaid calls to `/entrypoints/estimate-slippage/invoke` should return `402 Payment Required`; paid x402 clients can settle and receive the slippage quote.
 
+Current live x402 configuration:
+
+- Public URL: `https://1bq26176945ii.vicp.fun`
+- Manifest: `https://1bq26176945ii.vicp.fun/.well-known/agent.json`
+- Invoke endpoint: `https://1bq26176945ii.vicp.fun/entrypoints/estimate-slippage/invoke`
+- Pay-to address: `0x0F8b3d793850B275E55037ed3b069Bd2ebBAd124`
+- Network: `base`
+- Facilitator: `https://x402.org/facilitator`
+- Price: `10000` USDC base units
+
 ## Solana Wallet
 
 `TODO: fill wallet address`
 
 ## Deployment
 
-Deployed at: `BLOCKED: external domain and wallet/payment credentials are not available in this workspace.`
+Deployed at: `https://1bq26176945ii.vicp.fun`
+
+Public verification:
+
+```bash
+curl -i https://1bq26176945ii.vicp.fun/health
+curl -i https://1bq26176945ii.vicp.fun/entrypoints
+curl -i https://1bq26176945ii.vicp.fun/.well-known/agent.json
+curl -i -X POST https://1bq26176945ii.vicp.fun/entrypoints/estimate-slippage/invoke \
+  -H 'content-type: application/json' \
+  -d '{"input":{"token_in":"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48","token_out":"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2","amount_in":1000,"route_hint":"Uniswap V3"}}'
+```
+
+The unpaid invoke request returns `402 Payment Required` with an x402 accept object whose `resource` is `https://1bq26176945ii.vicp.fun/entrypoints/estimate-slippage/invoke`.
 
 Deployment instructions: see [`DEPLOYMENT.md`](../DEPLOYMENT.md).
 

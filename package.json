@@ -6,6 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "pnpm build && node dist/server.js",
     "type-check": "tsc --noEmit",
     "test": "echo '无测试'",
     "lint": "echo '无 lint'"

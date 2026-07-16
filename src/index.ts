@@ -11,12 +11,89 @@ import { createAgentApp, paymentsFromEnv } from "@lucid-dreams/agent-kit";
 import type { PaymentsConfig } from "@lucid-dreams/agent-kit";
 
 const DEFAULT_PRICE = "10000"; // 0.01 USDC，USDC 6 位精度下的 base units
+const MAX_BODY_BYTES = 16 * 1024;
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX_REQUESTS = 120;
+const TOKEN_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
-function hasPaymentEnv(env: NodeJS.ProcessEnv = process.env): boolean {
-  return Boolean(env.ADDRESS || env.FACILITATOR_URL || env.NETWORK || env.DEFAULT_PRICE);
+type RateLimitBucket = {
+  count: number;
+  resetAt: number;
+};
+
+type MiddlewareContext = {
+  req: {
+    header(name: string): string | undefined;
+  };
+  json(body: unknown, status?: number): Response;
+};
+
+type MiddlewareNext = () => Promise<void>;
+
+const rateLimitBuckets = new Map<string, RateLimitBucket>();
+
+function requireCompletePaymentEnv(env: NodeJS.ProcessEnv = process.env): boolean {
+  const hasAnyPaymentEnv = Boolean(
+    env.ADDRESS || env.FACILITATOR_URL || env.NETWORK || env.DEFAULT_PRICE
+  );
+
+  if (!hasAnyPaymentEnv) return false;
+
+  const missing = ["ADDRESS", "FACILITATOR_URL", "NETWORK"].filter((key) => !env[key]);
+  if (missing.length > 0) {
+    throw new Error(
+      `Incomplete x402 payment configuration. Missing: ${missing.join(", ")}`
+    );
+  }
+
+  return true;
 }
 
-const payments: PaymentsConfig | false = hasPaymentEnv()
+function getClientKey(c: MiddlewareContext): string {
+  return (
+    c.req.header("cf-connecting-ip") ||
+    c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
+    c.req.header("x-real-ip") ||
+    "unknown"
+  );
+}
+
+function pruneExpiredRateLimitBuckets(now: number): void {
+  if (rateLimitBuckets.size < 1_000) return;
+
+  for (const [key, bucket] of rateLimitBuckets) {
+    if (bucket.resetAt <= now) rateLimitBuckets.delete(key);
+  }
+}
+
+async function publicEdgeGuard(
+  c: MiddlewareContext,
+  next: MiddlewareNext
+): Promise<Response | void> {
+  const contentLength = Number(c.req.header("content-length") ?? "0");
+  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+    return c.json({ error: "Request body too large" }, 413);
+  }
+
+  const now = Date.now();
+  pruneExpiredRateLimitBuckets(now);
+
+  const key = getClientKey(c);
+  const bucket = rateLimitBuckets.get(key);
+  if (!bucket || bucket.resetAt <= now) {
+    rateLimitBuckets.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return next();
+  }
+
+  bucket.count += 1;
+  if (bucket.count > RATE_LIMIT_MAX_REQUESTS) {
+    return c.json({ error: "Too many requests" }, 429);
+  }
+
+  return next();
+}
+
+const payments: PaymentsConfig | false = requireCompletePaymentEnv()
   ? paymentsFromEnv({ defaultPrice: process.env.DEFAULT_PRICE ?? DEFAULT_PRICE })
   : false;
 
@@ -36,6 +113,8 @@ const { app, addEntrypoint } = createAgentApp(
   }
 );
 
+app.use("*", publicEdgeGuard);
+
 // ── 类型定义 ──────────────────────────────────────────
 
 interface PoolDepth {
@@ -51,11 +130,25 @@ interface TradeRecord {
 }
 
 const slippageInputSchema = z.object({
-  token_in: z.string().describe("Input token address"),
-  token_out: z.string().describe("Output token address"),
-  amount_in: z.number().positive().describe("Amount to swap"),
+  token_in: z
+    .string()
+    .max(42)
+    .regex(TOKEN_ADDRESS_REGEX)
+    .describe("Input token address"),
+  token_out: z
+    .string()
+    .max(42)
+    .regex(TOKEN_ADDRESS_REGEX)
+    .describe("Output token address"),
+  amount_in: z
+    .number()
+    .positive()
+    .finite()
+    .max(1_000_000_000_000)
+    .describe("Amount to swap"),
   route_hint: z
     .string()
+    .max(80)
     .optional()
     .describe("Suggested route/DEX (optional)"),
 });
@@ -226,7 +319,7 @@ addEntrypoint({
 addEntrypoint({
   key: "echo",
   description: "Echo a message (for health and payment smoke tests)",
-  input: z.object({ text: z.string() }),
+  input: z.object({ text: z.string().max(1_000) }),
   price: { invoke: process.env.DEFAULT_PRICE ?? DEFAULT_PRICE },
   network: (process.env.NETWORK ?? "base") as "base",
   async handler({ input }) {
