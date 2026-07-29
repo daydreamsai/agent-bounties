@@ -1,7 +1,16 @@
 # Agent Bounties
-
 Welcome to the Daydreams AI Agent Bounties program! 🚀
 
+## About
+This repository hosts bounties for building AI agents that solve real DeFi and Web3 problems. Each bounty is worth **$1,000** and is awarded on a **first-come, first-served** basis to qualifying submissions.
+
+## Active Bounties
+
+Browse our [open issues](https://github.com/daydreamsai/agent-bounties/issues) to see all available bounties. Each bounty includes:
+
+- Clear specification with inputs and outputs
+- Acceptance criteria
+-
 ## About
 
 This repository hosts bounties for building AI agents that solve real DeFi and Web3 problems. Each bounty is worth **$1,000** and is awarded on a **first-come, first-served** basis to qualifying submissions.
