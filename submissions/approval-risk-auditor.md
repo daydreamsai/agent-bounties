@@ -21,8 +21,11 @@ Audits DeFi token approvals across multiple EVM chains (Ethereum, Polygon, Arbit
 - **Output**: Structured JSON with approvals, risk flags, summary stats, and revoke calldata
 
 ## Live Deployment
-**Local server verified**: `http://localhost:3000` — health check and audit endpoint both return 200 OK.
-**Wrangler deploy**: Cloudflare Workers free tier has 1MB size limit; bundle (x402 + agent-kit) is ~5.7MB. Ready for paid Cloudflare plan (10MB), Vercel, Render, or Railway.
+**Production URL**: https://approval-risk-auditor-xi.vercel.app (Vercel, unlimited bundle size)
+
+**Endpoints verified**:
+- `GET https://approval-risk-auditor-xi.vercel.app/health` → `{"ok":true,"version":"1.0.0"}`
+- `POST https://approval-risk-auditor-xi.vercel.app/entrypoints/audit/invoke` → returns full audit result
 
 **Endpoints**:
 - `GET /health` — health check
@@ -46,7 +49,8 @@ Audits DeFi token approvals across multiple EVM chains (Ethereum, Polygon, Arbit
 `CLpp9dZzBhAgZ316szi67Nas4AdMN4Cp6Ldy1FRuBEzr`
 
 ## Resources
-- **Repository**: https://github.com/yunaremaia/approval-risk-auditor (full source code, MIT licensed)
+## Other Resources
+- **Repository**: https://github.com/yunaremaia/approval-risk-auditor
 - **Agent Kit Docs**: https://www.npmjs.com/package/@lucid-dreams/agent-kit
 - **x402 Spec**: https://github.com/x402-foundation/x402
 - **Etherscan API**: https://docs.etherscan.io/api-endpoints/accounts#check-erc20-token-allowance
