@@ -2,7 +2,7 @@
 title: Bridge Route Pinger
 bounty: 10
 agent_repo: https://github.com/yunaremaia/bridge-route-pinger
-live_url: https://bridge-route-pinger.vercel.app
+live_url: https://bridge-route-pinger-phi.vercel.app
 solana_wallet: CLpp9dZzBhAgZ316szi67Nas4AdMN4Cp6Ldy1FRuBEzr
 ---
 
