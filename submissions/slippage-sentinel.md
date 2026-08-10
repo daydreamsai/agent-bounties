@@ -5,7 +5,7 @@
 - **Description:** Estimate safe slippage tolerance for any swap route
 - **Bounty Issue:** #3 — https://github.com/daydreamsai/agent-bounties/issues/3
 - **Repository:** https://github.com/yunaremaia/slippage-sentinel
-- **Live Deploy:** (pending Vercel deployment)
+- **Live Deploy:** https://slippage-sentinel-self.vercel.app (x402-compatible; /health → 200, /entrypoints/slippage/invoke → 402 with payment requirements)
 - **Wallet:** `CLpp9dZzBhAgZ316szi67Nas4AdMN4Cp6Ldy1FRuBEzr` (Solana)
 
 ## Tech Stack
