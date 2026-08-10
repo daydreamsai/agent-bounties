@@ -2,7 +2,7 @@
 title: LP Impermanent Loss Estimator
 bounty: 7
 agent_repo: https://github.com/yunaremaia/lp-impermanent-loss-estimator
-live_url: https://lp-impermanent-loss-estimator.vercel.app
+live_url: https://lp-impermanent-loss.vercel.app
 solana_wallet: CLpp9dZzBhAgZ316szi67Nas4AdMN4Cp6Ldy1FRuBEzr
 ---
 
