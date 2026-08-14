@@ -18,8 +18,6 @@ Scans Base UniswapV2-style factories for `PairCreated` logs in the last N minute
 - [x] Deployed on a public URL (serveo tunnel; upgrading to stable domain)
 - [x] Reachable via x402 payment surface (`402` + `X-PAYMENT` gate)
 
-## Solana wallet (payout)
-`3BCVxDxuFpoAvQsDZMJw75PzKsKHjKvGXwioFTTPUM7o`
 
 ## Notes
 Core scanner is live on Base RPC. Next: stable domain + full x402 facilitator settlement verification + FP<1% evidence.
