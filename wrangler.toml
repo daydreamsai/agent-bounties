@@ -1,0 +1,12 @@
+name = "yield-pool-watcher-foundation"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+[[kv_namespaces]]
+binding = "SNAPSHOTS_KV"
+id = "ea26f376b3f148f4a33bdeb6b4bf867a"
+
+[vars]
+# X402_PAY_TO must be a checksummed Base/EVM address.
+# The bounty reward wallet is a separate Solana address and must not be used here.
+X402_PRICE_USDC = "10000"
