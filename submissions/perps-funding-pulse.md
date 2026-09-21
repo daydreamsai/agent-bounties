@@ -116,7 +116,7 @@ GET /api/health
 
 ## Solana Wallet
 
-**Wallet Address:** `2xKLp5KfCvh6pM3bN8fY1vR2w3x4y5z6a7b8c9d0e1f`
+**Wallet Address:** `3L1QynEsY9VS2LjggWaPaA1uTkawpDc8eTWafCzegZab`
 
 ## Other Resources
 
