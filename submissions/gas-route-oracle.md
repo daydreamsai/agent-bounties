@@ -26,13 +26,13 @@ The agent is deployed on a Vercel serverless function and is reachable via x402.
 
 | Chain | RPC Endpoint | Native Token |
 |-------|-------------|--------------|
-| Ethereum | eth.llamarpc.com | ETH |
-| Arbitrum |arb1.arbitrum.io/rpc | ETH |
-| Optimism | mainnet.optimism.io | ETH |
-| Base | base.llamarpc.com | ETH |
-| Polygon | polygon-rpc.com | MATIC |
-| BSC | bsc-dataseed.binance.org | BNB |
-| Avalanche | api.avax.network/ext/bc/C/rpc | AVAX |
+| Ethereum | https://eth.llamarpc.com | ETH |
+| Arbitrum | https://arb1.arbitrum.io/rpc | ETH |
+| Optimism | https://mainnet.optimism.io | ETH |
+| Base | https://base.llamarpc.com | ETH |
+| Polygon | https://polygon-rpc.com | MATIC |
+| BSC | https://bsc-dataseed.binance.org | BNB |
+| Avalanche | https://api.avax.network/ext/bc/C/rpc | AVAX |
 
 ## Acceptance Criteria
 
