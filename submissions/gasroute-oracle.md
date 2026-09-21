@@ -45,7 +45,7 @@ GasRoute Oracle is an AI agent that monitors gas prices across multiple EVM-comp
 |-------|--------------|--------------|
 | Ethereum | eth.llamarpc.com | ETH |
 | Polygon | polygon-rpc.com | MATIC |
-| Arbitrum |arb1.arbitrum.io/rpc | ETH |
+| Arbitrum | arb1.arbitrum.io/rpc | ETH |
 | Optimism | mainnet.optimism.io | ETH |
 | Base | mainnet.base.org | ETH |
 | BSC | bsc-dataseed.binance.org | BNB |
