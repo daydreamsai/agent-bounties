@@ -89,12 +89,12 @@ GET /api/health
 
 ## Solana Wallet
 
-**Wallet Address:** `YOUR_WALLET_ADDRESS_HERE`
+**Wallet Address:** `7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU`
 
 ## Other Resources
 
-- **Repository:** https://github.com/your-org/gasroute-oracle
-- **Documentation:** https://docs.gasroute-oracle.example.com
+- **Repository:** https://github.com/daydreamsai/agent-bounties
+- **Documentation:** https://github.com/daydreamsai/agent-bounties/blob/main/submissions/gasroute-oracle.md
 - **Architecture:** Uses Node.js with Express for the API server, and a background worker for chain monitoring
 
 ## Implementation Details
