@@ -65,6 +65,18 @@
 
 ---
 
+## Live Link
+
+**Deployment URL:** https://approval-risk-auditor.scented-harp.workers.dev
+
+- `GET /health` → `{"status":..., "chains":{...}}` (verified 200, JSON)
+- `GET /.well-known/x402.json` → x402 manifest (verified 200)
+- `POST /audit` `{"wallet":"0x…","chains":["ethereum"]}` → verified HTTP 402 + `accepts[]` (x402-exact, Base USDC) for callers without an X-PAYMENT header; a valid x402 payment unlocks the full audit
+
+Note: the Worker runs on a Cloudflare temporary preview account (free tier), so the subdomain is re-deployed periodically and may rotate. Pin the claimed account or deploy to a paid account for a permanent URL.
+
+---
+
 ## Deployment
 
 ```bash
