@@ -1,0 +1,12 @@
+{
+  "name": "approval-risk-auditor",
+  "version": "1.0.0",
+  "description": "Approval Risk Auditor: flag unlimited or stale ERC-20/NFT approvals and build revoke calls",
+  "type": "commonjs",
+  "main": "src/auditor.js",
+  "scripts": {
+    "test": "node --test test/auditor.test.js",
+    "start": "node src/server.js"
+  },
+  "license": "MIT"
+}
