@@ -1,0 +1,12 @@
+{
+  "name": "gasroute-oracle",
+  "version": "0.1.0",
+  "description": "Choose the cheapest chain from fresh, injected gas observations.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
