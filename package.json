@@ -1,0 +1,13 @@
+{
+  "name": "bridge-route-pinger",
+  "version": "0.1.0",
+  "description": "List viable bridge routes with live LI.FI fee and time quotes",
+  "type": "module",
+  "main": "src/bridge-route-pinger.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
