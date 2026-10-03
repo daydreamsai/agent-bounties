@@ -1,0 +1,18 @@
+name = "agent-bounties"
+
+main = "src/fresh-markets-watch.ts"
+
+compatibility_date = "2026-09-30"
+
+workers_dev = true
+[vars]
+PAY_TO = "0x16470549907A5e895B42BD3EE9BcFc1b692d7196"
+X402_NETWORK = "eip155:8453"
+X402_PRICE = "$0.01"
+X402_FACILITATOR_URL = "https://facilitator.daydreams.systems"
+
+[[kv_namespaces]]
+binding = "PAIRS_KV"
+
+[triggers]
+crons = ["* * * * *"]
