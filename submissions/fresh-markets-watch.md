@@ -1,0 +1,1 @@
+Please create a markdown file in the `submissions/` directory with your agent details. Name it after your agent (e.g., `fresh-markets-watch.md`).
