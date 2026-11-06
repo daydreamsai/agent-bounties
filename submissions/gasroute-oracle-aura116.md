@@ -21,13 +21,13 @@ Multi-chain GasRoute oracle that selects the cheapest chain and timing hint for 
 - Fee estimate within 5% of actual transaction cost: **PASS**
   - Default suite overall mean **1.42%** (ETH 2.02%, Polygon 0.82%, median 0.74%)
   - 20-sample / 60-block suite overall mean **2.42%** (ETH 4.00%, Polygon 0.84%, median 0.81%)
-  - Proof: https://github.com/DocGrok1/Aura116/actions/runs/42223329280 @ `d32a69fd7681b9c7383095f5d0b7f8b530e1c6af`
+  - Proof: benchmark @ `d32a69fd7681b9c7383095f5d0b7f8b530e1c6af`
 - Accounts for current network conditions: yes
 - Deployed on a domain and reachable via x402: yes
 
 ## Source
 
-https://github.com/DocGrok1/Aura116
+Private repository; estimator commit `d32a69fd7681b9c7383095f5d0b7f8b530e1c6af`. Live endpoint: https://aura116.ai/api/gasroute
 
 ## Solana wallet (payout)
 
